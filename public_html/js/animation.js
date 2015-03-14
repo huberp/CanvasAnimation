@@ -49,15 +49,33 @@
 //
 (function () {
 
+    var STATE = {
+            UNKNOWN: {value:0},
+            NEW: { value:1},
+            RUN:    {value:2},
+            INACTIVE_PENDING:{value:4},
+            INACTIVE:{value:8},
+            UNMANAGED_PENDING: {value:16},
+            UNMANAGED: {value:32}
+        };
     var ManagedObject = function () {
+        
         this.objectManager;
         this.idx;
+        this.state = STATE.UNKNOWN;
         this.setManager = function (manager, idx) {
             this.objectManager = manager;
             this.idx = idx;
         };
         this.remove = function () {
             objectManager.remove(this);
+            this.state = STATE.UNMANAGED_PENDING;
+        };
+        this.getState = function() {
+            return this.state;
+        };
+        this.setState = function(state) {
+            this.state = state;
         };
     };
 
@@ -74,6 +92,7 @@
         };
         this.remove = function (animObj) {
             this.deletions.push(animObj);
+            animObj.setState(STATE.UNMANAGED_PENDING);
         };
         this.getAnimations = function () {
             return this.animations;
@@ -84,6 +103,7 @@
                 var len2 = this.animations.length;
                 for (var j = 0; j < len2; j++) {
                     if (this.animations[j].idx === this.deletions[i].idx) {
+                        this.deletions[i].setState(STATE.UNMANAGED);
                         this.animations.splice(j, 1);
                         break;
                     }
@@ -447,6 +467,8 @@
             if (compare(this.currentPos, to)) {
                 this.fire(EVENT_TYPES.OFF_SCREEN, this);
                 this.currentPos = from;
+                this.setState(STATE.INACTIVE_PENDING);
+                return getState();
             }
         };
         this.getPos = function () {
@@ -681,7 +703,10 @@
         lastTime = performance.now();
         //context.clearRect(0, 0, canvas.width, canvas.height);
         objectManager.getAnimations().forEach(function (elem) {
-            elem.update(myCurrent);
+            var retState = elem.update(myCurrent);
+            if(retState && retState===ManagedObject.STATE.INACTIVE_PENDING) {
+                objectManager.remove(elem);
+            }
         });
         objectManager.getAnimations().forEach(function (elem) {
             elem.paint(context);
