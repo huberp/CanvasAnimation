@@ -252,6 +252,34 @@
     RelativeXYAnimation.inheritsFrom(CompositeAnimationComponent);
     //
     //
+    var XYCorrection = function (xyAnimation, deltaX, deltaY) {
+        AnimationComponent.call(this);
+        this.init = function () {
+            var self = this;
+            xyAnimation.init().setParent(self);
+            return this;
+        };
+        this.update = function (current) {
+            xyAnimation.update(current);
+        };
+        this.getX = function () {
+            return deltaX + xyAnimation.getX();
+        };
+        this.getY = function () {
+            return deltaY + xyAnimation.getY();
+        };
+        this.setX = function (x) {
+            xyAnimation.setPos(x);
+            return this;
+        };
+        this.setY = function (y) {
+            xyAnimation.setPos(y);
+            return this;
+        };
+    };
+    XYCorrection.inheritsFrom(AnimationComponent);
+//
+    //
     var XYAnimation = function (xAnimation, yAnimation) {
         CompositeAnimationComponent.call(this, xAnimation, yAnimation);
         this.init = function () {
@@ -345,7 +373,7 @@
     //Conrete Animation Implementations
     //
     //
-    var CirclePathAnimation = function (radius, deltaX, deltaY, startDeg, direction, degPerMs) {
+    var CirclePathAnimation = function (radius, startDeg, direction, degPerMs) {
         AnimationComponent.call(this);
         var PI_PER_DEG = Math.PI / 180;
         //last update time - we do updates only each "updateDelay" milliseconds
@@ -363,10 +391,10 @@
             this.lastUpdateTime = current;
         };
         this.getX = function () {
-            return deltaX + radius * Math.cos(this.currentArc);
+            return radius * Math.cos(this.currentArc);
         };
         this.getY = function () {
-            return deltaY + radius * Math.sin(this.currentArc);
+            return radius * Math.sin(this.currentArc);
         };
     };
     CirclePathAnimation.inheritsFrom(AnimationComponent);
@@ -507,8 +535,22 @@
     var EVENT_TYPES = {
         OFF_SCREEN: {}
     };
-    
-    
+
+    var CirclePainter = function (color, radius, position) {
+        this.init = function () {
+            return this;
+        };
+        this.update = function (current) {
+        };
+        this.paint = function (ctx, px, py) {
+            ctx.beginPath();
+            ctx.arc(position.getX(), position.getY(), radius, 0, 2 * Math.PI, false);
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.stroke();
+        };
+    };
+
     //==========================================================================
     //
     //  Now setup the animations and run it
@@ -588,21 +630,38 @@
                 );
 
         if (idx >= 1 && idx < 24) {
-            var speed = 0.1 + 0.1*Math.random();
-            var circelAnimation1 = new CirclePathAnimation(50, 16, 16, 0, dir, speed);
-            var circelAnimation2 = new CirclePathAnimation(50, 16, 16, 180, dir, speed);
-            var relativeXYAnimation1 = new RelativeXYAnimation(xyBaseAnimation, circelAnimation1);
-            var relativeXYAnimation2 = new RelativeXYAnimation(xyBaseAnimation, circelAnimation2);
+            //build two circling sattelites around a asteroid
+            var speed = 0.1 + 0.1 * Math.random();
+            var circleAnimation1 = new CirclePathAnimation(65, 0, dir, speed);
+            var circleAnimation2 = new CirclePathAnimation(65, 180, dir, speed);
+            //not quite sure why the XYCorrection parameters have to be 16,16 here? it should be 36,36????
+            var relativeXYAnimation1 = new XYCorrection(new RelativeXYAnimation(xyBaseAnimation, circleAnimation1),16,16);
+            var relativeXYAnimation2 = new XYCorrection(new RelativeXYAnimation(xyBaseAnimation, circleAnimation2),16,16);
+            var circlePainter = new CirclePainter(8,65, new XYCorrection(xyBaseAnimation,36,36));
+            //now it gets funky - let's build a circeling satelite around a sattelite
+            var circleAnimation1_1 = new CirclePathAnimation(32, 180, dir - 2 * dir, speed + 0.06);
+            var relativeXYAnimation1_1 = new RelativeXYAnimation(relativeXYAnimation1, circleAnimation1_1);
+            var circlePainter1_1 = new CirclePainter(8,32, new XYCorrection(relativeXYAnimation1,16,16));
+
             var satelliteAnimation = new SpriteAnimation(asteroid3, 32, 32, 5, 19, dir, false, 50 + 150 * Math.random(), 1);
-            var compositeSub1 = new PaintableWithAnimation(satelliteAnimation,relativeXYAnimation1);
-            var compositeSub2 = new PaintableWithAnimation(satelliteAnimation,relativeXYAnimation2);
-            return new PaintableCombination(compositeMain, new PaintableCombination(compositeSub1,compositeSub2));
+            var compositeSub1 = new PaintableWithAnimation(satelliteAnimation, relativeXYAnimation1);
+            var compositeSub2 = new PaintableWithAnimation(satelliteAnimation, relativeXYAnimation2);
+            var compositeSub1_1 = new PaintableWithAnimation(satelliteAnimation, relativeXYAnimation1_1);
+            return new PaintableCombination(
+                 compositeMain, 
+                 new PaintableCombination(
+                         circlePainter, 
+                         new PaintableCombination(
+                                 compositeSub2, 
+                                 new PaintableCombination(
+                                         compositeSub1, 
+                                         new PaintableCombination(circlePainter1_1,compositeSub1_1)))));
         } else {
             return compositeMain;
         }
     };
 
-    for (i = 1; i < 20; i++) {
+    for (i = 1; i < 5; i++) {
         objectManager.add(createObject(i, dir));
         dir = dir - 2 * dir;
     }
