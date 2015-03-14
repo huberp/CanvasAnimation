@@ -507,6 +507,12 @@
     var EVENT_TYPES = {
         OFF_SCREEN: {}
     };
+    
+    
+    //==========================================================================
+    //
+    //  Now setup the animations and run it
+    //
     var canvas = document.getElementById('myCanvas');
     var context = canvas.getContext('2d');
 //
@@ -530,7 +536,8 @@
 
     yCoords = new Array();
     dir = -1;
-
+    //
+    //background
     objectManager.add(
             new PaintableWithAnimation(
                     new ImgPainter(background, 1080, 1920),
@@ -540,6 +547,8 @@
                             )
                     ));
 
+    //
+    //A Listener which listens to OFF_SCREEN events
     var listener = {
         eventType: EVENT_TYPES.OFF_SCREEN,
         listen: function (eventType, event) {
@@ -579,8 +588,9 @@
                 );
 
         if (idx >= 1 && idx < 24) {
-            var circelAnimation1 = new CirclePathAnimation(50, 16, 16, 0, 1, 0.2);
-            var circelAnimation2 = new CirclePathAnimation(50, 16, 16, 180, 1, 0.2);
+            var speed = 0.1 + 0.1*Math.random();
+            var circelAnimation1 = new CirclePathAnimation(50, 16, 16, 0, dir, speed);
+            var circelAnimation2 = new CirclePathAnimation(50, 16, 16, 180, dir, speed);
             var relativeXYAnimation1 = new RelativeXYAnimation(xyBaseAnimation, circelAnimation1);
             var relativeXYAnimation2 = new RelativeXYAnimation(xyBaseAnimation, circelAnimation2);
             var satelliteAnimation = new SpriteAnimation(asteroid3, 32, 32, 5, 19, dir, false, 50 + 150 * Math.random(), 1);
@@ -592,7 +602,7 @@
         }
     };
 
-    for (i = 1; i < 10; i++) {
+    for (i = 1; i < 20; i++) {
         objectManager.add(createObject(i, dir));
         dir = dir - 2 * dir;
     }
