@@ -191,6 +191,48 @@
     CompositeAnimationComponent.inheritsFrom(AnimationComponent);
     //
     //
+    /**
+     * PaintableWithStateIndicator combines a Paintable with a StateIndicator
+     * @param {type} paintable
+     * @param {type} objectStateIndicator optional state indicator. If provided this state indicators
+     *                  getState method is called to provide return values for this.getState() and this.update()
+     *                  State should be on of values of enum STATE. Such a StateIndicator could be a deaply nested PathAnimation which
+     *                  triggers when if falls off the screen. Keep in mind - even if StateIndicator is a PathAnimatzion it won't be updated here!
+     * @returns {animation_L50.PaintableWithStateIndicator}
+     */
+    var PaintableWithStateIndicator = function(paintable,objectStateIndicator) {
+        AnimationComponent.call(this);
+         this.init = function () {
+            var self = this;
+            paintable.init();
+            if (typeof paintable.setParent === 'function') {
+                paintable.setParent(self);
+            }
+            return this;
+        };
+        this.update = function (current) {
+            paintable.update(current);
+            return this.getState();
+        };
+        this.paint = function (ctx) {
+            paintable.paint(ctx);
+        };
+        this.getState = function() {
+            if(objectStateIndicator && typeof objectStateIndicator.getState === 'function') {
+                return objectStateIndicator.getState();
+            } else {
+                return this.state;
+            }
+        }; 
+    };
+    PaintableWithStateIndicator.inheritsFrom(AnimationComponent);
+    /**
+     * PaintableCombination combines two paintables (top level objects)
+     * @param {type} paintableA 1st paintable object 
+     * @param {type} paintableB 2nd paintable object
+     * @param {type} objectStateIndicator 
+     * @returns {animation_L50.PaintableCombination}
+     */
     var PaintableCombination = function (paintableA, paintableB) {
         CompositeAnimationComponent.call(this, paintableA, paintableB);
         this.init = function () {
@@ -208,6 +250,7 @@
         this.update = function (current) {
             paintableA.update(current);
             paintableB.update(current);
+            return this.getState();
         };
         this.paint = function (ctx) {
             paintableA.paint(ctx);
@@ -468,7 +511,7 @@
                 this.fire(EVENT_TYPES.OFF_SCREEN, this);
                 this.currentPos = from;
                 this.setState(STATE.INACTIVE_PENDING);
-                return getState();
+                return this.getState();
             }
         };
         this.getPos = function () {
@@ -669,7 +712,7 @@
             var compositeSub1 = new PaintableWithAnimation(satelliteAnimation, relativeXYAnimation1);
             var compositeSub2 = new PaintableWithAnimation(satelliteAnimation, relativeXYAnimation2);
             var compositeSub1_1 = new PaintableWithAnimation(satelliteAnimation, relativeXYAnimation1_1);
-            return new PaintableCombination(
+            return new PaintableWithStateIndicator(new PaintableCombination(
                  compositeMain, 
                  new PaintableCombination(
                          circlePainter, 
@@ -677,7 +720,7 @@
                                  compositeSub2, 
                                  new PaintableCombination(
                                          compositeSub1, 
-                                         new PaintableCombination(circlePainter1_1,compositeSub1_1)))));
+                                         new PaintableCombination(circlePainter1_1,compositeSub1_1))))),yAnimation);
         } else {
             return compositeMain;
         }
@@ -704,7 +747,7 @@
         //context.clearRect(0, 0, canvas.width, canvas.height);
         objectManager.getAnimations().forEach(function (elem) {
             var retState = elem.update(myCurrent);
-            if(retState && retState===ManagedObject.STATE.INACTIVE_PENDING) {
+            if(retState && retState===STATE.INACTIVE_PENDING) {
                 objectManager.remove(elem);
             }
         });
