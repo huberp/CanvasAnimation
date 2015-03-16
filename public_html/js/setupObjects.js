@@ -112,7 +112,7 @@
         }
     };
 
-    for (i = 1; i < 10; i++) {
+    for (i = 1; i < 2; i++) {
         objectManager.add(createObject(i, dir));
         dir = dir - 2 * dir;
     }

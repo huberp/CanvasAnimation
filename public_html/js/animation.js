@@ -2,6 +2,10 @@
 // Animation Classes
 (function (PKG, undefined) {
 
+    PKG.EVENT_TYPES = {
+        OFF_SCREEN: {}
+    };
+
     PKG.STATE = {
         UNKNOWN: {value: 0},
         NEW: {value: 1},
@@ -11,6 +15,10 @@
         UNMANAGED_PENDING: {value: 16},
         UNMANAGED: {value: 32}
     };
+    /**
+     * Base Class for a object managed by ObjectManager.
+     * @returns {undefined}
+     */
     PKG.ManagedObject = function () {
         this.objectManager;
         this.idx;
@@ -30,7 +38,10 @@
             this.state = state;
         };
     };
-
+    /**
+     * Manages the Objects, mostly this should be Paintable top level objects.
+     * @returns {undefined}
+     */
     PKG.ObjectManager = function () {
         this.counter = 0;
         this.animations = new Array();
@@ -49,6 +60,11 @@
         this.getAnimations = function () {
             return this.animations;
         };
+        /**
+         * add and remove will store changes in seperate array
+         * only until a call to commit at the end of each game loop.
+         * This is sort of a transaction.
+         */
         this.commit = function () {
             var len = this.deletions.length;
             for (var i = 0; i < len; i++) {
@@ -67,7 +83,10 @@
             //console.log(this.animations.length);
         };
     };
-
+    /**
+     * Defines interface for an Object Listener
+     * @returns {undefined}
+     */
     PKG.ObjectListener = function () {
         this.eventType = function () {
         };
@@ -75,6 +94,11 @@
         };
     };
 
+    /**
+     * Base Class for objects that emit events and support listeners.
+     * Subclass of ManagedObject
+     * @returns {undefined}
+     */
     PKG.ObjectListenerSupport = function () {
         PKG.ManagedObject.call(this);
         this.listeners = new Array();
@@ -105,6 +129,12 @@
     PKG.ObjectListenerSupport.inheritsFrom(PKG.ManagedObject);
 //
 //
+    /**
+     * Base Class for an AnimationComponent. It's only purpose is
+     * to manage a relationship to a parent of a composition tree.
+     * Subclass of ObjectListenerSupport
+     * @returns {undefined}
+     */
     PKG.AnimationComponent = function () {
         PKG.ObjectListenerSupport.call(this);
         this.par = null;
@@ -121,9 +151,28 @@
     PKG.AnimationComponent.inheritsFrom(PKG.ObjectListenerSupport);
 //
 //
+    /**
+     * Composition of two AnimationComponent object. This CompositionObject
+     * is itself a AnimationComponent
+     * @param {type} componentA
+     * @param {type} componentB
+     * @returns {undefined}
+     */
     PKG.CompositeAnimationComponent = function (componentA, componentB) {
         PKG.AnimationComponent.call(this);
         this.par = null;
+        this.init = function () {
+            var self = this;
+            componentA.init();
+            componentB.init();
+            if (typeof componentA.setParent === 'function') {
+                componentA.setParent(self);
+            }
+            if (typeof componentB.setParent === 'function') {
+                componentB.setParent(self);
+            }
+            return this;
+        };
         this.setParent = function (parent) {
             this.par = parent;
             if (typeof componentA.setParent === 'function') {
@@ -135,9 +184,6 @@
         };
         this.getParent = function () {
             return this.par;
-        };
-        this.init = function () {
-            return this;
         };
     };
     PKG.CompositeAnimationComponent.inheritsFrom(PKG.AnimationComponent);
@@ -187,18 +233,6 @@
      */
     PKG.PaintableCombination = function (paintableA, paintableB) {
         PKG.CompositeAnimationComponent.call(this, paintableA, paintableB);
-        this.init = function () {
-            var self = this;
-            paintableA.init();
-            paintableB.init();
-            if (typeof paintableA.setParent === 'function') {
-                paintableA.setParent(self);
-            }
-            if (typeof paintableB.setParent === 'function') {
-                paintableB.setParent(self);
-            }
-            return this;
-        };
         this.update = function (current) {
             paintableA.update(current);
             paintableB.update(current);
@@ -214,18 +248,6 @@
 //
     PKG.PaintableWithAnimation = function (paintable, xyPosition) {
         PKG.CompositeAnimationComponent.call(this, paintable, xyPosition);
-        this.init = function () {
-            var self = this;
-            paintable.init();
-            xyPosition.init();
-            if (typeof paintable.setParent === 'function') {
-                paintable.setParent(self);
-            }
-            if (typeof xyPosition.setParent === 'function') {
-                xyPosition.setParent(self);
-            }
-            return this;
-        };
         this.update = function (current) {
             paintable.update(current);
             xyPosition.update(current);
@@ -320,11 +342,6 @@
         this.setY = function (y) {
             yAnimation.setPos(y);
             return this;
-        };
-        this.setParent = function (par) {
-            this.par = par;
-            xAnimation.setParent(par);
-            yAnimation.setParent(par);
         };
     };
     PKG.XYAnimation.inheritsFrom(PKG.CompositeAnimationComponent);
@@ -442,8 +459,6 @@
     PKG.BouncingPathAnimation.inheritsFrom(PKG.AnimationComponent);
 //
 //
-//
-//
     PKG.PathAnimation2 = function (from, to, pixelPerMs) {
         PKG.AnimationComponent.call(this);
         //last update time - we do updates only each "updateDelay" milliseconds
@@ -551,9 +566,7 @@
         };
     };
 //
-    PKG.EVENT_TYPES = {
-        OFF_SCREEN: {}
-    };
+
 
     PKG.CirclePainter = function (color, radius, position) {
         this.init = function () {
