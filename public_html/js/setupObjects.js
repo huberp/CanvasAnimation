@@ -1,6 +1,8 @@
 //==============================================================================
 // Now setup the animations and run it
 (function () {
+    var ANIM = window.ANIMATION;
+    
     var canvas = document.getElementById('myCanvas');
     var context = canvas.getContext('2d');
 //
@@ -22,25 +24,25 @@
     explosion2.src = "img/explosion02_96x96.png";
     ship.src = "img/smallfighter0006.png";
 
-    objectManager = new ObjectManager();
+    objectManager = new ANIM.ObjectManager();
 
     yCoords = new Array();
     dir = -1;
     //
     //background
     objectManager.add(
-            new PaintableWithAnimation(
-                    new ImgPainter(background, 1080, 1920),
-                    new XYAnimation(
-                            new FixValueAnimation(0),
-                            new PathAnimation2(-1320, 0, 0.02)
+            new ANIM.PaintableWithAnimation(
+                    new ANIM.ImgPainter(background, 1080, 1920),
+                    new ANIM.XYAnimation(
+                            new ANIM.FixValueAnimation(0),
+                            new ANIM.PathAnimation2(-1320, 0, 0.02)
                             )
                     ));
 
     //
     //A Listener which listens to OFF_SCREEN events
     var listener = {
-        eventType: EVENT_TYPES.OFF_SCREEN,
+        eventType: ANIMATION.EVENT_TYPES.OFF_SCREEN,
         listen: function (eventType, event) {
             event.getParent().remove();
             var idx = Math.floor(Math.random() * 120);
@@ -54,25 +56,25 @@
 
     var createObject = function (idx, dir) {
         //
-        var yAnimation = new PathAnimation2(-72, 600, 0.05 + 0.1 * Math.random()).addListener(listener);
-        var xAnimation = new FixValueAnimation(Math.random() * 520);
-        var xyBaseAnimation = new XYAnimation(xAnimation, yAnimation);
+        var yAnimation = new ANIM.PathAnimation2(-72, 600, 0.05 + 0.1 * Math.random()).addListener(listener);
+        var xAnimation = new ANIM.FixValueAnimation(Math.random() * 520);
+        var xyBaseAnimation = new ANIM.XYAnimation(xAnimation, yAnimation);
 
         var spriteAnimation;
         //
         if (idx >= 1 && idx < 24) {
-            spriteAnimation = new SpriteAnimation(asteroid1, 72, 72, 5, 19, dir, false, 150 + 150 * Math.random(), 1);
+            spriteAnimation = new ANIM.SpriteAnimation(asteroid1, 72, 72, 5, 19, dir, false, 150 + 150 * Math.random(), 1);
         } else if (idx >= 24 && idx < 48) {
-            spriteAnimation = new SpriteAnimation(asteroid3, 32, 32, 5, 19, dir, false, 50 + 150 * Math.random(), 1);
+            spriteAnimation = new ANIM.SpriteAnimation(asteroid3, 32, 32, 5, 19, dir, false, 50 + 150 * Math.random(), 1);
         } else if (idx >= 48 && idx < 72) {
-            spriteAnimation = new SpriteAnimation(asteroid4, 32, 32, 5, 19, dir, false, 50 + 150 * Math.random(), 1);
+            spriteAnimation = new ANIM.SpriteAnimation(asteroid4, 32, 32, 5, 19, dir, false, 50 + 150 * Math.random(), 1);
         } else if (idx >= 72 && idx < 108) {
-            spriteAnimation = new SpriteAnimation(explosion, 64, 64, 10, 100, 1, true, 50 + 50 * Math.random(), 0.5);
+            spriteAnimation = new ANIM.SpriteAnimation(explosion, 64, 64, 10, 100, 1, true, 50 + 50 * Math.random(), 0.5);
         } else {
-            spriteAnimation = new SpriteAnimation(explosion2, 96, 96, 5, 20, 1, true, 100 + 200 * Math.random(), 0.7);
+            spriteAnimation = new ANIM.SpriteAnimation(explosion2, 96, 96, 5, 20, 1, true, 100 + 200 * Math.random(), 0.7);
         }
 
-        var compositeMain = new PaintableWithAnimation(
+        var compositeMain = new ANIM.PaintableWithAnimation(
                 spriteAnimation,
                 xyBaseAnimation
                 );
@@ -80,30 +82,31 @@
         if (idx >= 1 && idx < 24) {
             //build two circling sattelites around a asteroid
             var speed = 0.1 + 0.1 * Math.random();
-            var circleAnimation1 = new CirclePathAnimation(65, 0, dir, speed);
-            var circleAnimation2 = new CirclePathAnimation(65, 180, dir, speed);
+            var circleAnimation1 = new ANIM.CirclePathAnimation(65, 0, dir, speed);
+            var circleAnimation2 = new ANIM.CirclePathAnimation(65, 180, dir, speed);
             //not quite sure why the XYCorrection parameters have to be 16,16 here? it should be 36,36????
-            var relativeXYAnimation1 = new XYCorrection(new RelativeXYAnimation(xyBaseAnimation, circleAnimation1), 16, 16);
-            var relativeXYAnimation2 = new XYCorrection(new RelativeXYAnimation(xyBaseAnimation, circleAnimation2), 16, 16);
-            var circlePainter = new CirclePainter(8, 65, new XYCorrection(xyBaseAnimation, 36, 36));
+            var relativeXYAnimation1 = new ANIM.XYCorrection(new ANIM.RelativeXYAnimation(xyBaseAnimation, circleAnimation1), 16, 16);
+            var relativeXYAnimation2 = new ANIM.XYCorrection(new ANIM.RelativeXYAnimation(xyBaseAnimation, circleAnimation2), 16, 16);
+            var circlePainter = new ANIM.CirclePainter(8, 65, new ANIM.XYCorrection(xyBaseAnimation, 36, 36));
             //now it gets funky - let's build a circeling satelite around a sattelite
-            var circleAnimation1_1 = new CirclePathAnimation(32, 180, dir - 2 * dir, speed + 0.06);
-            var relativeXYAnimation1_1 = new RelativeXYAnimation(relativeXYAnimation1, circleAnimation1_1);
-            var circlePainter1_1 = new CirclePainter(8, 32, new XYCorrection(relativeXYAnimation1, 16, 16));
+            var circleAnimation1_1 = new ANIM.CirclePathAnimation(32, 180, dir - 2 * dir, speed + 0.06);
+            var relativeXYAnimation1_1 = new ANIM.RelativeXYAnimation(relativeXYAnimation1, circleAnimation1_1);
+            var circlePainter1_1 = new ANIM.CirclePainter(8, 32, new ANIM.XYCorrection(relativeXYAnimation1, 16, 16));
 
-            var satelliteAnimation = new SpriteAnimation(asteroid3, 32, 32, 5, 19, dir, false, 50 + 150 * Math.random(), 1);
-            var compositeSub1 = new PaintableWithAnimation(satelliteAnimation, relativeXYAnimation1);
-            var compositeSub2 = new PaintableWithAnimation(satelliteAnimation, relativeXYAnimation2);
-            var compositeSub1_1 = new PaintableWithAnimation(satelliteAnimation, relativeXYAnimation1_1);
-            return new PaintableWithStateIndicator(new PaintableCombination(
-                    compositeMain,
-                    new PaintableCombination(
-                            circlePainter,
-                            new PaintableCombination(
-                                    compositeSub2,
-                                    new PaintableCombination(
-                                            compositeSub1,
-                                            new PaintableCombination(circlePainter1_1, compositeSub1_1))))), yAnimation);
+            var satelliteAnimation = new ANIM.SpriteAnimation(asteroid3, 32, 32, 5, 19, dir, false, 50 + 150 * Math.random(), 1);
+            var compositeSub1 = new ANIM.PaintableWithAnimation(satelliteAnimation, relativeXYAnimation1);
+            var compositeSub2 = new ANIM.PaintableWithAnimation(satelliteAnimation, relativeXYAnimation2);
+            var compositeSub1_1 = new ANIM.PaintableWithAnimation(satelliteAnimation, relativeXYAnimation1_1);
+            return new ANIM.PaintableWithStateIndicator(
+                    new ANIM.PaintableCombination(
+                        compositeMain,
+                        new ANIM.PaintableCombination(
+                                circlePainter,
+                                new ANIM.PaintableCombination(
+                                        compositeSub2,
+                                        new ANIM.PaintableCombination(
+                                                compositeSub1,
+                                                new ANIM.PaintableCombination(circlePainter1_1, compositeSub1_1))))), yAnimation);
         } else {
             return compositeMain;
         }
@@ -151,7 +154,7 @@
         //context.clearRect(0, 0, canvas.width, canvas.height);
         objectManager.getAnimations().forEach(function (elem) {
             var retState = elem.update(myCurrent);
-            if (retState && retState === STATE.INACTIVE_PENDING) {
+            if (retState && retState === ANIM.STATE.INACTIVE_PENDING) {
                 objectManager.remove(elem);
             }
         });
