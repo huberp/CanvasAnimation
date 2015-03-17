@@ -78,6 +78,7 @@
                 }
             }
             this.animations = this.animations.concat(this.additions);
+            this.animations.sort(PKG.AnimationComponent.sortComparator);
             this.additions = new Array();
             this.deletions = new Array();
             //console.log(this.animations.length);
@@ -138,6 +139,7 @@
     PKG.AnimationComponent = function () {
         PKG.ObjectListenerSupport.call(this);
         this.par = null;
+        this.order = 0;
         this.setParent = function (parent) {
             this.par = parent;
         };
@@ -146,6 +148,16 @@
         };
         this.init = function () {
             return this;
+        };
+        this.setOrder = function(order) {
+            this.order = order;
+            return this;
+        };
+        this.getOrder = function() {
+            return this.order;
+        };
+        PKG.AnimationComponent.sortComparator = function(a,b) {
+            return a.order-b.order;
         };
     };
     PKG.AnimationComponent.inheritsFrom(PKG.ObjectListenerSupport);
@@ -224,6 +236,7 @@
         };
     };
     PKG.PaintableWithStateIndicator.inheritsFrom(PKG.AnimationComponent);
+
     /**
      * PaintableCombination combines two paintables (top level objects)
      * @param {type} paintableA 1st paintable object 
@@ -548,14 +561,17 @@
             var idx = (this.animBase + direction * this.currentPos);
             var y = Math.floor(idx / gridx);
             var x = Math.floor(idx % gridx);
+            var currentAlpha = ctx.globalAlpha;
             ctx.globalAlpha = alpha;
             ctx.drawImage(img, x * sx, y * sy, sx, sy, px, py, sx, sy);
+            ctx.globalAlpha = currentAlpha;
         };
     };
     PKG.SpriteAnimation.inheritsFrom(PKG.AnimationComponent);
 //
 //
     PKG.ImgPainter = function (img, width, height) {
+        PKG.AnimationComponent.call(this);
         this.init = function () {
             return this;
         };
@@ -565,6 +581,7 @@
             ctx.drawImage(img, px, py, width, height);
         };
     };
+    PKG.ImgPainter.inheritsFrom(PKG.AnimationComponent);
 //
 
 

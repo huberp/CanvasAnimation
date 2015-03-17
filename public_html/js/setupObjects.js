@@ -32,13 +32,22 @@
     //background
     objectManager.add(
             new ANIM.PaintableWithAnimation(
-                    new ANIM.ImgPainter(background, 1080, 1920),
-                    new ANIM.XYAnimation(
-                            new ANIM.FixValueAnimation(0),
-                            new ANIM.PathAnimation2(-1320, 0, 0.02)
-                            )
-                    ));
-
+                new ANIM.ImgPainter(background, 1080, 1920),
+                new ANIM.XYAnimation(
+                    new ANIM.FixValueAnimation(0),
+                    new ANIM.PathAnimation2(-1320, 0, 0.02)
+                )
+            ).setOrder(0)
+    );
+    objectManager.add(
+           new ANIM.PaintableWithAnimation( 
+                new ANIM.ImgPainter(ship,95,151),
+                new ANIM.XYAnimation(
+                     new ANIM.BouncingPathAnimation(00,600-95,0.1),
+                     new ANIM.FixValueAnimation(600-151)
+                )
+           ).setOrder(100)
+    );        
     //
     //A Listener which listens to OFF_SCREEN events
     var listener = {
@@ -113,7 +122,7 @@
     };
 
     for (i = 1; i < 10; i++) {
-        objectManager.add(createObject(i, dir));
+        objectManager.add(createObject(i, dir).setOrder(50));
         dir = dir - 2 * dir;
     }
     objectManager.commit();
