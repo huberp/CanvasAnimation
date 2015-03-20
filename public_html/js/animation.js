@@ -638,6 +638,7 @@
 
 
     PKG.CirclePainter = function (color, radius, position) {
+        PKG.AnimationComponent.call(this);
         this.init = function () {
             return this;
         };
@@ -651,4 +652,25 @@
             ctx.stroke();
         };
     };
+    PKG.CirclePainter.inheritsFrom(PKG.AnimationComponent);
+    
+    PKG.FPSRenderer = function () {
+        PKG.AnimationComponent.call(this);
+        this.paints = 0;
+        this.lastCurrent;
+        this.init = function () {
+            return this;
+        };
+        this.update = function (current) {
+            this.lastCurrent = current;
+        };
+        this.paint = function (ctx) {
+            this.paints++;
+            ctx.font = '20pt Calibri';
+            ctx.fillStyle = 'red';
+            ctx.fillText(''+((this.paints*1000)/(this.lastCurrent-this.lastUpdateTime)).toFixed(2), 50, 50);
+        };
+    };
+    PKG.FPSRenderer.inheritsFrom(PKG.AnimationComponent);
+    
 })(window.ANIMATION = window.ANIMATION || {});

@@ -48,6 +48,9 @@
                             )
                     ).setOrder(100)
             );
+     objectManager.add(
+             new ANIM.FPSRenderer().setOrder(100)
+     );
     //
     //A Listener which listens to OFF_SCREEN events
     var listener = {
@@ -73,7 +76,7 @@
         var spriteAnimation;
         //
         if (idx >= 1 && idx < 24) {
-            spriteAnimation = new ANIM.SpriteAnimation(asteroid1, 72, 72, 5, 19, dir, false, 150 + 150 * Math.random(), 1);
+            spriteAnimation = new ANIM.SpriteAnimation(asteroid1, 72, 72, 5, 19, dir, false, 50 + 150 * Math.random(), 1);
         } else if (idx >= 24 && idx < 48) {
             spriteAnimation = new ANIM.SpriteAnimation(asteroid3, 32, 32, 5, 19, dir, false, 50 + 150 * Math.random(), 1);
         } else if (idx >= 48 && idx < 72) {
