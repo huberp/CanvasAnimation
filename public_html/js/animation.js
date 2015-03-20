@@ -63,11 +63,11 @@
         this.pause = function() {
             
         };
-        this.restart = function() {
+        this.resume = function() {
             var len = this.animations.length;
             for (var i = 0; i < len; i++) {
-                 if (typeof this.animations[i].restart === 'function') {
-                    this.animations[i].restart();
+                 if (typeof this.animations[i].resume === 'function') {
+                    this.animations[i].resume();
                 }
             }
         };
@@ -162,7 +162,7 @@
         this.pause = function() {
             //nothing to do here
         };
-        this.restart = function() {
+        this.resume = function() {
             this.lastUpdateTime = performance.now();
         };
         this.setParent = function (parent) {
@@ -217,11 +217,11 @@
         this.getParent = function () {
             return this.par;
         };
-        this.restart=function() {
+        this.resume=function() {
             var len = components.length;
             for (var i = 0; i < len; i++) {
-                 if (typeof components[i].restart === 'function') {
-                    components[i].restart();
+                 if (typeof components[i].resume === 'function') {
+                    components[i].resume();
                 }
             }
         };
@@ -259,6 +259,9 @@
             } else {
                 return this.state;
             }
+        };
+        this.resume = function() {
+            paintable.resume();
         };
     };
     PKG.PaintableWithStateIndicator.inheritsFrom(PKG.AnimationComponent);
@@ -353,6 +356,9 @@
         this.setY = function (y) {
             xyAnimation.setPos(y);
             return this;
+        };
+        this.resume = function() {
+            xyAnimation.resume();
         };
     };
     PKG.XYCorrection.inheritsFrom(PKG.AnimationComponent);

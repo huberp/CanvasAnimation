@@ -158,7 +158,7 @@
         var elem = document.getElementById("toggleAnimation");
         if(animationToggle===1) {
             elem.innerHTML = "Stop Animation";
-            objectManager.restart();
+            objectManager.resume();
             window.requestAnimationFrame(anim, canvas);
         } else {
             objectManager.pause();
