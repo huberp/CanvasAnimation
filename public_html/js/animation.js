@@ -60,6 +60,17 @@
         this.getAnimations = function () {
             return this.animations;
         };
+        this.pause = function() {
+            
+        };
+        this.restart = function() {
+            var len = this.animations.length;
+            for (var i = 0; i < len; i++) {
+                 if (typeof this.animations[i].restart === 'function') {
+                    this.animations[i].restart();
+                }
+            }
+        };
         /**
          * add and remove will store changes in seperate array
          * only until a call to commit at the end of each game loop.
@@ -139,7 +150,21 @@
     PKG.AnimationComponent = function () {
         PKG.ObjectListenerSupport.call(this);
         this.par = null;
+        //soemthing like a z-order, order in which objects are about to be painted
+        //pbjects that are painted "later" might hide parts of objects that have been
+        //painted earlier
         this.order = 0;
+        //last update time - we do updates only each "updateDelay" milliseconds
+        this.lastUpdateTime = 0;
+        this.init = function() {
+            this.lastUpdateTime = performance.now();
+        };
+        this.pause = function() {
+            //nothing to do here
+        };
+        this.restart = function() {
+            this.lastUpdateTime = performance.now();
+        };
         this.setParent = function (parent) {
             this.par = parent;
         };
@@ -171,7 +196,6 @@
      */
     PKG.CompositeAnimationComponent = function (components) {
         PKG.AnimationComponent.call(this);
-        this.par = null;
         this.init = function () {
             var self = this;
             var len = components.length;
@@ -192,6 +216,14 @@
         };
         this.getParent = function () {
             return this.par;
+        };
+        this.restart=function() {
+            var len = components.length;
+            for (var i = 0; i < len; i++) {
+                 if (typeof components[i].restart === 'function') {
+                    components[i].restart();
+                }
+            }
         };
     };
     PKG.CompositeAnimationComponent.inheritsFrom(PKG.AnimationComponent);
@@ -414,11 +446,30 @@
 //Conrete Animation Implementations
 //
 //
+    PKG.Accellerator = function(lowSpeed, highSpeed, speedIncPerMs) {
+        PKG.AnimationComponent.call(this);
+        this.currentSpeed = lowSpeed;
+        this.init = function () {
+            this.lastUpdateTime = performance.now();
+            return this;
+        };
+        this.update = function (current) {
+            var delta = current - this.lastUpdateTime;
+            this.currentSpeed += delta * speedIncPerMs;
+            if(this.currentSpeed > highSpeed) {
+                this.currentSpeed = highSpeed;
+            }
+        };
+        this.getSpeed = function() {
+           return this.currentSpeed;   
+        };
+    };
+    PKG.Accellerator.inheritsFrom(PKG.AnimationComponent);
+//
+//
     PKG.CirclePathAnimation = function (radius, startDeg, direction, degPerMs) {
         PKG.AnimationComponent.call(this);
         var PI_PER_DEG = Math.PI / 180;
-        //last update time - we do updates only each "updateDelay" milliseconds
-        this.lastUpdateTime = 0;
         //current pos
         this.currentArc = startDeg * PI_PER_DEG;
         this.arcPerMs = degPerMs * PI_PER_DEG;
@@ -443,8 +494,6 @@
 //
     PKG.BouncingPathAnimation = function (posMin, posMax, pixelPerMs) {
         PKG.AnimationComponent.call(this);
-        //last update time - we do updates only each "updateDelay" milliseconds
-        this.lastUpdateTime = 0;
         //current pos
         this.currentPos = posMin;
         this.direction = (posMax - posMin) / Math.abs(posMax - posMin);
@@ -470,8 +519,6 @@
 //
     PKG.PathAnimation2 = function (from, to, pixelPerMs) {
         PKG.AnimationComponent.call(this);
-        //last update time - we do updates only each "updateDelay" milliseconds
-        this.lastUpdateTime = 0;
         //current pos
         this.currentPos = from;
         this.direction = (to - from) / Math.abs(to - from);
@@ -528,8 +575,6 @@
         PKG.AnimationComponent.call(this);
         //current index into spritephases - nosprites is maximum
         this.currentPos = 0;
-        //last update time - we do updates only each "updateDelay" milliseconds
-        this.lastUpdateTime = 0;
         //animBase is 0 if direction is +1 and nosprites if direction is -1
         //this allows for backward and forward animation
         this.animBase = direction === -1 ? nosprites - 1 : 0;

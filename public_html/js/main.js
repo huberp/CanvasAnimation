@@ -27,7 +27,7 @@
         };
 }());
 //==============================================================================
-// inheritsFrom utility
+// inheritsFrom utility: http://phrogz.net/JS/classes/OOPinJS2.html
 (function () {
     Function.prototype.inheritsFrom = function (parentClassOrObject) {
         if (parentClassOrObject.constructor == Function)

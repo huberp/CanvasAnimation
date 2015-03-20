@@ -149,14 +149,31 @@
     };
     canvas.addEventListener('keypress', handleKeyPress);
     canvas.addEventListener('keyup', handleKeyPress);
-
+    //==========================================================================
+    //Setup the control button
+    //
+    var animationToggle = 1; //running
+    toggleAnimation = function(event) {
+        animationToggle = 1 - animationToggle;
+        var elem = document.getElementById("toggleAnimation");
+        if(animationToggle===1) {
+            elem.innerHTML = "Stop Animation";
+            objectManager.restart();
+            window.requestAnimationFrame(anim, canvas);
+        } else {
+            objectManager.pause();
+            elem.innerHTML = "Start Animation";
+            
+        }  
+    };
+    document.getElementById("toggleAnimation").onclick = toggleAnimation;
+    
     //==========================================================================
     // Run everything now
     //
     var lastTime = performance.now();
     anim = function (current) {
         myCurrent = performance.now();
-        window.requestAnimationFrame(anim, canvas);
         delta = current - lastTime;
         lastTime = performance.now();
         //context.clearRect(0, 0, canvas.width, canvas.height);
@@ -170,6 +187,9 @@
             elem.paint(context);
         });
         objectManager.commit();
+        if(animationToggle===1) {
+            window.requestAnimationFrame(anim, canvas);
+        }
     };
     window.requestAnimationFrame(anim, canvas);
 })();
