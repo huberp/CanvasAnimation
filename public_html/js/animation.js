@@ -60,13 +60,13 @@
         this.getAnimations = function () {
             return this.animations;
         };
-        this.pause = function() {
-            
+        this.pause = function () {
+
         };
-        this.resume = function() {
+        this.resume = function () {
             var len = this.animations.length;
             for (var i = 0; i < len; i++) {
-                 if (typeof this.animations[i].resume === 'function') {
+                if (typeof this.animations[i].resume === 'function') {
                     this.animations[i].resume();
                 }
             }
@@ -156,13 +156,13 @@
         this.order = 0;
         //last update time - we do updates only each "updateDelay" milliseconds
         this.lastUpdateTime = 0;
-        this.init = function() {
+        this.init = function () {
             this.lastUpdateTime = performance.now();
         };
-        this.pause = function() {
+        this.pause = function () {
             //nothing to do here
         };
-        this.resume = function() {
+        this.resume = function () {
             this.lastUpdateTime = performance.now();
         };
         this.setParent = function (parent) {
@@ -217,10 +217,10 @@
         this.getParent = function () {
             return this.par;
         };
-        this.resume=function() {
+        this.resume = function () {
             var len = components.length;
             for (var i = 0; i < len; i++) {
-                 if (typeof components[i].resume === 'function') {
+                if (typeof components[i].resume === 'function') {
                     components[i].resume();
                 }
             }
@@ -260,7 +260,7 @@
                 return this.state;
             }
         };
-        this.resume = function() {
+        this.resume = function () {
             paintable.resume();
         };
     };
@@ -357,7 +357,7 @@
             xyAnimation.setPos(y);
             return this;
         };
-        this.resume = function() {
+        this.resume = function () {
             xyAnimation.resume();
         };
     };
@@ -452,7 +452,7 @@
 //Conrete Animation Implementations
 //
 //
-    PKG.Accellerator = function(lowSpeed, highSpeed, speedIncPerMs) {
+    PKG.Accellerator = function (lowSpeed, highSpeed, speedIncPerMs) {
         PKG.AnimationComponent.call(this);
         this.currentSpeed = lowSpeed;
         this.init = function () {
@@ -462,12 +462,12 @@
         this.update = function (current) {
             var delta = current - this.lastUpdateTime;
             this.currentSpeed += delta * speedIncPerMs;
-            if(this.currentSpeed > highSpeed) {
+            if (this.currentSpeed > highSpeed) {
                 this.currentSpeed = highSpeed;
             }
         };
-        this.getSpeed = function() {
-           return this.currentSpeed;   
+        this.getSpeed = function () {
+            return this.currentSpeed;
         };
     };
     PKG.Accellerator.inheritsFrom(PKG.AnimationComponent);
@@ -539,8 +539,9 @@
             //console.log(delta);
             this.currentPos = this.currentPos + this.direction * delta * pixelPerMs;
             if (compare(this.currentPos, to)) {
-                this.fire(PKG.EVENT_TYPES.OFF_SCREEN, this);
-                this.currentPos = from;
+                if (this.getState() !== PKG.STATE.INACTIVE_PENDING) {
+                    this.fire(PKG.EVENT_TYPES.OFF_SCREEN, this);
+                }
                 this.setState(PKG.STATE.INACTIVE_PENDING);
                 return this.getState();
             }
@@ -585,7 +586,7 @@
         //this allows for backward and forward animation
         this.animBase = direction === -1 ? nosprites - 1 : 0;
         this.init = function () {
-            lastUpdateTime = performance.now();
+            this.lastUpdateTime = performance.now();
         };
         this.update = function (current) {
             //only update if updateDelay has benn exceeded. this allows for different
@@ -595,8 +596,12 @@
             if (delay > updateDelay) {
                 this.currentPos = this.currentPos + Math.floor(delay / updateDelay);
                 if (oneTime) {
-                    if (this.currentPos > nosprites || this.currentPos < 0) {
-                        this.fire(PKG.EVENT_TYPES.OFF_SCREEN, this);
+                    //console.log("Sprite: "+nosprites+"; "+this.currentPos+"; "+(direction)+"; "+delay+"; "+updateDelay);
+                    if ((direction === 1 && this.currentPos >= nosprites) || (direction === -1 && this.currentPos <= 0)) {
+                        if (this.getState() !== PKG.STATE.INACTIVE_PENDING) {
+                            this.fire(PKG.EVENT_TYPES.OFF_SCREEN, this);
+                        }
+                        this.setState(PKG.STATE.INACTIVE_PENDING);
                     }
                 }
                 this.currentPos = this.currentPos % nosprites;

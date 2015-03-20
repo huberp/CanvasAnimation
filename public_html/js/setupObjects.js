@@ -53,6 +53,7 @@
     var listener = {
         eventType: ANIMATION.EVENT_TYPES.OFF_SCREEN,
         listen: function (eventType, event) {
+            //console.log("listener remove: "+event.getParent().toString());
             event.getParent().remove();
             var idx = Math.floor(Math.random() * 120);
             dir = dir - 2 * dir;
@@ -78,9 +79,9 @@
         } else if (idx >= 48 && idx < 72) {
             spriteAnimation = new ANIM.SpriteAnimation(asteroid4, 32, 32, 5, 19, dir, false, 50 + 150 * Math.random(), 1);
         } else if (idx >= 72 && idx < 108) {
-            spriteAnimation = new ANIM.SpriteAnimation(explosion, 64, 64, 10, 100, 1, true, 50 + 50 * Math.random(), 0.5);
+            spriteAnimation = new ANIM.SpriteAnimation(explosion, 64, 64, 10, 100, 1, true, 15 + 35 * Math.random(), 0.5).addListener(listener);
         } else {
-            spriteAnimation = new ANIM.SpriteAnimation(explosion2, 96, 96, 5, 20, 1, true, 100 + 200 * Math.random(), 0.7);
+            spriteAnimation = new ANIM.SpriteAnimation(explosion2, 96, 96, 5, 20, 1, true, 50 + 150 * Math.random(), 0.7).addListener(listener);
         }
 
         var compositeMain = new ANIM.PaintableWithAnimation(
@@ -180,7 +181,8 @@
         objectManager.getAnimations().forEach(function (elem) {
             var retState = elem.update(myCurrent);
             if (retState && retState === ANIM.STATE.INACTIVE_PENDING) {
-                objectManager.remove(elem);
+                //console.log("loop remove: "+elem.getParent().toString());
+                objectManager.remove(elem.getParent());
             }
         });
         objectManager.getAnimations().forEach(function (elem) {
