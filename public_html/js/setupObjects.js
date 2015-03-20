@@ -2,7 +2,7 @@
 // Now setup the animations and run it
 (function () {
     var ANIM = window.ANIMATION;
-    
+
     var canvas = document.getElementById('myCanvas');
     var context = canvas.getContext('2d');
 //
@@ -32,22 +32,22 @@
     //background
     objectManager.add(
             new ANIM.PaintableWithAnimation(
-                new ANIM.ImgPainter(background, 1080, 1920),
-                new ANIM.XYAnimation(
-                    new ANIM.FixValueAnimation(0),
-                    new ANIM.PathAnimation2(-1320, 0, 0.02)
-                )
-            ).setOrder(0)
-    );
+                    new ANIM.ImgPainter(background, 1080, 1920),
+                    new ANIM.XYAnimation(
+                            new ANIM.FixValueAnimation(0),
+                            new ANIM.PathAnimation2(-1320, 0, 0.02)
+                            )
+                    ).setOrder(0)
+            );
     objectManager.add(
-           new ANIM.PaintableWithAnimation( 
-                new ANIM.ImgPainter(ship,95,151),
-                new ANIM.XYAnimation(
-                     new ANIM.BouncingPathAnimation(00,600-95,0.1),
-                     new ANIM.FixValueAnimation(600-151)
-                )
-           ).setOrder(100)
-    );        
+            new ANIM.PaintableWithAnimation(
+                    new ANIM.ImgPainter(ship, 95, 151),
+                    new ANIM.XYAnimation(
+                            new ANIM.BouncingPathAnimation(00, 600 - 95, 0.1),
+                            new ANIM.FixValueAnimation(600 - 151)
+                            )
+                    ).setOrder(100)
+            );
     //
     //A Listener which listens to OFF_SCREEN events
     var listener = {
@@ -108,14 +108,12 @@
             var compositeSub1_1 = new ANIM.PaintableWithAnimation(satelliteAnimation, relativeXYAnimation1_1);
             return new ANIM.PaintableWithStateIndicator(
                     new ANIM.PaintableCombination(
-                        compositeMain,
-                        new ANIM.PaintableCombination(
+                            [compositeMain,
                                 circlePainter,
-                                new ANIM.PaintableCombination(
-                                        compositeSub2,
-                                        new ANIM.PaintableCombination(
-                                                compositeSub1,
-                                                new ANIM.PaintableCombination(circlePainter1_1, compositeSub1_1))))), yAnimation);
+                                compositeSub2,
+                                compositeSub1,
+                                circlePainter1_1,
+                                compositeSub1_1]), yAnimation);
         } else {
             return compositeMain;
         }
@@ -150,6 +148,7 @@
         }
     };
     canvas.addEventListener('keypress', handleKeyPress);
+    canvas.addEventListener('keyup', handleKeyPress);
 
     //==========================================================================
     // Run everything now

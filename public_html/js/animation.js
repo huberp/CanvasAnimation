@@ -149,49 +149,45 @@
         this.init = function () {
             return this;
         };
-        this.setOrder = function(order) {
+        this.setOrder = function (order) {
             this.order = order;
             return this;
         };
-        this.getOrder = function() {
+        this.getOrder = function () {
             return this.order;
         };
-        PKG.AnimationComponent.sortComparator = function(a,b) {
-            return a.order-b.order;
+        PKG.AnimationComponent.sortComparator = function (a, b) {
+            return a.order - b.order;
         };
     };
     PKG.AnimationComponent.inheritsFrom(PKG.ObjectListenerSupport);
 //
 //
     /**
-     * Composition of two AnimationComponent object. This CompositionObject
+     * Composition of two or more AnimationComponent object. This CompositionObject
      * is itself a AnimationComponent
-     * @param {type} componentA
-     * @param {type} componentB
+     * @param {type} components
      * @returns {undefined}
      */
-    PKG.CompositeAnimationComponent = function (componentA, componentB) {
+    PKG.CompositeAnimationComponent = function (components) {
         PKG.AnimationComponent.call(this);
         this.par = null;
         this.init = function () {
             var self = this;
-            componentA.init();
-            componentB.init();
-            if (typeof componentA.setParent === 'function') {
-                componentA.setParent(self);
+            var len = components.length;
+            for (var i = 0; i < len; i++) {
+                components[i].init();
             }
-            if (typeof componentB.setParent === 'function') {
-                componentB.setParent(self);
-            }
+            this.setParent(self);
             return this;
         };
         this.setParent = function (parent) {
             this.par = parent;
-            if (typeof componentA.setParent === 'function') {
-                componentA.setParent(parent);
-            }
-            if (typeof componentB.setParent === 'function') {
-                componentB.setParent(parent);
+            var len = components.length;
+            for (var i = 0; i < len; i++) {
+                if (typeof components[i].setParent === 'function') {
+                    components[i].setParent(parent);
+                }
             }
         };
         this.getParent = function () {
@@ -215,9 +211,7 @@
         this.init = function () {
             var self = this;
             paintable.init();
-            if (typeof paintable.setParent === 'function') {
-                paintable.setParent(self);
-            }
+            this.setParent(self);
             return this;
         };
         this.update = function (current) {
@@ -238,29 +232,31 @@
     PKG.PaintableWithStateIndicator.inheritsFrom(PKG.AnimationComponent);
 
     /**
-     * PaintableCombination combines two paintables (top level objects)
-     * @param {type} paintableA 1st paintable object 
-     * @param {type} paintableB 2nd paintable object
-     * @param {type} objectStateIndicator 
+     * PaintableCombination combines two or more paintables (top level objects)
+     * @param {type} paintables array of paintable objects 
      * @returns {animation_L50.PaintableCombination}
      */
-    PKG.PaintableCombination = function (paintableA, paintableB) {
-        PKG.CompositeAnimationComponent.call(this, paintableA, paintableB);
+    PKG.PaintableCombination = function (paintables) {
+        PKG.CompositeAnimationComponent.call(this, paintables);
         this.update = function (current) {
-            paintableA.update(current);
-            paintableB.update(current);
+            var len = paintables.length;
+            for (var i = 0; i < len; i++) {
+                paintables[i].update(current);
+            }
             return this.getState();
         };
         this.paint = function (ctx) {
-            paintableA.paint(ctx);
-            paintableB.paint(ctx);
+            var len = paintables.length;
+            for (var i = 0; i < len; i++) {
+                paintables[i].paint(ctx);
+            }
         };
     };
     PKG.PaintableCombination.inheritsFrom(PKG.CompositeAnimationComponent);
 //
 //
     PKG.PaintableWithAnimation = function (paintable, xyPosition) {
-        PKG.CompositeAnimationComponent.call(this, paintable, xyPosition);
+        PKG.CompositeAnimationComponent.call(this, [paintable, xyPosition]);
         this.update = function (current) {
             paintable.update(current);
             xyPosition.update(current);
@@ -279,7 +275,7 @@
 //
 //
     PKG.RelativeXYAnimation = function (relativeXYAnimation, baseXYAnimation) {
-        PKG.CompositeAnimationComponent.call(this, relativeXYAnimation, baseXYAnimation);
+        PKG.CompositeAnimationComponent.call(this, [relativeXYAnimation, baseXYAnimation]);
         this.update = function (current) {
             relativeXYAnimation.update(current);
             baseXYAnimation.update(current);
@@ -331,7 +327,7 @@
 //
 //
     PKG.XYAnimation = function (xAnimation, yAnimation) {
-        PKG.CompositeAnimationComponent.call(this, xAnimation, yAnimation);
+        PKG.CompositeAnimationComponent.call(this, [xAnimation, yAnimation]);
         this.init = function () {
             var self = this;
             xAnimation.init().setParent(self);
