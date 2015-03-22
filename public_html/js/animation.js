@@ -653,24 +653,35 @@
         };
     };
     PKG.CirclePainter.inheritsFrom(PKG.AnimationComponent);
-    
+
     PKG.FPSRenderer = function () {
         PKG.AnimationComponent.call(this);
         this.paints = 0;
-        this.lastCurrent;
+        this.accumulatedDelay = 0;
+        this.fps = 0;
+        this.msec = 2000;
         this.init = function () {
             return this;
         };
         this.update = function (current) {
-            this.lastCurrent = current;
+
         };
         this.paint = function (ctx) {
             this.paints++;
+            var current = performance.now();
+            var elapsed = current - this.lastUpdateTime;
+            this.accumulatedDelay += elapsed;
+            this.lastUpdateTime = current;
+            if (this.accumulatedDelay >= this.msec) {
+                this.fps = (this.paints / this.accumulatedDelay) * 1000;
+                this.accumulatedDelay = 0;
+                this.paints = 0;
+            }
             ctx.font = '20pt Calibri';
             ctx.fillStyle = 'red';
-            ctx.fillText(''+((this.paints*1000)/(this.lastCurrent-this.lastUpdateTime)).toFixed(2), 50, 50);
+            ctx.fillText(this.fps.toFixed(1)/*+"; "+elapsed.toFixed(2)*/, 50, 50);
         };
     };
     PKG.FPSRenderer.inheritsFrom(PKG.AnimationComponent);
-    
+
 })(window.ANIMATION = window.ANIMATION || {});

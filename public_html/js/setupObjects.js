@@ -123,7 +123,7 @@
         }
     };
 
-    for (i = 1; i < 10; i++) {
+    for (i = 1; i < 20; i++) {
         objectManager.add(createObject(i, dir).setOrder(50));
         dir = dir - 2 * dir;
     }
@@ -179,7 +179,7 @@
     anim = function (current) {
         myCurrent = performance.now();
         delta = current - lastTime;
-        lastTime = performance.now();
+        lastTime = myCurrent
         //context.clearRect(0, 0, canvas.width, canvas.height);
         objectManager.getAnimations().forEach(function (elem) {
             var retState = elem.update(myCurrent);
@@ -193,9 +193,38 @@
         });
         objectManager.commit();
         if(animationToggle===1) {
-            window.requestAnimationFrame(anim, canvas);
+            //triggerAnimationFrame();
+            triggerAnimationFrameWithTimeOut();
+            //window.requestAnimationFrame(anim, canvas);
         }
     };
-    window.requestAnimationFrame(anim, canvas);
+    //Frames per second control
+    //
+    var lastTrigger = Date.now();
+    //var accumulatedDelay = 0;
+    var fps = 65; //use 15, 30, 65
+    var timeOutDelay = 6;
+    var twoThirds = 2*timeOutDelay/3;
+    var accumulatedDelay = twoThirds; //empirical start value, it makes accumulatedDelay reach faster frsPerSecondDelay
+    var frsPerSecondDelay = 1000 / fps; //60 frames per second
+    triggerAnimationFrameWithTimeOut = function () {
+        var current = Date.now();
+        var delay = (current-lastTrigger); // allready elapsed time
+        accumulatedDelay += delay;
+        if(accumulatedDelay >= frsPerSecondDelay) {
+            triggerAnimationFrame();
+            accumulatedDelay=twoThirds;
+        } else {
+            setTimeout(triggerAnimationFrameWithTimeOut, timeOutDelay);
+        }
+        lastTrigger = current;
+    };
+    
+    triggerAnimationFrame = function() {
+        window.requestAnimationFrame(anim, canvas);
+    };
+    
+    //triggerAnimationFrame();
+    triggerAnimationFrameWithTimeOut();
 })();
 
