@@ -149,43 +149,47 @@
      */
     PKG.AnimationComponent = function () {
         PKG.ObjectListenerSupport.call(this);
-        this.par = null;
-        //soemthing like a z-order, order in which objects are about to be painted
+        this.root = null;
+        //something like a z-order, order in which objects are about to be painted
         //pbjects that are painted "later" might hide parts of objects that have been
         //painted earlier
         this.order = 0;
         //last update time - we do updates only each "updateDelay" milliseconds
         this.lastUpdateTime = 0;
-        this.init = function () {
-            this.lastUpdateTime = performance.now();
-        };
-        this.pause = function () {
-            //nothing to do here
-        };
-        this.resume = function () {
-            this.lastUpdateTime = performance.now();
-        };
-        this.setParent = function (parent) {
-            this.par = parent;
-        };
-        this.getParent = function () {
-            return this.par;
-        };
-        this.init = function () {
-            return this;
-        };
-        this.setOrder = function (order) {
-            this.order = order;
-            return this;
-        };
-        this.getOrder = function () {
-            return this.order;
-        };
-        PKG.AnimationComponent.sortComparator = function (a, b) {
-            return a.order - b.order;
-        };
+
     };
     PKG.AnimationComponent.inheritsFrom(PKG.ObjectListenerSupport);
+    PKG.AnimationComponent.prototype.init = function () {
+        this.lastUpdateTime = performance.now();
+    };
+    PKG.AnimationComponent.prototype.update = function (current) {
+        this.lastUpdateTime = current;
+    };
+    PKG.AnimationComponent.prototype.pause = function () {
+        //nothing to do here
+    };
+    PKG.AnimationComponent.prototype.resume = function () {
+        this.lastUpdateTime = performance.now();
+    };
+    PKG.AnimationComponent.prototype.setRoot = function (parent) {
+        this.root = parent;
+    };
+    PKG.AnimationComponent.prototype.getRoot = function () {
+        return this.root;
+    };
+    PKG.AnimationComponent.prototype.init = function () {
+        return this;
+    };
+    PKG.AnimationComponent.prototype.setOrder = function (order) {
+        this.order = order;
+        return this;
+    };
+    PKG.AnimationComponent.prototype.getOrder = function () {
+        return this.order;
+    };
+    PKG.AnimationComponent.sortComparator = function (a, b) {
+        return a.order - b.order;
+    };
 //
 //
     /**
@@ -196,37 +200,44 @@
      */
     PKG.CompositeAnimationComponent = function (components) {
         PKG.AnimationComponent.call(this);
-        this.init = function () {
-            var self = this;
-            var len = components.length;
-            for (var i = 0; i < len; i++) {
-                components[i].init();
-            }
-            this.setParent(self);
-            return this;
-        };
-        this.setParent = function (parent) {
-            this.par = parent;
-            var len = components.length;
-            for (var i = 0; i < len; i++) {
-                if (typeof components[i].setParent === 'function') {
-                    components[i].setParent(parent);
-                }
-            }
-        };
-        this.getParent = function () {
-            return this.par;
-        };
-        this.resume = function () {
-            var len = components.length;
-            for (var i = 0; i < len; i++) {
-                if (typeof components[i].resume === 'function') {
-                    components[i].resume();
-                }
-            }
-        };
+        this.components = components;
     };
     PKG.CompositeAnimationComponent.inheritsFrom(PKG.AnimationComponent);
+    PKG.CompositeAnimationComponent.prototype.init = function () {
+        var len = this.components.length;
+        for (var i = 0; i < len; i++) {
+            this.components[i].init();
+        }
+        this.setRoot(this);
+        return this;
+    };
+    PKG.CompositeAnimationComponent.prototype.update = function (current) {
+        var len = this.components.length;
+        for (var i = 0; i < len; i++) {
+            this.components[i].update(current);
+        }
+        return PKG.AnimationComponent.prototype.update.call(this, current);
+    };
+    PKG.CompositeAnimationComponent.prototype.setRoot = function (parent) {
+        this.root = parent;
+        var len = this.components.length;
+        for (var i = 0; i < len; i++) {
+            if (typeof this.components[i].setRoot === 'function') {
+                this.components[i].setRoot(parent);
+            }
+        }
+    };
+    PKG.CompositeAnimationComponent.prototype.getRoot = function () {
+        return this.root;
+    };
+    PKG.CompositeAnimationComponent.prototype.resume = function () {
+        var len = this.components.length;
+        for (var i = 0; i < len; i++) {
+            if (typeof this.components[i].resume === 'function') {
+                this.components[i].resume();
+            }
+        }
+    };
 //
 //
     /**
@@ -243,7 +254,7 @@
         this.init = function () {
             var self = this;
             paintable.init();
-            this.setParent(self);
+            this.setRoot(self);
             return this;
         };
         this.update = function (current) {
@@ -337,7 +348,7 @@
         PKG.AnimationComponent.call(this);
         this.init = function () {
             var self = this;
-            xyAnimation.init().setParent(self);
+            xyAnimation.init().setRoot(self);
             return this;
         };
         this.update = function (current) {
@@ -368,14 +379,16 @@
         PKG.CompositeAnimationComponent.call(this, [xAnimation, yAnimation]);
         this.init = function () {
             var self = this;
-            xAnimation.init().setParent(self);
-            yAnimation.init().setParent(self);
+            xAnimation.init().setRoot(self);
+            yAnimation.init().setRoot(self);
             return this;
         };
-        this.update = function (current) {
-            xAnimation.update(current);
-            yAnimation.update(current);
-        };
+        /*
+         this.update = function (current) {
+         xAnimation.update(current);
+         yAnimation.update(current);
+         };
+         */
         this.getX = function () {
             return xAnimation.getPos();
         };
@@ -400,7 +413,7 @@
         this.currentPart = null;
         this.init = function () {
             this.currentPart = animationParts.pop();
-            this.currentPart.setParent(this.getParent());
+            this.currentPart.setRoot(this.getRoot());
             this.currentPart.init().setX(startX).setY(startY);
             return this;
         };
@@ -433,8 +446,8 @@
             var self = this;
             xAnimation.init();
             yAnimation.init();
-            xAnimation.setParent(self);
-            yAnimation.setParent(self);
+            xAnimation.setRoot(self);
+            yAnimation.setRoot(self);
             return this;
         };
         this.update = function (current) {
@@ -447,11 +460,68 @@
             return yAnimation.getPos();
         };
 
-    }
-//==========================================================================
+    };
+//==============================================================================
 //Conrete Animation Implementations
 //
 //
+    PKG.OnOffIntervalls = function (eachMsec, forMsec) {
+        PKG.AnimationComponent.call(this);
+        this.elapsed = 0;
+        this.addedMsec = eachMsec + forMsec;
+        this.on = false;
+        this.eachMsec = eachMsec;
+    };
+    PKG.OnOffIntervalls.inheritsFrom(PKG.AnimationComponent);
+    PKG.OnOffIntervalls.prototype.update = function (current) {
+        this.elapsed += (current - this.lastUpdateTime);
+        if (this.elapsed > this.eachMsec) {
+            if (this.elapsed > this.addedMsec) {
+                this.elapsed = 0;
+                this.value = 0;
+                this.on = false;
+            } else {
+                this.on = true;
+            }
+        }
+        return PKG.AnimationComponent.prototype.update.call(this, current);
+    };
+    PKG.OnOffIntervalls.prototype.isOn = function () {
+        return this.on;
+    };
+//
+//
+    PKG.PosShake = function (onOffControl, shakeValue) {
+        PKG.CompositeAnimationComponent.call(this, [onOffControl]);
+        this.value = 0;
+        this.mult = 1;
+        this.onOffControl = onOffControl;
+        this.shakeValue = shakeValue;
+    };
+    PKG.PosShake.inheritsFrom(PKG.CompositeAnimationComponent);
+    PKG.PosShake.prototype.update = function (current) {
+        if (this.onOffControl.isOn()) {
+            this.mult = this.mult - 2 * this.mult;
+            this.value = this.mult * this.shakeValue;
+        } else {
+            this.value = 0;
+        }
+        return PKG.CompositeAnimationComponent.prototype.update.call(this, current);
+    };
+    PKG.PosShake.prototype.getPos = function () {
+        return this.value;
+    };
+    //
+    //
+    PKG.SumPosition = function (positionA, positionB) {
+        PKG.CompositeAnimationComponent.call(this, [positionA, positionB]);
+        this.getPos = function () {
+            return positionA.getPos() + positionB.getPos();
+        };
+    };
+    PKG.SumPosition.inheritsFrom(PKG.CompositeAnimationComponent);
+
+
     PKG.Accellerator = function (lowSpeed, highSpeed, speedIncPerMs) {
         PKG.AnimationComponent.call(this);
         this.currentSpeed = lowSpeed;
@@ -543,8 +613,8 @@
                     this.fire(PKG.EVENT_TYPES.OFF_SCREEN, this);
                 }
                 this.setState(PKG.STATE.INACTIVE_PENDING);
-                return this.getState();
             }
+            return this.getState();
         };
         this.getPos = function () {
             return this.currentPos;
@@ -564,8 +634,6 @@
         PKG.AnimationComponent.call(this);
         this.init = function () {
             return this;
-        };
-        this.update = function (current) {
         };
         this.getPos = function () {
             return value;

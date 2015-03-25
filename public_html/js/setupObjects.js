@@ -56,8 +56,8 @@
     var listener = {
         eventType: ANIMATION.EVENT_TYPES.OFF_SCREEN,
         listen: function (eventType, event) {
-            //console.log("listener remove: "+event.getParent().toString());
-            event.getParent().remove();
+            //console.log("listener remove: "+event.getRoot().toString());
+            event.getRoot().remove();
             var idx = Math.floor(Math.random() * 120);
             dir = dir - 2 * dir;
             var composite = createObject(idx, dir);
@@ -93,23 +93,31 @@
                 );
 
         if (idx >= 1 && idx < 24) {
-            //build two circling sattelites around a asteroid
-            var speed = 0.1 + 0.1 * Math.random();
+            //build two circling satellites around a asteroid
+            var speed = 0.05 + 0.1 * Math.random();
             var circleAnimation1 = new ANIM.CirclePathAnimation(65, 0, dir, speed);
             var circleAnimation2 = new ANIM.CirclePathAnimation(65, 180, dir, speed);
             //not quite sure why the XYCorrection parameters have to be 16,16 here? it should be 36,36????
             var relativeXYAnimation1 = new ANIM.XYCorrection(new ANIM.RelativeXYAnimation(xyBaseAnimation, circleAnimation1), 16, 16);
             var relativeXYAnimation2 = new ANIM.XYCorrection(new ANIM.RelativeXYAnimation(xyBaseAnimation, circleAnimation2), 16, 16);
             var circlePainter = new ANIM.CirclePainter(8, 65, new ANIM.XYCorrection(xyBaseAnimation, 36, 36));
+            //
             //now it gets funky - let's build a circeling satelite around a sattelite
             var circleAnimation1_1 = new ANIM.CirclePathAnimation(32, 180, dir - 2 * dir, speed + 0.06);
             var relativeXYAnimation1_1 = new ANIM.RelativeXYAnimation(relativeXYAnimation1, circleAnimation1_1);
             var circlePainter1_1 = new ANIM.CirclePainter(8, 32, new ANIM.XYCorrection(relativeXYAnimation1, 16, 16));
-
+            //
+            // make the satellite of the satellite shake from time to time (controlled by an OnOffIntervall)
+            var onOffIntervall = new ANIM.OnOffIntervalls(2000,400);
+            var yShaker = new ANIM.PosShake(onOffIntervall,2);
+            var xShaker = new ANIM.PosShake(onOffIntervall,-2);
+            var shakerAnimation = new ANIM.XYAnimation(xShaker, yShaker);
+            var relativeXYAnimation1_2 = new ANIM.RelativeXYAnimation(shakerAnimation, relativeXYAnimation1_1);
+            //
             var satelliteAnimation = new ANIM.SpriteAnimation(asteroid3, 32, 32, 5, 19, dir, false, 50 + 150 * Math.random(), 1);
             var compositeSub1 = new ANIM.PaintableWithAnimation(satelliteAnimation, relativeXYAnimation1);
             var compositeSub2 = new ANIM.PaintableWithAnimation(satelliteAnimation, relativeXYAnimation2);
-            var compositeSub1_1 = new ANIM.PaintableWithAnimation(satelliteAnimation, relativeXYAnimation1_1);
+            var compositeSub1_1 = new ANIM.PaintableWithAnimation(satelliteAnimation, relativeXYAnimation1_2);
             return new ANIM.PaintableWithStateIndicator(
                     new ANIM.PaintableCombination(
                             [compositeMain,
@@ -123,7 +131,7 @@
         }
     };
 
-    for (i = 1; i < 20; i++) {
+    for (i = 1; i < 10; i++) {
         objectManager.add(createObject(i, dir).setOrder(50));
         dir = dir - 2 * dir;
     }
@@ -179,13 +187,13 @@
     anim = function (current) {
         myCurrent = performance.now();
         delta = current - lastTime;
-        lastTime = myCurrent
+        lastTime = myCurrent;
         //context.clearRect(0, 0, canvas.width, canvas.height);
         objectManager.getAnimations().forEach(function (elem) {
             var retState = elem.update(myCurrent);
             if (retState && retState === ANIM.STATE.INACTIVE_PENDING) {
-                //console.log("loop remove: "+elem.getParent().toString());
-                objectManager.remove(elem.getParent());
+                //console.log("loop remove: "+elem.getRoot().toString());
+                objectManager.remove(elem.getRoot());
             }
         });
         objectManager.getAnimations().forEach(function (elem) {
