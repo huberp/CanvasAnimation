@@ -23,21 +23,22 @@
         this.objectManager;
         this.idx;
         this.state = PKG.STATE.UNKNOWN;
-        this.setManager = function (manager, idx) {
-            this.objectManager = manager;
-            this.idx = idx;
-        };
-        this.remove = function () {
-            objectManager.remove(this);
-            this.state = PKG.STATE.UNMANAGED_PENDING;
-        };
-        this.getState = function () {
-            return this.state;
-        };
-        this.setState = function (state) {
-            this.state = state;
-        };
     };
+    PKG.ManagedObject.prototype.setManager = function (manager, idx) {
+        this.objectManager = manager;
+        this.idx = idx;
+    };
+    PKG.ManagedObject.prototype.remove = function () {
+        objectManager.remove(this);
+        this.state = PKG.STATE.UNMANAGED_PENDING;
+    };
+    PKG.ManagedObject.prototype.getState = function () {
+        return this.state;
+    };
+    PKG.ManagedObject.prototype.setState = function (state) {
+        this.state = state;
+    };
+
     /**
      * Manages the Objects, mostly this should be Paintable top level objects.
      * @returns {undefined}
@@ -47,53 +48,53 @@
         this.animations = new Array();
         this.additions = new Array();
         this.deletions = new Array();
-        this.add = function (animObj) {
-            this.additions.push(animObj);
-            if (typeof animObj.setManager === 'function') {
-                animObj.setManager(this, this.counter++);
-            }
-        };
-        this.remove = function (animObj) {
-            this.deletions.push(animObj);
-            animObj.setState(PKG.STATE.UNMANAGED_PENDING);
-        };
-        this.getAnimations = function () {
-            return this.animations;
-        };
-        this.pause = function () {
+    };
+    PKG.ObjectManager.prototype.add = function (animObj) {
+        this.additions.push(animObj);
+        if (typeof animObj.setManager === 'function') {
+            animObj.setManager(this, this.counter++);
+        }
+    };
+    PKG.ObjectManager.prototype.remove = function (animObj) {
+        this.deletions.push(animObj);
+        animObj.setState(PKG.STATE.UNMANAGED_PENDING);
+    };
+    PKG.ObjectManager.prototype.getAnimations = function () {
+        return this.animations;
+    };
+    PKG.ObjectManager.prototype.pause = function () {
 
-        };
-        this.resume = function () {
-            var len = this.animations.length;
-            for (var i = 0; i < len; i++) {
-                if (typeof this.animations[i].resume === 'function') {
-                    this.animations[i].resume();
+    };
+    PKG.ObjectManager.prototype.resume = function () {
+        var len = this.animations.length;
+        for (var i = 0; i < len; i++) {
+            if (typeof this.animations[i].resume === 'function') {
+                this.animations[i].resume();
+            }
+        }
+    };
+    /**
+     * add and remove will store changes in seperate array
+     * only until a call to commit at the end of each game loop.
+     * This is sort of a transaction.
+     */
+    PKG.ObjectManager.prototype.commit = function () {
+        var len = this.deletions.length;
+        for (var i = 0; i < len; i++) {
+            var len2 = this.animations.length;
+            for (var j = 0; j < len2; j++) {
+                if (this.animations[j].idx === this.deletions[i].idx) {
+                    this.deletions[i].setState(PKG.STATE.UNMANAGED);
+                    this.animations.splice(j, 1);
+                    break;
                 }
             }
-        };
-        /**
-         * add and remove will store changes in seperate array
-         * only until a call to commit at the end of each game loop.
-         * This is sort of a transaction.
-         */
-        this.commit = function () {
-            var len = this.deletions.length;
-            for (var i = 0; i < len; i++) {
-                var len2 = this.animations.length;
-                for (var j = 0; j < len2; j++) {
-                    if (this.animations[j].idx === this.deletions[i].idx) {
-                        this.deletions[i].setState(PKG.STATE.UNMANAGED);
-                        this.animations.splice(j, 1);
-                        break;
-                    }
-                }
-            }
-            this.animations = this.animations.concat(this.additions);
-            this.animations.sort(PKG.AnimationComponent.sortComparator);
-            this.additions = new Array();
-            this.deletions = new Array();
-            //console.log(this.animations.length);
-        };
+        }
+        this.animations = this.animations.concat(this.additions);
+        this.animations.sort(PKG.AnimationComponent.sortComparator);
+        this.additions = new Array();
+        this.deletions = new Array();
+        //console.log(this.animations.length);
     };
     /**
      * Defines interface for an Object Listener
@@ -114,31 +115,32 @@
     PKG.ObjectListenerSupport = function () {
         PKG.ManagedObject.call(this);
         this.listeners = new Array();
-        //console.log(this.listeners);
-        this.addListener = function (listener) {
-            this.listeners.push(listener);
-            return this;
-        };
-        this.fire = function (eventType, event) {
-            this.listeners.forEach(function (elem, idx, array) {
-                fireSingel(elem, idx, array, eventType, event);
-            });
-        };
-        this.fireAsync = function (eventType, event) {
-            var len = this.listeners.length;
-            for (var i = 0; i < len; i++) {
-                timeout(function () {
-                    fireSingle(this.listeners[i], i, this.listeners, eventType, event);
-                }, 2);
-            }
-        };
-        var fireSingel = function (listener, idx, array, eventType, event) {
-            if (listener.eventType === eventType) {
-                listener.listen(eventType, event);
-            }
-        };
     };
     PKG.ObjectListenerSupport.inheritsFrom(PKG.ManagedObject);
+    //console.log(this.listeners);
+    PKG.ObjectListenerSupport.prototype.addListener = function (listener) {
+        this.listeners.push(listener);
+        return this;
+    };
+    PKG.ObjectListenerSupport.prototype.fire = function (eventType, event) {
+        this.listeners.forEach(function (elem, idx, array) {
+            fireSingel(elem, idx, array, eventType, event);
+        });
+    };
+    PKG.ObjectListenerSupport.prototype.fireAsync = function (eventType, event) {
+        var len = this.listeners.length;
+        for (var i = 0; i < len; i++) {
+            timeout(function () {
+                fireSingle(this.listeners[i], i, this.listeners, eventType, event);
+            }, 2);
+        }
+    };
+    var fireSingel = function (listener, idx, array, eventType, event) {
+        if (listener.eventType === eventType) {
+            listener.listen(eventType, event);
+        }
+    };
+
 //
 //
     /**
@@ -251,31 +253,34 @@
      */
     PKG.PaintableWithStateIndicator = function (paintable, objectStateIndicator) {
         PKG.AnimationComponent.call(this);
-        this.init = function () {
-            var self = this;
-            paintable.init();
-            this.setRoot(self);
-            return this;
-        };
-        this.update = function (current) {
-            paintable.update(current);
-            return this.getState();
-        };
-        this.paint = function (ctx) {
-            paintable.paint(ctx);
-        };
-        this.getState = function () {
-            if (objectStateIndicator && typeof objectStateIndicator.getState === 'function') {
-                return objectStateIndicator.getState();
-            } else {
-                return this.state;
-            }
-        };
-        this.resume = function () {
-            paintable.resume();
-        };
+        this.paintable = paintable;
+        this.objectStateIndicator = objectStateIndicator;
     };
     PKG.PaintableWithStateIndicator.inheritsFrom(PKG.AnimationComponent);
+    PKG.PaintableWithStateIndicator.prototype.init = function () {
+        var self = this;
+        this.paintable.init();
+        this.setRoot(self);
+        return this;
+    };
+    PKG.PaintableWithStateIndicator.prototype.update = function (current) {
+        this.paintable.update(current);
+        return this.getState();
+    };
+    PKG.PaintableWithStateIndicator.prototype.paint = function (ctx) {
+        this.paintable.paint(ctx);
+    };
+    PKG.PaintableWithStateIndicator.prototype.getState = function () {
+        if (this.objectStateIndicator && typeof this.objectStateIndicator.getState === 'function') {
+            return this.objectStateIndicator.getState();
+        } else {
+            return this.state;
+        }
+    };
+    PKG.PaintableWithStateIndicator.prototype.resume = function () {
+        this.paintable.resume();
+    };
+
 
     /**
      * PaintableCombination combines two or more paintables (top level objects)
@@ -303,10 +308,6 @@
 //
     PKG.PaintableWithAnimation = function (paintable, xyPosition) {
         PKG.CompositeAnimationComponent.call(this, [paintable, xyPosition]);
-        this.update = function (current) {
-            paintable.update(current);
-            xyPosition.update(current);
-        };
         this.paint = function (ctx) {
             paintable.paint(ctx, xyPosition.getX(), xyPosition.getY());
         };
@@ -320,91 +321,97 @@
     PKG.PaintableWithAnimation.inheritsFrom(PKG.CompositeAnimationComponent);
 //
 //
+    /**
+     * 
+     * @param {type} relativeXYAnimation
+     * @param {type} baseXYAnimation
+     * @returns {undefined}
+     */
     PKG.RelativeXYAnimation = function (relativeXYAnimation, baseXYAnimation) {
         PKG.CompositeAnimationComponent.call(this, [relativeXYAnimation, baseXYAnimation]);
-        this.update = function (current) {
-            relativeXYAnimation.update(current);
-            baseXYAnimation.update(current);
-        };
-        this.getX = function () {
-            return baseXYAnimation.getX() + relativeXYAnimation.getX();
-        };
-        this.getY = function () {
-            return baseXYAnimation.getY() + relativeXYAnimation.getY();
-        };
-        this.setX = function (x) {
-            baseXYAnimation.setPos(x);
-            return this;
-        };
-        this.setY = function (y) {
-            baseXYAnimation.setPos(y);
-            return this;
-        };
+        this.baseXYAnimation = baseXYAnimation;
+        this.relativeXYAnimation = relativeXYAnimation;
     };
     PKG.RelativeXYAnimation.inheritsFrom(PKG.CompositeAnimationComponent);
+    PKG.RelativeXYAnimation.prototype.getX = function () {
+        return this.baseXYAnimation.getX() + this.relativeXYAnimation.getX();
+    };
+    PKG.RelativeXYAnimation.prototype.getY = function () {
+        return this.baseXYAnimation.getY() + this.relativeXYAnimation.getY();
+    };
+    PKG.RelativeXYAnimation.prototype.setX = function (x) {
+        this.baseXYAnimation.setPos(x);
+        return this;
+    };
+    PKG.RelativeXYAnimation.prototype.setY = function (y) {
+        this.baseXYAnimation.setPos(y);
+        return this;
+    };
 //
 //
+    /**
+     * 
+     * @param {type} xyAnimation
+     * @param {type} deltaX
+     * @param {type} deltaY
+     * @returns {undefined}
+     */
     PKG.XYCorrection = function (xyAnimation, deltaX, deltaY) {
         PKG.AnimationComponent.call(this);
-        this.init = function () {
-            var self = this;
-            xyAnimation.init().setRoot(self);
-            return this;
-        };
-        this.update = function (current) {
-            xyAnimation.update(current);
-        };
-        this.getX = function () {
-            return deltaX + xyAnimation.getX();
-        };
-        this.getY = function () {
-            return deltaY + xyAnimation.getY();
-        };
-        this.setX = function (x) {
-            xyAnimation.setPos(x);
-            return this;
-        };
-        this.setY = function (y) {
-            xyAnimation.setPos(y);
-            return this;
-        };
-        this.resume = function () {
-            xyAnimation.resume();
-        };
+        this.xyAnimation = xyAnimation;
+        this.deltaX = deltaX;
+        this.deltaY = deltaY;
     };
     PKG.XYCorrection.inheritsFrom(PKG.AnimationComponent);
+    PKG.XYCorrection.prototype.init = function () {
+        var self = this;
+        this.xyAnimation.init().setRoot(self);
+        return this;
+    };
+    PKG.XYCorrection.prototype.update = function (current) {
+        return this.xyAnimation.update(current);
+    };
+    PKG.XYCorrection.prototype.getX = function () {
+        return this.deltaX + this.xyAnimation.getX();
+    };
+    PKG.XYCorrection.prototype.getY = function () {
+        return this.deltaY + this.xyAnimation.getY();
+    };
+    PKG.XYCorrection.prototype.setX = function (x) {
+        this.xyAnimation.setPos(x);
+        return this;
+    };
+    PKG.XYCorrection.prototype.setY = function (y) {
+        this.xyAnimation.setPos(y);
+        return this;
+    };
+    PKG.XYCorrection.prototype.resume = function () {
+        this.xyAnimation.resume();
+    };
+
 //
 //
     PKG.XYAnimation = function (xAnimation, yAnimation) {
         PKG.CompositeAnimationComponent.call(this, [xAnimation, yAnimation]);
-        this.init = function () {
-            var self = this;
-            xAnimation.init().setRoot(self);
-            yAnimation.init().setRoot(self);
-            return this;
-        };
-        /*
-         this.update = function (current) {
-         xAnimation.update(current);
-         yAnimation.update(current);
-         };
-         */
-        this.getX = function () {
-            return xAnimation.getPos();
-        };
-        this.getY = function () {
-            return yAnimation.getPos();
-        };
-        this.setX = function (x) {
-            xAnimation.setPos(x);
-            return this;
-        };
-        this.setY = function (y) {
-            yAnimation.setPos(y);
-            return this;
-        };
-    };
+        this.xAnimation = xAnimation;
+        this.yAnimation = yAnimation;
+    }
     PKG.XYAnimation.inheritsFrom(PKG.CompositeAnimationComponent);
+    PKG.XYAnimation.prototype.getX = function () {
+        return this.xAnimation.getPos();
+    };
+    PKG.XYAnimation.prototype.getY = function () {
+        return this.yAnimation.getPos();
+    };
+    PKG.XYAnimation.prototype.setX = function (x) {
+        this.xAnimation.setPos(x);
+        return this;
+    };
+    PKG.XYAnimation.prototype.setY = function (y) {
+        this.yAnimation.setPos(y);
+        return this;
+    };
+
 
 //
 //
