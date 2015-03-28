@@ -163,6 +163,7 @@
     PKG.AnimationComponent.inheritsFrom(PKG.ObjectListenerSupport);
     PKG.AnimationComponent.prototype.init = function () {
         this.lastUpdateTime = performance.now();
+        return this;
     };
     PKG.AnimationComponent.prototype.update = function (current) {
         this.lastUpdateTime = current;
@@ -179,9 +180,6 @@
     PKG.AnimationComponent.prototype.getRoot = function () {
         return this.root;
     };
-    PKG.AnimationComponent.prototype.init = function () {
-        return this;
-    };
     PKG.AnimationComponent.prototype.setOrder = function (order) {
         this.order = order;
         return this;
@@ -191,6 +189,43 @@
     };
     PKG.AnimationComponent.sortComparator = function (a, b) {
         return a.order - b.order;
+    };
+    //
+    //
+    /**
+     * 
+     * @param {type} delegate
+     * @returns {undefined}
+     */
+    PKG.AnimationComponentDelegate = function (delegate) {
+        PKG.ObjectListenerSupport.call(this);
+        this.delegate = delegate;
+    };
+    PKG.AnimationComponentDelegate.inheritsFrom(PKG.ObjectListenerSupport);
+    PKG.AnimationComponentDelegate.prototype.init = function () {
+        this.delegate.init().setRoot(this);
+    };
+    PKG.AnimationComponentDelegate.prototype.update = function (current) {
+        return this.delegate.update(current);
+    };
+    PKG.AnimationComponentDelegate.prototype.pause = function () {
+        this.delegate.pause();
+    };
+    PKG.AnimationComponentDelegate.prototype.resume = function () {
+        this.delegate.resume();
+    };
+    PKG.AnimationComponentDelegate.prototype.setRoot = function (parent) {
+        this.delegate.setRoot(parent);
+    };
+    PKG.AnimationComponentDelegate.prototype.getRoot = function () {
+        return this.delegate.getRoot();
+    };
+    PKG.AnimationComponentDelegate.prototype.setOrder = function (order) {
+        this.delegate.setOrder(order);
+        return this;
+    };
+    PKG.AnimationComponentDelegate.prototype.getOrder = function () {
+        return this.delgate.getOrder();
     };
 //
 //
@@ -252,17 +287,11 @@
      * @returns {animation_L50.PaintableWithStateIndicator}
      */
     PKG.PaintableWithStateIndicator = function (paintable, objectStateIndicator) {
-        PKG.AnimationComponent.call(this);
+        PKG.AnimationComponentDelegate.call(this, paintable);
         this.paintable = paintable;
         this.objectStateIndicator = objectStateIndicator;
     };
-    PKG.PaintableWithStateIndicator.inheritsFrom(PKG.AnimationComponent);
-    PKG.PaintableWithStateIndicator.prototype.init = function () {
-        var self = this;
-        this.paintable.init();
-        this.setRoot(self);
-        return this;
-    };
+    PKG.PaintableWithStateIndicator.inheritsFrom(PKG.AnimationComponentDelegate);
     PKG.PaintableWithStateIndicator.prototype.update = function (current) {
         this.paintable.update(current);
         return this.getState();
@@ -277,11 +306,6 @@
             return this.state;
         }
     };
-    PKG.PaintableWithStateIndicator.prototype.resume = function () {
-        this.paintable.resume();
-    };
-
-
     /**
      * PaintableCombination combines two or more paintables (top level objects)
      * @param {type} paintables array of paintable objects 
@@ -395,7 +419,7 @@
         PKG.CompositeAnimationComponent.call(this, [xAnimation, yAnimation]);
         this.xAnimation = xAnimation;
         this.yAnimation = yAnimation;
-    }
+    };
     PKG.XYAnimation.inheritsFrom(PKG.CompositeAnimationComponent);
     PKG.XYAnimation.prototype.getX = function () {
         return this.xAnimation.getPos();
@@ -532,22 +556,26 @@
     PKG.Accellerator = function (lowSpeed, highSpeed, speedIncPerMs) {
         PKG.AnimationComponent.call(this);
         this.currentSpeed = lowSpeed;
-        this.init = function () {
-            this.lastUpdateTime = performance.now();
-            return this;
-        };
-        this.update = function (current) {
-            var delta = current - this.lastUpdateTime;
-            this.currentSpeed += delta * speedIncPerMs;
-            if (this.currentSpeed > highSpeed) {
-                this.currentSpeed = highSpeed;
-            }
-        };
-        this.getSpeed = function () {
-            return this.currentSpeed;
-        };
+        this.lowSpeed = lowSpeed;
+        this.highSpeed = highSpeed;
+        this.speedIncPerMs = speedIncPerMs;
     };
     PKG.Accellerator.inheritsFrom(PKG.AnimationComponent);
+    PKG.Accellerator.prototype.init = function () {
+        this.lastUpdateTime = performance.now();
+        return this;
+    };
+    PKG.Accellerator.prototype.update = function (current) {
+        var delta = current - this.lastUpdateTime;
+        this.currentSpeed += delta * this.speedIncPerMs;
+        if (this.currentSpeed > this.highSpeed) {
+            this.currentSpeed = this.highSpeed;
+        }
+    };
+    PKG.Accellerator.prototype.getSpeed = function () {
+        return this.currentSpeed;
+    };
+
 //
 //
     PKG.CirclePathAnimation = function (radius, startDeg, direction, degPerMs) {
@@ -605,43 +633,44 @@
         //current pos
         this.currentPos = from;
         this.direction = (to - from) / Math.abs(to - from);
-        this.init = function () {
-            this.currentPos = from;
-            this.lastUpdateTime = performance.now();
-            return this;
-        };
-        this.update = function (current) {
-            var delta = current - this.lastUpdateTime;
-            this.lastUpdateTime = current;
-            //console.log(delta);
-            this.currentPos = this.currentPos + this.direction * delta * pixelPerMs;
-            if (compare(this.currentPos, to)) {
-                if (this.getState() !== PKG.STATE.INACTIVE_PENDING) {
-                    this.fire(PKG.EVENT_TYPES.OFF_SCREEN, this);
-                }
-                this.setState(PKG.STATE.INACTIVE_PENDING);
-            }
-            return this.getState();
-        };
-        this.getPos = function () {
-            return this.currentPos;
-        };
-        var compareNeg = function (cur, to) {
-            return cur <= to;
-        };
-        var comparePos = function (cur, to) {
-            return cur >= to;
-        };
-        var compare = this.direction <= 0 ? compareNeg : comparePos;
+        this.pixelPerMs = pixelPerMs;
+        this.to = to;
+        this.from = from;
     };
     PKG.PathAnimation2.inheritsFrom(PKG.AnimationComponent);
+    PKG.PathAnimation2.prototype.init = function () {
+        this.currentPos = this.from;
+        this.lastUpdateTime = performance.now();
+        return this;
+    };
+    PKG.PathAnimation2.prototype.update = function (current) {
+        var delta = current - this.lastUpdateTime;
+        this.lastUpdateTime = current;
+        //console.log(delta);
+        this.currentPos = this.currentPos + this.direction * delta * this.pixelPerMs;
+        if (compare(this.currentPos, this.to)) {
+            if (this.getState() !== PKG.STATE.INACTIVE_PENDING) {
+                this.fire(PKG.EVENT_TYPES.OFF_SCREEN, this);
+            }
+            this.setState(PKG.STATE.INACTIVE_PENDING);
+        }
+        return this.getState();
+    };
+    PKG.PathAnimation2.prototype.getPos = function () {
+        return this.currentPos;
+    };
+    var compareNeg = function (cur, to) {
+        return cur <= to;
+    };
+    var comparePos = function (cur, to) {
+        return cur >= to;
+    };
+    var compare = this.direction <= 0 ? compareNeg : comparePos;
+
 //
 //
     PKG.FixValueAnimation = function (value) {
         PKG.AnimationComponent.call(this);
-        this.init = function () {
-            return this;
-        };
         this.getPos = function () {
             return value;
         };
@@ -699,11 +728,6 @@
 //
     PKG.ImgPainter = function (img, width, height) {
         PKG.AnimationComponent.call(this);
-        this.init = function () {
-            return this;
-        };
-        this.update = function (current) {
-        };
         this.paint = function (ctx, px, py) {
             ctx.drawImage(img, px, py, width, height);
         };
