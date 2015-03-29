@@ -7,22 +7,25 @@
     var context = canvas.getContext('2d');
 //
 //http://freegameassets.blogspot.de/
-    var asteroid1 = new Image();
-    var asteroid3 = new Image();
-    var asteroid4 = new Image();
-    var explosion = new Image();
+    var asteroid1 = new ANIM.SpriteDescriptor(new Image(),72, 72, 5, 19);
+    var asteroid3 = new ANIM.SpriteDescriptor(new Image(), 32, 32, 5, 19);
+    var asteroid4 = new ANIM.SpriteDescriptor(new Image(), 32, 32, 5, 19);
+    var explosion = new ANIM.SpriteDescriptor(new Image(), 64, 64, 10, 100);
     var background = new Image();
 //http://www.codeproject.com/Articles/677417/Shootem-Up-NET
-    var explosion2 = new Image();
+    var explosion2 = new ANIM.SpriteDescriptor(new Image(), 96, 96, 5, 20);
     var ship = new Image();
 //
-    asteroid1.src = "img/asteroid1_72x72.png";
-    asteroid3.src = "img/asteroid3_32x32.png";
-    asteroid4.src = "img/asteroid4_32x32.png";
-    explosion.src = "img/explosion01_set_64x64.png";
+    asteroid1.img.src = "img/asteroid1_72x72.png";
+    asteroid3.img.src = "img/asteroid3_32x32.png";
+    asteroid4.img.src = "img/asteroid4_32x32.png";
+    explosion.img.src = "img/explosion01_set_64x64.png";
+    explosion2.img.src = "img/explosion02_96x96.png";
+    
     background.src = "img/maxresdefault.jpg";
-    explosion2.src = "img/explosion02_96x96.png";
     ship.src = "img/smallfighter0006.png";
+
+
 
     objectManager = new ANIM.ObjectManager();
 
@@ -76,15 +79,15 @@
         var spriteAnimation;
         //
         if (idx >= 1 && idx < 24) {
-            spriteAnimation = new ANIM.SpriteAnimation(asteroid1, 72, 72, 5, 19, dir, false, 50 + 150 * Math.random(), 1);
+            spriteAnimation = new ANIM.SpriteAnimation(asteroid1, dir, false, 50 + 150 * Math.random(), 1);
         } else if (idx >= 24 && idx < 48) {
-            spriteAnimation = new ANIM.SpriteAnimation(asteroid3, 32, 32, 5, 19, dir, false, 50 + 150 * Math.random(), 1);
+            spriteAnimation = new ANIM.SpriteAnimation(asteroid3, dir, false, 50 + 150 * Math.random(), 1);
         } else if (idx >= 48 && idx < 72) {
-            spriteAnimation = new ANIM.SpriteAnimation(asteroid4, 32, 32, 5, 19, dir, false, 50 + 150 * Math.random(), 1);
+            spriteAnimation = new ANIM.SpriteAnimation(asteroid4, dir, false, 50 + 150 * Math.random(), 1);
         } else if (idx >= 72 && idx < 108) {
-            spriteAnimation = new ANIM.SpriteAnimation(explosion, 64, 64, 10, 100, 1, true, 15 + 35 * Math.random(), 0.5).addListener(listener);
+            spriteAnimation = new ANIM.SpriteAnimation(explosion, 1, true, 15 + 35 * Math.random(), 0.5).addListener(listener);
         } else {
-            spriteAnimation = new ANIM.SpriteAnimation(explosion2, 96, 96, 5, 20, 1, true, 50 + 150 * Math.random(), 0.7).addListener(listener);
+            spriteAnimation = new ANIM.SpriteAnimation(explosion2, 1, true, 50 + 150 * Math.random(), 0.7).addListener(listener);
         }
 
         var compositeMain = new ANIM.PaintableWithAnimation(
@@ -114,7 +117,7 @@
             var shakerAnimation = new ANIM.XYAnimation(xShaker, yShaker);
             var relativeXYAnimation1_2 = new ANIM.RelativeXYAnimation(shakerAnimation, relativeXYAnimation1_1);
             //
-            var satelliteAnimation = new ANIM.SpriteAnimation(asteroid3, 32, 32, 5, 19, dir, false, 50 + 150 * Math.random(), 1);
+            var satelliteAnimation = new ANIM.SpriteAnimation(asteroid3, dir, false, 50 + 150 * Math.random(), 1);
             var compositeSub1 = new ANIM.PaintableWithAnimation(satelliteAnimation, relativeXYAnimation1);
             var compositeSub2 = new ANIM.PaintableWithAnimation(satelliteAnimation, relativeXYAnimation2);
             var compositeSub1_1 = new ANIM.PaintableWithAnimation(satelliteAnimation, relativeXYAnimation1_2);

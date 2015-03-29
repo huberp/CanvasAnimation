@@ -29,7 +29,7 @@
         this.idx = idx;
     };
     PKG.ManagedObject.prototype.remove = function () {
-        objectManager.remove(this);
+        this.objectManager.remove(this);
         this.state = PKG.STATE.UNMANAGED_PENDING;
     };
     PKG.ManagedObject.prototype.getState = function () {
@@ -313,36 +313,38 @@
      */
     PKG.PaintableCombination = function (paintables) {
         PKG.CompositeAnimationComponent.call(this, paintables);
-        this.update = function (current) {
-            var len = paintables.length;
-            for (var i = 0; i < len; i++) {
-                paintables[i].update(current);
-            }
-            return this.getState();
-        };
-        this.paint = function (ctx) {
-            var len = paintables.length;
-            for (var i = 0; i < len; i++) {
-                paintables[i].paint(ctx);
-            }
-        };
     };
     PKG.PaintableCombination.inheritsFrom(PKG.CompositeAnimationComponent);
+    PKG.PaintableCombination.prototype.paint = function (ctx) {
+        var len = this.components.length;
+        for (var i = 0; i < len; i++) {
+            this.components[i].paint(ctx);
+        }
+    };
+
 //
 //
+    /**
+     * 
+     * @param {type} paintable
+     * @param {type} xyPosition
+     * @returns {undefined}
+     */
     PKG.PaintableWithAnimation = function (paintable, xyPosition) {
         PKG.CompositeAnimationComponent.call(this, [paintable, xyPosition]);
-        this.paint = function (ctx) {
-            paintable.paint(ctx, xyPosition.getX(), xyPosition.getY());
-        };
-        this.getX = function () {
-            return xyPosition.getX();
-        };
-        this.getY = function () {
-            return xyPosition.getY();
-        };
+        this.paintable = paintable;
+        this.xyPosition = xyPosition;
     };
     PKG.PaintableWithAnimation.inheritsFrom(PKG.CompositeAnimationComponent);
+    PKG.PaintableWithAnimation.prototype.paint = function (ctx) {
+        this.paintable.paint(ctx, this.xyPosition.getX(), this.xyPosition.getY());
+    };
+    PKG.PaintableWithAnimation.prototype.getX = function () {
+        return this.xyPosition.getX();
+    };
+    PKG.PaintableWithAnimation.prototype.getY = function () {
+        return this.xyPosition.getY();
+    };
 //
 //
     /**
@@ -450,11 +452,11 @@
         };
         this.update = function (current) {
             var retVal = this.currentPart.update(current);
-            if (retVal === XYAnimationPathPart.PART_STATE.STOP) {
+            if (retVal === PKG.PART_STATE.STOP) {
                 if (animationParts.length > 0) {
                     this.init();
                 } else {
-                    this.fire(EVENT_TYPES.OFF_SCREEN, this);
+                    this.fire(PKG.EVENT_TYPES.OFF_SCREEN, this);
                 }
             }
         };
@@ -583,49 +585,63 @@
         var PI_PER_DEG = Math.PI / 180;
         //current pos
         this.currentArc = startDeg * PI_PER_DEG;
-        this.arcPerMs = degPerMs * PI_PER_DEG;
-        this.init = function () {
-            lastUpdateTime = performance.now();
-            return this;
-        };
-        this.update = function (current) {
-            var delta = current - this.lastUpdateTime;
-            this.currentArc = (this.currentArc + direction * delta * this.arcPerMs);
-            this.lastUpdateTime = current;
-        };
-        this.getX = function () {
-            return radius * Math.cos(this.currentArc);
-        };
-        this.getY = function () {
-            return radius * Math.sin(this.currentArc);
-        };
+        //multiply direction in, so go forward or backward according to given parameter
+        this.arcPerMs = direction * degPerMs * PI_PER_DEG;
+        this.radius = radius;
+        this.direction = direction;
     };
     PKG.CirclePathAnimation.inheritsFrom(PKG.AnimationComponent);
+    PKG.CirclePathAnimation.prototype.init = function () {
+        lastUpdateTime = performance.now();
+        return this;
+    };
+    PKG.CirclePathAnimation.prototype.update = function (current) {
+        var delta = current - this.lastUpdateTime;
+        this.currentArc = (this.currentArc + delta * this.arcPerMs);
+        this.lastUpdateTime = current;
+    };
+    PKG.CirclePathAnimation.prototype.getX = function () {
+        return this.radius * Math.cos(this.currentArc);
+    };
+    PKG.CirclePathAnimation.prototype.getY = function () {
+        return this.radius * Math.sin(this.currentArc);
+    };
+
 //
 //
+    /**
+     * 
+     * @param {type} posMin
+     * @param {type} posMax
+     * @param {type} pixelPerMs
+     * @returns {undefined}
+     */
     PKG.BouncingPathAnimation = function (posMin, posMax, pixelPerMs) {
         PKG.AnimationComponent.call(this);
         //current pos
         this.currentPos = posMin;
         this.direction = (posMax - posMin) / Math.abs(posMax - posMin);
-        this.init = function () {
-            lastUpdateTime = performance.now();
-            return this;
-        };
-        this.update = function (current) {
-            var delta = current - this.lastUpdateTime;
-            this.currentPos = this.currentPos + this.direction * delta * pixelPerMs;
-            if (this.currentPos >= posMax)
-                this.direction = -1;
-            if (this.currentPos <= posMin)
-                this.direction = 1;
-            this.lastUpdateTime = current;
-        };
-        this.getPos = function () {
-            return this.currentPos;
-        };
+        this.pixelPerMs = pixelPerMs;
+        this.posMax = posMax;
+        this.posMin = posMin;
     };
     PKG.BouncingPathAnimation.inheritsFrom(PKG.AnimationComponent);
+    PKG.BouncingPathAnimation.prototype.init = function () {
+        lastUpdateTime = performance.now();
+        return this;
+    };
+    PKG.BouncingPathAnimation.prototype.update = function (current) {
+        var delta = current - this.lastUpdateTime;
+        this.currentPos = this.currentPos + this.direction * delta * this.pixelPerMs;
+        if (this.currentPos >= this.posMax)
+            this.direction = -1;
+        if (this.currentPos <= this.posMin)
+            this.direction = 1;
+        this.lastUpdateTime = current;
+    };
+    PKG.BouncingPathAnimation.prototype.getPos = function () {
+        return this.currentPos;
+    };
 //
 //
     PKG.PathAnimation2 = function (from, to, pixelPerMs) {
@@ -671,59 +687,79 @@
 //
     PKG.FixValueAnimation = function (value) {
         PKG.AnimationComponent.call(this);
-        this.getPos = function () {
-            return value;
-        };
-        this.setPos = function (pos) {
-            //use this for XYAnimationPathPart
-            value = pos;
-        };
+        this.value = value;
     };
     PKG.FixValueAnimation.inheritsFrom(PKG.AnimationComponent);
+    PKG.FixValueAnimation.prototype.getPos = function () {
+        return this.value;
+    };
+    PKG.FixValueAnimation.prototype.setPos = function (pos) {
+        //use this for XYAnimationPathPart
+        this.value = pos;
+    };
+
 //
 //
-    PKG.SpriteAnimation = function (img, sx, sy, gridx, nosprites, direction, oneTime, updateDelay, alpha) {
+    PKG.SpriteDescriptor = function (img, sx, sy, gridWidth, noSprites) {
+        this.img = img;
+        this.sx = sx;
+        this.sy = sy;
+        this.gridWidth = gridWidth;
+        this.noSprites = noSprites;
+    };
+//
+//
+    PKG.SpriteAnimation = function (spriteDescriptor, direction, oneTime, updateDelay, alpha) {
         PKG.AnimationComponent.call(this);
+        this.spriteDescriptor = spriteDescriptor;
         //current index into spritephases - nosprites is maximum
         this.currentPos = 0;
         //animBase is 0 if direction is +1 and nosprites if direction is -1
         //this allows for backward and forward animation
-        this.animBase = direction === -1 ? nosprites - 1 : 0;
-        this.init = function () {
-            this.lastUpdateTime = performance.now();
-        };
-        this.update = function (current) {
-            //only update if updateDelay has benn exceeded. this allows for different
-            //update sppeds. but be aware that the delay may exceed one sprite-step
-            //so we have to check if we have to do more than one step here
-            var delay = current - this.lastUpdateTime;
-            if (delay > updateDelay) {
-                this.currentPos = this.currentPos + Math.floor(delay / updateDelay);
-                if (oneTime) {
-                    //console.log("Sprite: "+nosprites+"; "+this.currentPos+"; "+(direction)+"; "+delay+"; "+updateDelay);
-                    if ((direction === 1 && this.currentPos >= nosprites) || (direction === -1 && this.currentPos <= 0)) {
-                        if (this.getState() !== PKG.STATE.INACTIVE_PENDING) {
-                            this.fire(PKG.EVENT_TYPES.OFF_SCREEN, this);
-                        }
-                        this.setState(PKG.STATE.INACTIVE_PENDING);
-                    }
-                }
-                this.currentPos = this.currentPos % nosprites;
-                this.lastUpdateTime = current;
-            }
-        };
-        this.paint = function (ctx, px, py) {
-            //compute idx based on animBase and direction - this allows for forward and backward animation
-            var idx = (this.animBase + direction * this.currentPos);
-            var y = Math.floor(idx / gridx);
-            var x = Math.floor(idx % gridx);
-            var currentAlpha = ctx.globalAlpha;
-            ctx.globalAlpha = alpha;
-            ctx.drawImage(img, x * sx, y * sy, sx, sy, px, py, sx, sy);
-            ctx.globalAlpha = currentAlpha;
-        };
+        this.animBase = direction === -1 ? spriteDescriptor.noSprites - 1 : 0;
+        this.oneTime=oneTime;
+        this.updateDelay = updateDelay;
+        this.alpha = alpha;
+        this.direction = direction;
     };
     PKG.SpriteAnimation.inheritsFrom(PKG.AnimationComponent);
+    PKG.SpriteAnimation.prototype.update = function (current) {
+        //reference shortcuts for better performance and shorter expressions
+        var noSprites = this.spriteDescriptor.noSprites;
+        //only update if updateDelay has benn exceeded. this allows for different
+        //update sppeds. but be aware that the delay may exceed one sprite-step
+        //so we have to check if we have to do more than one step here
+        var delay = current - this.lastUpdateTime;
+        if (delay > this.updateDelay) {
+            this.currentPos = this.currentPos + Math.floor(delay / this.updateDelay);
+            if (this.oneTime) {
+                //console.log("Sprite: "+nosprites+"; "+this.currentPos+"; "+(direction)+"; "+delay+"; "+updateDelay);
+                if ((this.direction === 1 && this.currentPos >= noSprites) || (this.direction === -1 && this.currentPos <= 0)) {
+                    if (this.getState() !== PKG.STATE.INACTIVE_PENDING) {
+                        this.fire(PKG.EVENT_TYPES.OFF_SCREEN, this);
+                    }
+                    this.setState(PKG.STATE.INACTIVE_PENDING);
+                }
+            }
+            this.currentPos = this.currentPos % noSprites;
+            this.lastUpdateTime = current;
+        }
+    };
+    PKG.SpriteAnimation.prototype.paint = function (ctx, px, py) {
+        //reference shortcuts for better performance and shorter expressions
+        var spriteDesc = this.spriteDescriptor;
+        var sx = spriteDesc.sx;
+        var sy = spriteDesc.sy;
+        //compute idx based on animBase and direction - this allows for forward and backward animation
+        var idx = (this.animBase + this.direction * this.currentPos);
+        var y = Math.floor(idx / spriteDesc.gridWidth);
+        var x = Math.floor(idx % spriteDesc.gridWidth);
+        var currentAlpha = ctx.globalAlpha;
+        ctx.globalAlpha = this.alpha;
+        ctx.drawImage(spriteDesc.img, x * sx, y * sy, sx, sy, px, py, sx, sy);
+        ctx.globalAlpha = currentAlpha;
+    };
+
 //
 //
     PKG.ImgPainter = function (img, width, height) {
