@@ -23,6 +23,10 @@
         this.objectManager;
         this.idx;
         this.state = PKG.STATE.UNKNOWN;
+        //something like a z-order, order in which objects are about to be painted
+        //pbjects that are painted "later" might hide parts of objects that have been
+        //painted earlier
+        this.order = 0;
     };
     PKG.ManagedObject.prototype.setManager = function (manager, idx) {
         this.objectManager = manager;
@@ -37,6 +41,16 @@
     };
     PKG.ManagedObject.prototype.setState = function (state) {
         this.state = state;
+    };
+    PKG.ManagedObject.prototype.setOrder = function (order) {
+        this.order = order;
+        return this;
+    };
+    PKG.ManagedObject.prototype.getOrder = function () {
+        return this.order;
+    };
+    PKG.ManagedObject.sortComparator = function (a, b) {
+        return a.order - b.order;
     };
 
     /**
@@ -91,7 +105,7 @@
             }
         }
         this.animations = this.animations.concat(this.additions);
-        this.animations.sort(PKG.AnimationComponent.sortComparator);
+        this.animations.sort(PKG.ManagedObject.sortComparator);
         this.additions = new Array();
         this.deletions = new Array();
         //console.log(this.animations.length);
@@ -152,13 +166,8 @@
     PKG.AnimationComponent = function () {
         PKG.ObjectListenerSupport.call(this);
         this.root = null;
-        //something like a z-order, order in which objects are about to be painted
-        //pbjects that are painted "later" might hide parts of objects that have been
-        //painted earlier
-        this.order = 0;
         //last update time - we do updates only each "updateDelay" milliseconds
         this.lastUpdateTime = 0;
-
     };
     PKG.AnimationComponent.inheritsFrom(PKG.ObjectListenerSupport);
     PKG.AnimationComponent.prototype.init = function () {
@@ -179,16 +188,6 @@
     };
     PKG.AnimationComponent.prototype.getRoot = function () {
         return this.root;
-    };
-    PKG.AnimationComponent.prototype.setOrder = function (order) {
-        this.order = order;
-        return this;
-    };
-    PKG.AnimationComponent.prototype.getOrder = function () {
-        return this.order;
-    };
-    PKG.AnimationComponent.sortComparator = function (a, b) {
-        return a.order - b.order;
     };
     //
     //
@@ -717,7 +716,7 @@
         //animBase is 0 if direction is +1 and nosprites if direction is -1
         //this allows for backward and forward animation
         this.animBase = direction === -1 ? spriteDescriptor.noSprites - 1 : 0;
-        this.oneTime=oneTime;
+        this.oneTime = oneTime;
         this.updateDelay = updateDelay;
         this.alpha = alpha;
         this.direction = direction;
