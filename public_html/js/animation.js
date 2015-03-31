@@ -423,10 +423,10 @@
     };
     PKG.XYAnimation.inheritsFrom(PKG.CompositeAnimationComponent);
     PKG.XYAnimation.prototype.getX = function () {
-        return this.xAnimation.getPos();
+        return this.xAnimation.getValue();
     };
     PKG.XYAnimation.prototype.getY = function () {
-        return this.yAnimation.getPos();
+        return this.yAnimation.getValue();
     };
     PKG.XYAnimation.prototype.setX = function (x) {
         this.xAnimation.setPos(x);
@@ -460,10 +460,10 @@
             }
         };
         this.getX = function () {
-            return currentPart.getPos();
+            return currentPart.getValue();
         };
         this.getY = function () {
-            return currentPart.getPos();
+            return currentPart.getValue();
         };
     };
     PKG.XYAnimationPath.inheritsFrom(PKG.AnimationComponent);
@@ -486,10 +486,10 @@
 
         };
         this.getX = function () {
-            return xAnimation.getPos();
+            return xAnimation.getValue();
         };
         this.getY = function () {
-            return yAnimation.getPos();
+            return yAnimation.getValue();
         };
 
     };
@@ -540,15 +540,15 @@
         }
         return PKG.CompositeAnimationComponent.prototype.update.call(this, current);
     };
-    PKG.PosShake.prototype.getPos = function () {
+    PKG.PosShake.prototype.getValue = function () {
         return this.value;
     };
     //
     //
     PKG.SumPosition = function (positionA, positionB) {
         PKG.CompositeAnimationComponent.call(this, [positionA, positionB]);
-        this.getPos = function () {
-            return positionA.getPos() + positionB.getPos();
+        this.getValue = function () {
+            return positionA.getValue() + positionB.getValue();
         };
     };
     PKG.SumPosition.inheritsFrom(PKG.CompositeAnimationComponent);
@@ -573,41 +573,66 @@
             this.currentSpeed = this.highSpeed;
         }
     };
-    PKG.Accellerator.prototype.getSpeed = function () {
+    PKG.Accellerator.prototype.getValue = function () {
         return this.currentSpeed;
     };
-
 //
-//
-    PKG.CirclePathAnimation = function (radius, startDeg, direction, degPerMs) {
+//   
+    PKG.ArcBaseAnmimation = function (startDeg, direction, degPerMs) {
         PKG.AnimationComponent.call(this);
         var PI_PER_DEG = Math.PI / 180;
         //current pos
         this.currentArc = startDeg * PI_PER_DEG;
         //multiply direction in, so go forward or backward according to given parameter
         this.arcPerMs = direction * degPerMs * PI_PER_DEG;
-        this.radius = radius;
         this.direction = direction;
     };
-    PKG.CirclePathAnimation.inheritsFrom(PKG.AnimationComponent);
-    PKG.CirclePathAnimation.prototype.init = function () {
-        lastUpdateTime = performance.now();
-        return this;
-    };
-    PKG.CirclePathAnimation.prototype.update = function (current) {
+    PKG.ArcBaseAnmimation.inheritsFrom(PKG.AnimationComponent);
+    PKG.ArcBaseAnmimation.prototype.update = function (current) {
         var delta = current - this.lastUpdateTime;
         this.currentArc = (this.currentArc + delta * this.arcPerMs);
-        this.lastUpdateTime = current;
+        return PKG.AnimationComponent.prototype.update.call(this, current);
+    };
+    PKG.ArcBaseAnmimation.prototype.getValue = function () {
+        return this.currentArc;
+    };
+//
+//
+    PKG.SinValue = function (radius, arcValueFct) {
+        this.arcValueFct = arcValueFct;
+        this.radius = radius;
+    };
+    PKG.SinValue.prototype.getValue = function () {
+        return this.radius * Math.sin(this.arcValueFct.getValue());
+    };
+    //
+    //
+    PKG.CosValue = function (radius, arcValueFct) {
+        this.arcValueFct = arcValueFct;
+        this.radius = radius;
+    };
+    PKG.CosValue.prototype.getValue = function () {
+        return this.radius * Math.cos(this.arcValueFct.getValue());
+    };
+//
+//
+    PKG.CirclePathAnimation = function (radius, startDeg, direction, degPerMs) {
+        PKG.AnimationComponent.call(this);
+        this.arcValueFct = new PKG.ArcBaseAnmimation(startDeg, direction, degPerMs);
+        this.cos = new PKG.CosValue(radius, this.arcValueFct);
+        this.sin = new PKG.SinValue(radius, this.arcValueFct);
+    };
+    PKG.CirclePathAnimation.inheritsFrom(PKG.AnimationComponent);
+    PKG.CirclePathAnimation.prototype.update = function (current) {
+        this.arcValueFct.update(current);
+        return PKG.AnimationComponent.prototype.update.call(this, current);
     };
     PKG.CirclePathAnimation.prototype.getX = function () {
-        return this.radius * Math.cos(this.currentArc);
+        return this.cos.getValue();
     };
     PKG.CirclePathAnimation.prototype.getY = function () {
-        return this.radius * Math.sin(this.currentArc);
+        return this.sin.getValue();
     };
-
-//
-//
     /**
      * 
      * @param {type} posMin
@@ -638,7 +663,7 @@
             this.direction = 1;
         this.lastUpdateTime = current;
     };
-    PKG.BouncingPathAnimation.prototype.getPos = function () {
+    PKG.BouncingPathAnimation.prototype.getValue = function () {
         return this.currentPos;
     };
 //
@@ -671,7 +696,7 @@
         }
         return this.getState();
     };
-    PKG.PathAnimation2.prototype.getPos = function () {
+    PKG.PathAnimation2.prototype.getValue = function () {
         return this.currentPos;
     };
     var compareNeg = function (cur, to) {
@@ -689,7 +714,7 @@
         this.value = value;
     };
     PKG.FixValueAnimation.inheritsFrom(PKG.AnimationComponent);
-    PKG.FixValueAnimation.prototype.getPos = function () {
+    PKG.FixValueAnimation.prototype.getValue = function () {
         return this.value;
     };
     PKG.FixValueAnimation.prototype.setPos = function (pos) {
