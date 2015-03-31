@@ -614,8 +614,17 @@
     PKG.CosValue.prototype.getValue = function () {
         return this.radius * Math.cos(this.arcValueFct.getValue());
     };
-//
-//
+    //
+    //
+    PKG.DeltaValue = function (delta, inputValueFct) {
+        this.inputValueFct = inputValueFct;
+        this.delta = delta;
+    };
+    PKG.DeltaValue.prototype.getValue = function () {
+        return this.inputValueFct.getValue() + delta;
+    };
+    //
+    //
     PKG.CirclePathAnimation = function (radius, startDeg, direction, degPerMs) {
         PKG.AnimationComponent.call(this);
         this.arcValueFct = new PKG.ArcBaseAnmimation(startDeg, direction, degPerMs);
