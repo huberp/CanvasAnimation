@@ -1,7 +1,8 @@
 //==============================================================================
 // Now setup the animations and run it
-(function () {
+(function (PKG, undefined) {
     var ANIM = window.ANIMATION;
+    var GAME = window.GAME;
 
     var canvas = document.getElementById('myCanvas');
     var context = canvas.getContext('2d');
@@ -27,10 +28,10 @@
 
 
 
-    objectManager = new ANIM.ObjectManager();
+    var objectManager = new ANIM.ObjectManager();
 
-    yCoords = new Array();
-    dir = -1;
+    var yCoords = new Array();
+    var dir = -1;
     //
     //background
     objectManager.add(
@@ -142,33 +143,54 @@
     objectManager.getAnimations().forEach(function (elem) {
         elem.init();
     });
-
+     var keyboardControl = new GAME.KeyboardControl(37,38,39,40);
+     keyboardControl.activate(canvas, function(o,n) {console.log("old: "+o+"; new: "+n+"; isLeft: "+GAME.KeyboardControl.is(n,GAME.DIRECTION.LEFT))});
+    
+    /*
+    var pressedKeysBitField = 0;
+    var LEFT=1;
+    var RIGHT=2;
+    var UP=4;
+    var DOWN=8;
     var handleKeyPress = function (e) {
         var code = e.keyCode;
+        var press = function(old, keyValue) { return old | keyValue; };
+        var up = function(old, keyValue) { return old ^ keyValue; };
+        var funct = press;
+        if(e.type === "keyup") {
+            funct = up;
+        }
+        var L = 37;
         switch (code) {
-            case 37:
-                alert("Left");
+            case L:
+                //alert("Left");
+                pressedKeysBitField = funct(pressedKeysBitField,LEFT); 
                 break; //Left key
             case 38:
-                alert("Up");
+                //alert("Up");
+                pressedKeysBitField = funct(pressedKeysBitField,UP); 
                 break; //Up key
             case 39:
-                alert("Right");
+                //alert("Right");
+                pressedKeysBitField = funct(pressedKeysBitField,RIGHT); 
                 break; //Right key
             case 40:
-                alert("Down");
+                //alert("Down");
+                pressedKeysBitField = funct(pressedKeysBitField,DOWN); 
                 break; //Down key
             default:
-                alert(code); //Everything else
+                //alert(code); //Everything else
         }
+        console.log(pressedKeysBitField);
     };
     canvas.addEventListener('keypress', handleKeyPress);
     canvas.addEventListener('keyup', handleKeyPress);
+    */
     //==========================================================================
     //Setup the control button
     //
     var animationToggle = 1; //running
-    toggleAnimation = function(event) {
+    var toggleAnimation = function(event) {
         animationToggle = 1 - animationToggle;
         var elem = document.getElementById("toggleAnimation");
         if(animationToggle===1) {
@@ -187,7 +209,7 @@
     // Run everything now
     //
     var lastTime = performance.now();
-    anim = function (current) {
+    var anim = function (current) {
         myCurrent = performance.now();
         delta = current - lastTime;
         lastTime = myCurrent;
@@ -218,7 +240,7 @@
     var twoThirds = 2*timeOutDelay/3;
     var accumulatedDelay = twoThirds; //empirical start value, it makes accumulatedDelay reach faster frsPerSecondDelay
     var frsPerSecondDelay = 1000 / fps; //60 frames per second
-    triggerAnimationFrameWithTimeOut = function () {
+    var triggerAnimationFrameWithTimeOut = function () {
         var current = Date.now();
         var delay = (current-lastTrigger); // allready elapsed time
         accumulatedDelay += delay;
@@ -231,11 +253,11 @@
         lastTrigger = current;
     };
     
-    triggerAnimationFrame = function() {
+    var triggerAnimationFrame = function() {
         window.requestAnimationFrame(anim, canvas);
     };
     
     //triggerAnimationFrame();
     triggerAnimationFrameWithTimeOut();
-})();
+})(window.SETUP = window.SETUP || {});
 
