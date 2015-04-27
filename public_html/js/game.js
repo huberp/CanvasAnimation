@@ -4,14 +4,7 @@
  * and open the template in the editor.
  */
 (function (PKG, undefined) {
-
-    var pressedKeysBitField = 0;
-    PKG.DIRECTION = {
-        LEFT: {bit: 1, x: -1, y: 0},
-        RIGHT: {bit: 2, x: +1, y: 0},
-        UP: {bit: 4, x: 0, y: -1},
-        DOWN: {bit: 8, x: 0, y: +1}
-    };
+    
     PKG.KeyboardControl = function (leftKey, upKey, rightKey, downKey) {
         this.pressedKeysBitField = 0;
         this.leftKey = leftKey;
@@ -55,19 +48,19 @@
         switch (code) {
             case this.leftKey:
                 //alert("Left");
-                this.pressedKeysBitField = funct(this.pressedKeysBitField, PKG.DIRECTION.LEFT);
+                this.pressedKeysBitField = funct(this.pressedKeysBitField, BASE.DIRECTION.LEFT);
                 break; //Left key
             case this.upKey:
                 //alert("Up");
-                this.pressedKeysBitField = funct(this.pressedKeysBitField, PKG.DIRECTION.UP);
+                this.pressedKeysBitField = funct(this.pressedKeysBitField, BASE.DIRECTION.UP);
                 break; //Up key
             case this.rightKey:
                 //alert("Right");
-                this.pressedKeysBitField = funct(this.pressedKeysBitField, PKG.DIRECTION.RIGHT);
+                this.pressedKeysBitField = funct(this.pressedKeysBitField, BASE.DIRECTION.RIGHT);
                 break; //Right key
             case this.downKey:
                 //alert("Down");
-                this.pressedKeysBitField = funct(this.pressedKeysBitField, PKG.DIRECTION.DOWN);
+                this.pressedKeysBitField = funct(this.pressedKeysBitField, BASE.DIRECTION.DOWN);
                 break; //Down key
             default:
                 //alert(code); //Everything else

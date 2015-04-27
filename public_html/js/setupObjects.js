@@ -6,9 +6,11 @@
 
     var canvas = document.getElementById('myCanvas');
     var context = canvas.getContext('2d');
+    
+    var SCREEN_BOUNDS = BASE.Rectangle2D(0,0,600,600);
 //
 //http://freegameassets.blogspot.de/
-    var asteroid1 = new ANIM.SpriteDescriptor(new Image(),72, 72, 5, 19);
+    var asteroid1 = new ANIM.SpriteDescriptor(new Image(), 72, 72, 5, 19);
     var asteroid3 = new ANIM.SpriteDescriptor(new Image(), 32, 32, 5, 19);
     var asteroid4 = new ANIM.SpriteDescriptor(new Image(), 32, 32, 5, 19);
     var explosion = new ANIM.SpriteDescriptor(new Image(), 64, 64, 10, 100);
@@ -22,11 +24,9 @@
     asteroid4.img.src = "img/asteroid4_32x32.png";
     explosion.img.src = "img/explosion01_set_64x64.png";
     explosion2.img.src = "img/explosion02_96x96.png";
-    
+
     background.src = "img/maxresdefault.jpg";
     ship.src = "img/smallfighter0006.png";
-
-
 
     var objectManager = new ANIM.ObjectManager();
 
@@ -43,18 +43,19 @@
                             )
                     ).setOrder(0)
             );
+    //ship size is x:95, y:151
+    var shipControlAnimation = new ANIM.Vector2DAnimation(BASE.NULL_VECTOR2D, 0.25, BASE.Rectangle2D(-300,-600+151,300-95,0));
     objectManager.add(
             new ANIM.PaintableWithAnimation(
                     new ANIM.ImgPainter(ship, 95, 151),
-                    new ANIM.XYAnimation(
-                            new ANIM.BouncingPathAnimation(00, 600 - 95, 0.1),
-                            new ANIM.FixValueAnimation(600 - 151)
-                            )
-                    ).setOrder(100)
+                    new ANIM.XYCorrection(
+                            shipControlAnimation,300,600-151
+                    )
+            ).setOrder(100)
+    );
+    objectManager.add(
+            new ANIM.FPSRenderer().setOrder(100)
             );
-     objectManager.add(
-             new ANIM.FPSRenderer().setOrder(100)
-     );
     //
     //A Listener which listens to OFF_SCREEN events
     var listener = {
@@ -73,8 +74,8 @@
 
     var createObject = function (idx, dir) {
         //
-        var yAnimation = new ANIM.PathAnimation2(-72, 600, 0.05 + 0.1 * Math.random()).addListener(listener);
-        var xAnimation = new ANIM.FixValueAnimation(Math.random() * 520);
+        var xAnimation = new ANIM.FixValueAnimation(Math.random() * (SCREEN_BOUNDS.xmax - 80));
+        var yAnimation = new ANIM.PathAnimation2(-72, SCREEN_BOUNDS.ymax, 0.05 + 0.1 * Math.random()).addListener(listener);
         var xyBaseAnimation = new ANIM.XYAnimation(xAnimation, yAnimation);
 
         var spriteAnimation;
@@ -112,9 +113,9 @@
             var circlePainter1_1 = new ANIM.CirclePainter(8, 32, new ANIM.XYCorrection(relativeXYAnimation1, 16, 16));
             //
             // make the satellite of the satellite shake from time to time (controlled by an OnOffIntervall)
-            var onOffIntervall = new ANIM.OnOffIntervalls(2000,400);
-            var yShaker = new ANIM.PosShake(onOffIntervall,2);
-            var xShaker = new ANIM.PosShake(onOffIntervall,-2);
+            var onOffIntervall = new ANIM.OnOffIntervalls(2000, 400);
+            var yShaker = new ANIM.PosShake(onOffIntervall, 2);
+            var xShaker = new ANIM.PosShake(onOffIntervall, -2);
             var shakerAnimation = new ANIM.XYAnimation(xShaker, yShaker);
             var relativeXYAnimation1_2 = new ANIM.RelativeXYAnimation(shakerAnimation, relativeXYAnimation1_1);
             //
@@ -143,68 +144,34 @@
     objectManager.getAnimations().forEach(function (elem) {
         elem.init();
     });
-     var keyboardControl = new GAME.KeyboardControl(37,38,39,40);
-     keyboardControl.activate(canvas, function(o,n) {console.log("old: "+o+"; new: "+n+"; isLeft: "+GAME.KeyboardControl.is(n,GAME.DIRECTION.LEFT))});
+    var keyboardControl = new GAME.KeyboardControl(37, 38, 39, 40);
+    keyboardControl.activate(canvas, function (o, n) {
+        if(o!==n) {
+            shipControlAnimation.setDirection(BASE.UNIT_VECTORS_2D[n]);
+        }
+        console.log("old: " + o + "; new: " + n + "; isLeft: " + GAME.KeyboardControl.is(n, BASE.DIRECTION.LEFT));
+    });
+
     
-    /*
-    var pressedKeysBitField = 0;
-    var LEFT=1;
-    var RIGHT=2;
-    var UP=4;
-    var DOWN=8;
-    var handleKeyPress = function (e) {
-        var code = e.keyCode;
-        var press = function(old, keyValue) { return old | keyValue; };
-        var up = function(old, keyValue) { return old ^ keyValue; };
-        var funct = press;
-        if(e.type === "keyup") {
-            funct = up;
-        }
-        var L = 37;
-        switch (code) {
-            case L:
-                //alert("Left");
-                pressedKeysBitField = funct(pressedKeysBitField,LEFT); 
-                break; //Left key
-            case 38:
-                //alert("Up");
-                pressedKeysBitField = funct(pressedKeysBitField,UP); 
-                break; //Up key
-            case 39:
-                //alert("Right");
-                pressedKeysBitField = funct(pressedKeysBitField,RIGHT); 
-                break; //Right key
-            case 40:
-                //alert("Down");
-                pressedKeysBitField = funct(pressedKeysBitField,DOWN); 
-                break; //Down key
-            default:
-                //alert(code); //Everything else
-        }
-        console.log(pressedKeysBitField);
-    };
-    canvas.addEventListener('keypress', handleKeyPress);
-    canvas.addEventListener('keyup', handleKeyPress);
-    */
     //==========================================================================
     //Setup the control button
     //
     var animationToggle = 1; //running
-    var toggleAnimation = function(event) {
+    var toggleAnimation = function (event) {
         animationToggle = 1 - animationToggle;
         var elem = document.getElementById("toggleAnimation");
-        if(animationToggle===1) {
+        if (animationToggle === 1) {
             elem.innerHTML = "Stop Animation";
             objectManager.resume();
             window.requestAnimationFrame(anim, canvas);
         } else {
             objectManager.pause();
             elem.innerHTML = "Start Animation";
-            
-        }  
+
+        }
     };
     document.getElementById("toggleAnimation").onclick = toggleAnimation;
-    
+
     //==========================================================================
     // Run everything now
     //
@@ -225,7 +192,7 @@
             elem.paint(context);
         });
         objectManager.commit();
-        if(animationToggle===1) {
+        if (animationToggle === 1) {
             //triggerAnimationFrame();
             triggerAnimationFrameWithTimeOut();
             //window.requestAnimationFrame(anim, canvas);
@@ -237,26 +204,26 @@
     //var accumulatedDelay = 0;
     var fps = 65; //use 15, 30, 65
     var timeOutDelay = 6;
-    var twoThirds = 2*timeOutDelay/3;
+    var twoThirds = 2 * timeOutDelay / 3;
     var accumulatedDelay = twoThirds; //empirical start value, it makes accumulatedDelay reach faster frsPerSecondDelay
     var frsPerSecondDelay = 1000 / fps; //60 frames per second
     var triggerAnimationFrameWithTimeOut = function () {
         var current = Date.now();
-        var delay = (current-lastTrigger); // allready elapsed time
+        var delay = (current - lastTrigger); // allready elapsed time
         accumulatedDelay += delay;
-        if(accumulatedDelay >= frsPerSecondDelay) {
+        if (accumulatedDelay >= frsPerSecondDelay) {
             triggerAnimationFrame();
-            accumulatedDelay=twoThirds;
+            accumulatedDelay = twoThirds;
         } else {
             setTimeout(triggerAnimationFrameWithTimeOut, timeOutDelay);
         }
         lastTrigger = current;
     };
-    
-    var triggerAnimationFrame = function() {
+
+    var triggerAnimationFrame = function () {
         window.requestAnimationFrame(anim, canvas);
     };
-    
+
     //triggerAnimationFrame();
     triggerAnimationFrameWithTimeOut();
 })(window.SETUP = window.SETUP || {});

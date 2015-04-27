@@ -20,8 +20,8 @@
      * @returns {undefined}
      */
     PKG.ManagedObject = function () {
-        this.objectManager;
-        this.idx;
+        this.objectManager = undefined;
+        this.idx = undefined;
         this.state = PKG.STATE.UNKNOWN;
         //something like a z-order, order in which objects are about to be painted
         //pbjects that are painted "later" might hide parts of objects that have been
@@ -59,9 +59,9 @@
      */
     PKG.ObjectManager = function () {
         this.counter = 0;
-        this.animations = new Array();
-        this.additions = new Array();
-        this.deletions = new Array();
+        this.animations = [];
+        this.additions = [];
+        this.deletions = [];
     };
     PKG.ObjectManager.prototype.add = function (animObj) {
         this.additions.push(animObj);
@@ -344,12 +344,14 @@
     PKG.PaintableWithAnimation.prototype.getY = function () {
         return this.xyPosition.getY();
     };
-//
-//
+    //
+    //
     /**
-     * 
-     * @param {type} relativeXYAnimation
-     * @param {type} baseXYAnimation
+     * Combines two XY animations.
+     * Might be used to combine a simple base animation, let's say to move an object
+     * from to of screen to bottom (XYAnimation) and make a second object circle around it (CirclePathAnimation).  
+     * @param {type} relativeXYAnimation: animation relative to base animation
+     * @param {type} baseXYAnimation: base animation
      * @returns {undefined}
      */
     PKG.RelativeXYAnimation = function (relativeXYAnimation, baseXYAnimation) {
@@ -413,9 +415,70 @@
     PKG.XYCorrection.prototype.resume = function () {
         this.xyAnimation.resume();
     };
-
-//
-//
+    //
+    //
+    /**
+     * Computes a relative position based on a changeable direction "direction2D"
+     * and a speed "pixelPerMs". It will start with position (0,0). The direction can
+     * be updated with "setDirection". 
+     * Best use: Use any Unit Vector as "direction2D". To start with a position other
+     * than (0,0) please combine it with a RelativeXYAnimation;
+     * Intention: Use for controling objects with key strokes.
+     * @param {BASE.Vector2D} direction2D
+     * @param {double} pixelPerMs
+     * @param {BASE.Rectangle2D} boundsRectangle2D bounds for moving around. Keep in mind that when you combine
+     *      it with RelativeXYAnimation then the bounds might be different from the screen bounds. Let's say
+     *      you place a space ship in the middel of the screen then bounding values would be approximately 
+     *      [-screenbounds/2, screenbounds/2] in x and y direction.
+     * @returns {undefined}
+     */
+    PKG.Vector2DAnimation = function (direction2D, pixelPerMs, boundsRectangle2D) {
+        PKG.AnimationComponent.call(this);
+        this.direction2D = direction2D;
+        this.boundsRectangle2D = boundsRectangle2D;
+        this.pixelPerMs = pixelPerMs;
+        this.x = 0;
+        this.y = 0;
+    };
+    PKG.Vector2DAnimation.inheritsFrom(PKG.AnimationComponent);
+    PKG.Vector2DAnimation.prototype.getX = function () {
+        return this.x;
+    };
+    PKG.Vector2DAnimation.prototype.getY = function () {
+        return this.y;
+    };
+    PKG.Vector2DAnimation.prototype.setDirection = function (newDirection2D) {
+        return this.direction2D = newDirection2D;
+    };
+    PKG.Vector2DAnimation.prototype.update = function (current) {
+        var delta = current - this.lastUpdateTime;
+        this.lastUpdateTime = current;
+        //console.log(delta);
+        this.x = this.x + this.direction2D.x * delta * this.pixelPerMs;
+        this.y = this.y + this.direction2D.y * delta * this.pixelPerMs;
+        //
+        //think about emitting a bounds reached event?
+        if(this.x < this.boundsRectangle2D.xmin) {
+            this.x = this.boundsRectangle2D.xmin;
+        } else if(this.x > this.boundsRectangle2D.xmax) {
+            this.x = this.boundsRectangle2D.xmax;
+        }
+        if(this.y < this.boundsRectangle2D.ymin) {
+            this.y = this.boundsRectangle2D.ymin;
+        } else if(this.y > this.boundsRectangle2D.ymax) {
+            this.y = this.boundsRectangle2D.ymax;
+        }
+        return this.getState();
+    };
+    //
+    //
+    /**
+     * Combines 2 basic animation objects to get a XYAnimation
+     * which updates coordinates along both principal directions.
+     * @param {type} xAnimation
+     * @param {type} yAnimation
+     * @returns {undefined}
+     */
     PKG.XYAnimation = function (xAnimation, yAnimation) {
         PKG.CompositeAnimationComponent.call(this, [xAnimation, yAnimation]);
         this.xAnimation = xAnimation;
@@ -576,8 +639,16 @@
     PKG.Accellerator.prototype.getValue = function () {
         return this.currentSpeed;
     };
-//
-//   
+    //
+    //
+    /**
+     * Provides an Arc Value computed based on the time elapsed and a 
+     * Degree-Per-Millisecond velocity value;
+     * @param {type} startDeg
+     * @param {type} direction
+     * @param {type} degPerMs
+     * @returns {undefined}
+     */
     PKG.ArcBaseAnmimation = function (startDeg, direction, degPerMs) {
         PKG.AnimationComponent.call(this);
         var PI_PER_DEG = Math.PI / 180;
@@ -596,8 +667,8 @@
     PKG.ArcBaseAnmimation.prototype.getValue = function () {
         return this.currentArc;
     };
-//
-//
+    //
+    //
     PKG.SinValue = function (radius, arcValueFct) {
         this.arcValueFct = arcValueFct;
         this.radius = radius;
@@ -675,8 +746,15 @@
     PKG.BouncingPathAnimation.prototype.getValue = function () {
         return this.currentPos;
     };
-//
-//
+    //
+    //
+    /**
+     * Computes a path from "from" to "to" with velocity of "pixelPerMs" pixels per millisecond.
+     * @param {int} from start position in pixel 
+     * @param {int} to end postion in pixel
+     * @param {double} pixelPerMs velocity in pixel per millisecond
+     * @returns {undefined}
+     */
     PKG.PathAnimation2 = function (from, to, pixelPerMs) {
         PKG.AnimationComponent.call(this);
         //current pos
