@@ -97,13 +97,15 @@ git pull origin master
 
 # Merge changes to gh-pages branch
 git checkout gh-pages
-git merge master --no-ff -m "Merge ES6 refactored code to gh-pages"
+
+# Use the theirs strategy to prefer ES6 code over ES5 in case of conflicts
+git merge master --allow-unrelated-histories -X theirs -m "Merge ES6 refactored code to gh-pages"
 
 # Push to GitHub Pages
 git push origin gh-pages
 ```
 
-**Note:** The gh-pages branch currently contains ES5 code. Merging from master will bring in the ES6 refactored JavaScript files (animation.js, base.js, game.js, setupObjects.js) along with this README.
+**Note:** The gh-pages branch currently contains ES5 code. The merge strategy `-X theirs` ensures that the ES6 refactored JavaScript files (animation.js, base.js, game.js, setupObjects.js, main.js, plugins.js) from master replace the ES5 versions in case of conflicts. This also adds the README.md to gh-pages.
 
 The site will be available at: `https://huberp.github.io/CanvasAnimation/public_html/`
 
