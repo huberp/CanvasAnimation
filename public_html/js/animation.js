@@ -1,6 +1,6 @@
 //==============================================================================
 // Animation Classes
-(function (PKG, undefined) {
+((PKG) => {
 
     PKG.EVENT_TYPES = {
         OFF_SCREEN: {}
@@ -15,907 +15,1029 @@
         UNMANAGED_PENDING: {value: 16},
         UNMANAGED: {value: 32}
     };
-    /**
-     * Base Class for a object managed by ObjectManager.
-     * @returns {undefined}
-     */
-    PKG.ManagedObject = function () {
-        this.objectManager = undefined;
-        this.idx = undefined;
-        this.state = PKG.STATE.UNKNOWN;
-        //something like a z-order, order in which objects are about to be painted
-        //pbjects that are painted "later" might hide parts of objects that have been
-        //painted earlier
-        this.order = 0;
-    };
-    PKG.ManagedObject.prototype.setManager = function (manager, idx) {
-        this.objectManager = manager;
-        this.idx = idx;
-    };
-    PKG.ManagedObject.prototype.remove = function () {
-        this.objectManager.remove(this);
-        this.state = PKG.STATE.UNMANAGED_PENDING;
-    };
-    PKG.ManagedObject.prototype.getState = function () {
-        return this.state;
-    };
-    PKG.ManagedObject.prototype.setState = function (state) {
-        this.state = state;
-    };
-    PKG.ManagedObject.prototype.setOrder = function (order) {
-        this.order = order;
-        return this;
-    };
-    PKG.ManagedObject.prototype.getOrder = function () {
-        return this.order;
-    };
-    PKG.ManagedObject.sortComparator = function (a, b) {
-        return a.order - b.order;
-    };
-
-    /**
-     * Manages the Objects, mostly this should be Paintable top level objects.
-     * @returns {undefined}
-     */
-    PKG.ObjectManager = function () {
-        this.counter = 0;
-        this.animations = [];
-        this.additions = [];
-        this.deletions = [];
-    };
-    PKG.ObjectManager.prototype.add = function (animObj) {
-        this.additions.push(animObj);
-        if (typeof animObj.setManager === 'function') {
-            animObj.setManager(this, this.counter++);
-        }
-    };
-    PKG.ObjectManager.prototype.remove = function (animObj) {
-        this.deletions.push(animObj);
-        animObj.setState(PKG.STATE.UNMANAGED_PENDING);
-    };
-    PKG.ObjectManager.prototype.getAnimations = function () {
-        return this.animations;
-    };
-    PKG.ObjectManager.prototype.pause = function () {
-
-    };
-    PKG.ObjectManager.prototype.resume = function () {
-        var len = this.animations.length;
-        for (var i = 0; i < len; i++) {
-            if (typeof this.animations[i].resume === 'function') {
-                this.animations[i].resume();
-            }
-        }
-    };
-    /**
-     * add and remove will store changes in seperate array
-     * only until a call to commit at the end of each game loop.
-     * This is sort of a transaction.
-     */
-    PKG.ObjectManager.prototype.commit = function () {
-        var len = this.deletions.length;
-        for (var i = 0; i < len; i++) {
-            var len2 = this.animations.length;
-            for (var j = 0; j < len2; j++) {
-                if (this.animations[j].idx === this.deletions[i].idx) {
-                    this.deletions[i].setState(PKG.STATE.UNMANAGED);
-                    this.animations.splice(j, 1);
-                    break;
-                }
-            }
-        }
-        this.animations = this.animations.concat(this.additions);
-        this.animations.sort(PKG.ManagedObject.sortComparator);
-        this.additions = new Array();
-        this.deletions = new Array();
-        //console.log(this.animations.length);
-    };
-    /**
-     * Defines interface for an Object Listener
-     * @returns {undefined}
-     */
-    PKG.ObjectListener = function () {
-        this.eventType = function () {
-        };
-        this.listen = function (eventType, event) {
-        };
-    };
-
-    /**
-     * Base Class for objects that emit events and support listeners.
-     * Subclass of ManagedObject
-     * @returns {undefined}
-     */
-    PKG.ObjectListenerSupport = function () {
-        PKG.ManagedObject.call(this);
-        this.listeners = new Array();
-    };
-    PKG.ObjectListenerSupport.inheritsFrom(PKG.ManagedObject);
-    //console.log(this.listeners);
-    PKG.ObjectListenerSupport.prototype.addListener = function (listener) {
-        this.listeners.push(listener);
-        return this;
-    };
-    PKG.ObjectListenerSupport.prototype.fire = function (eventType, event) {
-        this.listeners.forEach(function (elem, idx, array) {
-            fireSingel(elem, idx, array, eventType, event);
-        });
-    };
-    PKG.ObjectListenerSupport.prototype.fireAsync = function (eventType, event) {
-        var len = this.listeners.length;
-        for (var i = 0; i < len; i++) {
-            timeout(function () {
-                fireSingle(this.listeners[i], i, this.listeners, eventType, event);
-            }, 2);
-        }
-    };
-    var fireSingel = function (listener, idx, array, eventType, event) {
+    
+    const fireSingel = (listener, idx, array, eventType, event) => {
         if (listener.eventType === eventType) {
             listener.listen(eventType, event);
         }
     };
+    
+    const compareNeg = (cur, to) => {
+        return cur <= to;
+    };
+    const comparePos = (cur, to) => {
+        return cur >= to;
+    };
 
-//
-//
+    /**
+     * Base Class for a object managed by ObjectManager.
+     */
+    class ManagedObject {
+        constructor() {
+            this.objectManager = undefined;
+            this.idx = undefined;
+            this.state = PKG.STATE.UNKNOWN;
+            //something like a z-order, order in which objects are about to be painted
+            //pbjects that are painted "later" might hide parts of objects that have been
+            //painted earlier
+            this.order = 0;
+        }
+        
+        setManager(manager, idx) {
+            this.objectManager = manager;
+            this.idx = idx;
+        }
+        
+        remove() {
+            this.objectManager.remove(this);
+            this.state = PKG.STATE.UNMANAGED_PENDING;
+        }
+        
+        getState() {
+            return this.state;
+        }
+        
+        setState(state) {
+            this.state = state;
+        }
+        
+        setOrder(order) {
+            this.order = order;
+            return this;
+        }
+        
+        getOrder() {
+            return this.order;
+        }
+        
+        static sortComparator(a, b) {
+            return a.order - b.order;
+        }
+    }
+
+    /**
+     * Manages the Objects, mostly this should be Paintable top level objects.
+     */
+    class ObjectManager {
+        constructor() {
+            this.counter = 0;
+            this.animations = [];
+            this.additions = [];
+            this.deletions = [];
+        }
+        
+        add(animObj) {
+            this.additions.push(animObj);
+            if (typeof animObj.setManager === 'function') {
+                animObj.setManager(this, this.counter++);
+            }
+        }
+        
+        remove(animObj) {
+            this.deletions.push(animObj);
+            animObj.setState(PKG.STATE.UNMANAGED_PENDING);
+        }
+        
+        getAnimations() {
+            return this.animations;
+        }
+        
+        pause() {
+        }
+        
+        resume() {
+            const len = this.animations.length;
+            for (let i = 0; i < len; i++) {
+                if (typeof this.animations[i].resume === 'function') {
+                    this.animations[i].resume();
+                }
+            }
+        }
+        
+        /**
+         * add and remove will store changes in seperate array
+         * only until a call to commit at the end of each game loop.
+         * This is sort of a transaction.
+         */
+        commit() {
+            const len = this.deletions.length;
+            for (let i = 0; i < len; i++) {
+                const len2 = this.animations.length;
+                for (let j = 0; j < len2; j++) {
+                    if (this.animations[j].idx === this.deletions[i].idx) {
+                        this.deletions[i].setState(PKG.STATE.UNMANAGED);
+                        this.animations.splice(j, 1);
+                        break;
+                    }
+                }
+            }
+            this.animations = this.animations.concat(this.additions);
+            this.animations.sort(ManagedObject.sortComparator);
+            this.additions = [];
+            this.deletions = [];
+            //console.log(this.animations.length);
+        }
+    }
+
+    /**
+     * Defines interface for an Object Listener
+     */
+    class ObjectListener {
+        constructor() {
+            this.eventType = () => {
+            };
+            this.listen = (eventType, event) => {
+            };
+        }
+    }
+
+    /**
+     * Base Class for objects that emit events and support listeners.
+     * Subclass of ManagedObject
+     */
+    class ObjectListenerSupport extends ManagedObject {
+        constructor() {
+            super();
+            this.listeners = [];
+        }
+        
+        addListener(listener) {
+            this.listeners.push(listener);
+            return this;
+        }
+        
+        fire(eventType, event) {
+            this.listeners.forEach((elem, idx, array) => {
+                fireSingel(elem, idx, array, eventType, event);
+            });
+        }
+        
+        fireAsync(eventType, event) {
+            const len = this.listeners.length;
+            for (let i = 0; i < len; i++) {
+                timeout(() => {
+                    fireSingel(this.listeners[i], i, this.listeners, eventType, event);
+                }, 2);
+            }
+        }
+    }
+
     /**
      * Base Class for an AnimationComponent. It's only purpose is
      * to manage a relationship to a parent of a composition tree.
      * Subclass of ObjectListenerSupport
-     * @returns {undefined}
      */
-    PKG.AnimationComponent = function () {
-        PKG.ObjectListenerSupport.call(this);
-        this.root = null;
-        //last update time - we do updates only each "updateDelay" milliseconds
-        this.lastUpdateTime = 0;
-    };
-    PKG.AnimationComponent.inheritsFrom(PKG.ObjectListenerSupport);
-    PKG.AnimationComponent.prototype.init = function () {
-        this.lastUpdateTime = performance.now();
-        return this;
-    };
-    PKG.AnimationComponent.prototype.update = function (current) {
-        this.lastUpdateTime = current;
-    };
-    PKG.AnimationComponent.prototype.pause = function () {
-        //nothing to do here
-    };
-    PKG.AnimationComponent.prototype.resume = function () {
-        this.lastUpdateTime = performance.now();
-    };
-    PKG.AnimationComponent.prototype.setRoot = function (parent) {
-        this.root = parent;
-    };
-    PKG.AnimationComponent.prototype.getRoot = function () {
-        return this.root;
-    };
-    //
-    //
+    class AnimationComponent extends ObjectListenerSupport {
+        constructor() {
+            super();
+            this.root = null;
+            //last update time - we do updates only each "updateDelay" milliseconds
+            this.lastUpdateTime = 0;
+        }
+        
+        init() {
+            this.lastUpdateTime = performance.now();
+            return this;
+        }
+        
+        update(current) {
+            this.lastUpdateTime = current;
+        }
+        
+        pause() {
+            //nothing to do here
+        }
+        
+        resume() {
+            this.lastUpdateTime = performance.now();
+        }
+        
+        setRoot(parent) {
+            this.root = parent;
+        }
+        
+        getRoot() {
+            return this.root;
+        }
+    }
+
     /**
-     * 
-     * @param {type} delegate
-     * @returns {undefined}
+     * AnimationComponentDelegate
      */
-    PKG.AnimationComponentDelegate = function (delegate) {
-        PKG.ObjectListenerSupport.call(this);
-        this.delegate = delegate;
-    };
-    PKG.AnimationComponentDelegate.inheritsFrom(PKG.ObjectListenerSupport);
-    PKG.AnimationComponentDelegate.prototype.init = function () {
-        this.delegate.init().setRoot(this);
-    };
-    PKG.AnimationComponentDelegate.prototype.update = function (current) {
-        return this.delegate.update(current);
-    };
-    PKG.AnimationComponentDelegate.prototype.pause = function () {
-        this.delegate.pause();
-    };
-    PKG.AnimationComponentDelegate.prototype.resume = function () {
-        this.delegate.resume();
-    };
-    PKG.AnimationComponentDelegate.prototype.setRoot = function (parent) {
-        this.delegate.setRoot(parent);
-    };
-    PKG.AnimationComponentDelegate.prototype.getRoot = function () {
-        return this.delegate.getRoot();
-    };
-    PKG.AnimationComponentDelegate.prototype.setOrder = function (order) {
-        this.delegate.setOrder(order);
-        return this;
-    };
-    PKG.AnimationComponentDelegate.prototype.getOrder = function () {
-        return this.delgate.getOrder();
-    };
-//
-//
+    class AnimationComponentDelegate extends ObjectListenerSupport {
+        constructor(delegate) {
+            super();
+            this.delegate = delegate;
+        }
+        
+        init() {
+            this.delegate.init().setRoot(this);
+        }
+        
+        update(current) {
+            return this.delegate.update(current);
+        }
+        
+        pause() {
+            this.delegate.pause();
+        }
+        
+        resume() {
+            this.delegate.resume();
+        }
+        
+        setRoot(parent) {
+            this.delegate.setRoot(parent);
+        }
+        
+        getRoot() {
+            return this.delegate.getRoot();
+        }
+        
+        setOrder(order) {
+            this.delegate.setOrder(order);
+            return this;
+        }
+        
+        getOrder() {
+            return this.delegate.getOrder();
+        }
+    }
+
     /**
      * Composition of two or more AnimationComponent object. This CompositionObject
      * is itself a AnimationComponent
-     * @param {type} components
-     * @returns {undefined}
      */
-    PKG.CompositeAnimationComponent = function (components) {
-        PKG.AnimationComponent.call(this);
-        this.components = components;
-    };
-    PKG.CompositeAnimationComponent.inheritsFrom(PKG.AnimationComponent);
-    PKG.CompositeAnimationComponent.prototype.init = function () {
-        var len = this.components.length;
-        for (var i = 0; i < len; i++) {
-            this.components[i].init();
+    class CompositeAnimationComponent extends AnimationComponent {
+        constructor(components) {
+            super();
+            this.components = components;
         }
-        this.setRoot(this);
-        return this;
-    };
-    PKG.CompositeAnimationComponent.prototype.update = function (current) {
-        var len = this.components.length;
-        for (var i = 0; i < len; i++) {
-            this.components[i].update(current);
+        
+        init() {
+            const len = this.components.length;
+            for (let i = 0; i < len; i++) {
+                this.components[i].init();
+            }
+            this.setRoot(this);
+            return this;
         }
-        return PKG.AnimationComponent.prototype.update.call(this, current);
-    };
-    PKG.CompositeAnimationComponent.prototype.setRoot = function (parent) {
-        this.root = parent;
-        var len = this.components.length;
-        for (var i = 0; i < len; i++) {
-            if (typeof this.components[i].setRoot === 'function') {
-                this.components[i].setRoot(parent);
+        
+        update(current) {
+            const len = this.components.length;
+            for (let i = 0; i < len; i++) {
+                this.components[i].update(current);
+            }
+            return super.update(current);
+        }
+        
+        setRoot(parent) {
+            this.root = parent;
+            const len = this.components.length;
+            for (let i = 0; i < len; i++) {
+                if (typeof this.components[i].setRoot === 'function') {
+                    this.components[i].setRoot(parent);
+                }
             }
         }
-    };
-    PKG.CompositeAnimationComponent.prototype.getRoot = function () {
-        return this.root;
-    };
-    PKG.CompositeAnimationComponent.prototype.resume = function () {
-        var len = this.components.length;
-        for (var i = 0; i < len; i++) {
-            if (typeof this.components[i].resume === 'function') {
-                this.components[i].resume();
+        
+        getRoot() {
+            return this.root;
+        }
+        
+        resume() {
+            const len = this.components.length;
+            for (let i = 0; i < len; i++) {
+                if (typeof this.components[i].resume === 'function') {
+                    this.components[i].resume();
+                }
             }
         }
-    };
-//
-//
+    }
+
     /**
      * PaintableWithStateIndicator combines a Paintable with a StateIndicator
-     * @param {type} paintable
-     * @param {type} objectStateIndicator optional state indicator. If provided this state indicators
-     *                  getState method is called to provide return values for this.getState() and this.update()
-     *                  State should be on of values of enum STATE. Such a StateIndicator could be a deaply nested PathAnimation which
-     *                  triggers when if falls off the screen. Keep in mind - even if StateIndicator is a PathAnimatzion it won't be updated here!
-     * @returns {animation_L50.PaintableWithStateIndicator}
      */
-    PKG.PaintableWithStateIndicator = function (paintable, objectStateIndicator) {
-        PKG.AnimationComponentDelegate.call(this, paintable);
-        this.paintable = paintable;
-        this.objectStateIndicator = objectStateIndicator;
-    };
-    PKG.PaintableWithStateIndicator.inheritsFrom(PKG.AnimationComponentDelegate);
-    PKG.PaintableWithStateIndicator.prototype.update = function (current) {
-        this.paintable.update(current);
-        return this.getState();
-    };
-    PKG.PaintableWithStateIndicator.prototype.paint = function (ctx) {
-        this.paintable.paint(ctx);
-    };
-    PKG.PaintableWithStateIndicator.prototype.getState = function () {
-        if (this.objectStateIndicator && typeof this.objectStateIndicator.getState === 'function') {
-            return this.objectStateIndicator.getState();
-        } else {
-            return this.state;
+    class PaintableWithStateIndicator extends AnimationComponentDelegate {
+        constructor(paintable, objectStateIndicator) {
+            super(paintable);
+            this.paintable = paintable;
+            this.objectStateIndicator = objectStateIndicator;
         }
-    };
+        
+        update(current) {
+            this.paintable.update(current);
+            return this.getState();
+        }
+        
+        paint(ctx) {
+            this.paintable.paint(ctx);
+        }
+        
+        getState() {
+            if (this.objectStateIndicator && typeof this.objectStateIndicator.getState === 'function') {
+                return this.objectStateIndicator.getState();
+            } else {
+                return this.state;
+            }
+        }
+    }
+
     /**
      * PaintableCombination combines two or more paintables (top level objects)
-     * @param {type} paintables array of paintable objects 
-     * @returns {animation_L50.PaintableCombination}
      */
-    PKG.PaintableCombination = function (paintables) {
-        PKG.CompositeAnimationComponent.call(this, paintables);
-    };
-    PKG.PaintableCombination.inheritsFrom(PKG.CompositeAnimationComponent);
-    PKG.PaintableCombination.prototype.paint = function (ctx) {
-        var len = this.components.length;
-        for (var i = 0; i < len; i++) {
-            this.components[i].paint(ctx);
+    class PaintableCombination extends CompositeAnimationComponent {
+        constructor(paintables) {
+            super(paintables);
         }
-    };
+        
+        paint(ctx) {
+            const len = this.components.length;
+            for (let i = 0; i < len; i++) {
+                this.components[i].paint(ctx);
+            }
+        }
+    }
 
-//
-//
     /**
-     * 
-     * @param {type} paintable
-     * @param {type} xyPosition
-     * @returns {undefined}
+     * PaintableWithAnimation
      */
-    PKG.PaintableWithAnimation = function (paintable, xyPosition) {
-        PKG.CompositeAnimationComponent.call(this, [paintable, xyPosition]);
-        this.paintable = paintable;
-        this.xyPosition = xyPosition;
-    };
-    PKG.PaintableWithAnimation.inheritsFrom(PKG.CompositeAnimationComponent);
-    PKG.PaintableWithAnimation.prototype.paint = function (ctx) {
-        this.paintable.paint(ctx, this.xyPosition.getX(), this.xyPosition.getY());
-    };
-    PKG.PaintableWithAnimation.prototype.getX = function () {
-        return this.xyPosition.getX();
-    };
-    PKG.PaintableWithAnimation.prototype.getY = function () {
-        return this.xyPosition.getY();
-    };
-    //
-    //
+    class PaintableWithAnimation extends CompositeAnimationComponent {
+        constructor(paintable, xyPosition) {
+            super([paintable, xyPosition]);
+            this.paintable = paintable;
+            this.xyPosition = xyPosition;
+        }
+        
+        paint(ctx) {
+            this.paintable.paint(ctx, this.xyPosition.getX(), this.xyPosition.getY());
+        }
+        
+        getX() {
+            return this.xyPosition.getX();
+        }
+        
+        getY() {
+            return this.xyPosition.getY();
+        }
+    }
+
     /**
      * Combines two XY animations.
      * Might be used to combine a simple base animation, let's say to move an object
-     * from to of screen to bottom (XYAnimation) and make a second object circle around it (CirclePathAnimation).  
-     * @param {type} relativeXYAnimation: animation relative to base animation
-     * @param {type} baseXYAnimation: base animation
-     * @returns {undefined}
+     * from to of screen to bottom (XYAnimation) and make a second object circle around it (CirclePathAnimation).
      */
-    PKG.RelativeXYAnimation = function (relativeXYAnimation, baseXYAnimation) {
-        PKG.CompositeAnimationComponent.call(this, [relativeXYAnimation, baseXYAnimation]);
-        this.baseXYAnimation = baseXYAnimation;
-        this.relativeXYAnimation = relativeXYAnimation;
-    };
-    PKG.RelativeXYAnimation.inheritsFrom(PKG.CompositeAnimationComponent);
-    PKG.RelativeXYAnimation.prototype.getX = function () {
-        return this.baseXYAnimation.getX() + this.relativeXYAnimation.getX();
-    };
-    PKG.RelativeXYAnimation.prototype.getY = function () {
-        return this.baseXYAnimation.getY() + this.relativeXYAnimation.getY();
-    };
-    PKG.RelativeXYAnimation.prototype.setX = function (x) {
-        this.baseXYAnimation.setPos(x);
-        return this;
-    };
-    PKG.RelativeXYAnimation.prototype.setY = function (y) {
-        this.baseXYAnimation.setPos(y);
-        return this;
-    };
-//
-//
+    class RelativeXYAnimation extends CompositeAnimationComponent {
+        constructor(relativeXYAnimation, baseXYAnimation) {
+            super([relativeXYAnimation, baseXYAnimation]);
+            this.baseXYAnimation = baseXYAnimation;
+            this.relativeXYAnimation = relativeXYAnimation;
+        }
+        
+        getX() {
+            return this.baseXYAnimation.getX() + this.relativeXYAnimation.getX();
+        }
+        
+        getY() {
+            return this.baseXYAnimation.getY() + this.relativeXYAnimation.getY();
+        }
+        
+        setX(x) {
+            this.baseXYAnimation.setPos(x);
+            return this;
+        }
+        
+        setY(y) {
+            this.baseXYAnimation.setPos(y);
+            return this;
+        }
+    }
+
     /**
-     * 
-     * @param {type} xyAnimation
-     * @param {type} deltaX
-     * @param {type} deltaY
-     * @returns {undefined}
+     * XYCorrection
      */
-    PKG.XYCorrection = function (xyAnimation, deltaX, deltaY) {
-        PKG.AnimationComponent.call(this);
-        this.xyAnimation = xyAnimation;
-        this.deltaX = deltaX;
-        this.deltaY = deltaY;
-    };
-    PKG.XYCorrection.inheritsFrom(PKG.AnimationComponent);
-    PKG.XYCorrection.prototype.init = function () {
-        var self = this;
-        this.xyAnimation.init().setRoot(self);
-        return this;
-    };
-    PKG.XYCorrection.prototype.update = function (current) {
-        return this.xyAnimation.update(current);
-    };
-    PKG.XYCorrection.prototype.getX = function () {
-        return this.deltaX + this.xyAnimation.getX();
-    };
-    PKG.XYCorrection.prototype.getY = function () {
-        return this.deltaY + this.xyAnimation.getY();
-    };
-    PKG.XYCorrection.prototype.setX = function (x) {
-        this.xyAnimation.setPos(x);
-        return this;
-    };
-    PKG.XYCorrection.prototype.setY = function (y) {
-        this.xyAnimation.setPos(y);
-        return this;
-    };
-    PKG.XYCorrection.prototype.resume = function () {
-        this.xyAnimation.resume();
-    };
-    //
-    //
+    class XYCorrection extends AnimationComponent {
+        constructor(xyAnimation, deltaX, deltaY) {
+            super();
+            this.xyAnimation = xyAnimation;
+            this.deltaX = deltaX;
+            this.deltaY = deltaY;
+        }
+        
+        init() {
+            const self = this;
+            this.xyAnimation.init().setRoot(self);
+            return this;
+        }
+        
+        update(current) {
+            return this.xyAnimation.update(current);
+        }
+        
+        getX() {
+            return this.deltaX + this.xyAnimation.getX();
+        }
+        
+        getY() {
+            return this.deltaY + this.xyAnimation.getY();
+        }
+        
+        setX(x) {
+            this.xyAnimation.setPos(x);
+            return this;
+        }
+        
+        setY(y) {
+            this.xyAnimation.setPos(y);
+            return this;
+        }
+        
+        resume() {
+            this.xyAnimation.resume();
+        }
+    }
+
     /**
      * Computes a relative position based on a changeable direction "direction2D"
      * and a speed "pixelPerMs". It will start with position (0,0). The direction can
-     * be updated with "setDirection". 
+     * be updated with "setDirection".
      * Best use: Use any Unit Vector as "direction2D". To start with a position other
      * than (0,0) please combine it with a RelativeXYAnimation;
      * Intention: Use for controling objects with key strokes.
-     * @param {BASE.Vector2D} direction2D
-     * @param {double} pixelPerMs
-     * @param {BASE.Rectangle2D} boundsRectangle2D bounds for moving around. Keep in mind that when you combine
-     *      it with RelativeXYAnimation then the bounds might be different from the screen bounds. Let's say
-     *      you place a space ship in the middel of the screen then bounding values would be approximately 
-     *      [-screenbounds/2, screenbounds/2] in x and y direction.
-     * @returns {undefined}
      */
-    PKG.Vector2DAnimation = function (direction2D, pixelPerMs, boundsRectangle2D) {
-        PKG.AnimationComponent.call(this);
-        this.direction2D = direction2D;
-        this.boundsRectangle2D = boundsRectangle2D;
-        this.pixelPerMs = pixelPerMs;
-        this.x = 0;
-        this.y = 0;
-    };
-    PKG.Vector2DAnimation.inheritsFrom(PKG.AnimationComponent);
-    PKG.Vector2DAnimation.prototype.getX = function () {
-        return this.x;
-    };
-    PKG.Vector2DAnimation.prototype.getY = function () {
-        return this.y;
-    };
-    PKG.Vector2DAnimation.prototype.setDirection = function (newDirection2D) {
-        return this.direction2D = newDirection2D;
-    };
-    PKG.Vector2DAnimation.prototype.update = function (current) {
-        var delta = current - this.lastUpdateTime;
-        this.lastUpdateTime = current;
-        //console.log(delta);
-        this.x = this.x + this.direction2D.x * delta * this.pixelPerMs;
-        this.y = this.y + this.direction2D.y * delta * this.pixelPerMs;
-        //
-        //think about emitting a bounds reached event?
-        if(this.x < this.boundsRectangle2D.xmin) {
-            this.x = this.boundsRectangle2D.xmin;
-        } else if(this.x > this.boundsRectangle2D.xmax) {
-            this.x = this.boundsRectangle2D.xmax;
+    class Vector2DAnimation extends AnimationComponent {
+        constructor(direction2D, pixelPerMs, boundsRectangle2D) {
+            super();
+            this.direction2D = direction2D;
+            this.boundsRectangle2D = boundsRectangle2D;
+            this.pixelPerMs = pixelPerMs;
+            this.x = 0;
+            this.y = 0;
         }
-        if(this.y < this.boundsRectangle2D.ymin) {
-            this.y = this.boundsRectangle2D.ymin;
-        } else if(this.y > this.boundsRectangle2D.ymax) {
-            this.y = this.boundsRectangle2D.ymax;
+        
+        getX() {
+            return this.x;
         }
-        return this.getState();
-    };
-    //
-    //
+        
+        getY() {
+            return this.y;
+        }
+        
+        setDirection(newDirection2D) {
+            return this.direction2D = newDirection2D;
+        }
+        
+        update(current) {
+            const delta = current - this.lastUpdateTime;
+            this.lastUpdateTime = current;
+            //console.log(delta);
+            this.x = this.x + this.direction2D.x * delta * this.pixelPerMs;
+            this.y = this.y + this.direction2D.y * delta * this.pixelPerMs;
+            //
+            //think about emitting a bounds reached event?
+            if (this.x < this.boundsRectangle2D.xmin) {
+                this.x = this.boundsRectangle2D.xmin;
+            } else if (this.x > this.boundsRectangle2D.xmax) {
+                this.x = this.boundsRectangle2D.xmax;
+            }
+            if (this.y < this.boundsRectangle2D.ymin) {
+                this.y = this.boundsRectangle2D.ymin;
+            } else if (this.y > this.boundsRectangle2D.ymax) {
+                this.y = this.boundsRectangle2D.ymax;
+            }
+            return this.getState();
+        }
+    }
+
     /**
      * Combines 2 basic animation objects to get a XYAnimation
      * which updates coordinates along both principal directions.
-     * @param {type} xAnimation
-     * @param {type} yAnimation
-     * @returns {undefined}
      */
-    PKG.XYAnimation = function (xAnimation, yAnimation) {
-        PKG.CompositeAnimationComponent.call(this, [xAnimation, yAnimation]);
-        this.xAnimation = xAnimation;
-        this.yAnimation = yAnimation;
-    };
-    PKG.XYAnimation.inheritsFrom(PKG.CompositeAnimationComponent);
-    PKG.XYAnimation.prototype.getX = function () {
-        return this.xAnimation.getValue();
-    };
-    PKG.XYAnimation.prototype.getY = function () {
-        return this.yAnimation.getValue();
-    };
-    PKG.XYAnimation.prototype.setX = function (x) {
-        this.xAnimation.setPos(x);
-        return this;
-    };
-    PKG.XYAnimation.prototype.setY = function (y) {
-        this.yAnimation.setPos(y);
-        return this;
-    };
-
-
-//
-//
-    PKG.XYAnimationPath = function (startX, startY, animationParts) {
-        PKG.AnimationComponent.call(this);
-        this.currentPart = null;
-        this.init = function () {
-            this.currentPart = animationParts.pop();
-            this.currentPart.setRoot(this.getRoot());
-            this.currentPart.init().setX(startX).setY(startY);
+    class XYAnimation extends CompositeAnimationComponent {
+        constructor(xAnimation, yAnimation) {
+            super([xAnimation, yAnimation]);
+            this.xAnimation = xAnimation;
+            this.yAnimation = yAnimation;
+        }
+        
+        getX() {
+            return this.xAnimation.getValue();
+        }
+        
+        getY() {
+            return this.yAnimation.getValue();
+        }
+        
+        setX(x) {
+            this.xAnimation.setPos(x);
             return this;
-        };
-        this.update = function (current) {
-            var retVal = this.currentPart.update(current);
+        }
+        
+        setY(y) {
+            this.yAnimation.setPos(y);
+            return this;
+        }
+    }
+
+    /**
+     * XYAnimationPath
+     */
+    class XYAnimationPath extends AnimationComponent {
+        constructor(startX, startY, animationParts) {
+            super();
+            this.startX = startX;
+            this.startY = startY;
+            this.animationParts = animationParts;
+            this.currentPart = null;
+        }
+        
+        init() {
+            this.currentPart = this.animationParts.pop();
+            this.currentPart.setRoot(this.getRoot());
+            this.currentPart.init().setX(this.startX).setY(this.startY);
+            return this;
+        }
+        
+        update(current) {
+            const retVal = this.currentPart.update(current);
             if (retVal === PKG.PART_STATE.STOP) {
-                if (animationParts.length > 0) {
+                if (this.animationParts.length > 0) {
                     this.init();
                 } else {
                     this.fire(PKG.EVENT_TYPES.OFF_SCREEN, this);
                 }
             }
-        };
-        this.getX = function () {
-            return currentPart.getValue();
-        };
-        this.getY = function () {
-            return currentPart.getValue();
-        };
-    };
-    PKG.XYAnimationPath.inheritsFrom(PKG.AnimationComponent);
-//
-//TODO
-    PKG.XYAnimationPathPart = function () {
-        this.PART_STATE = {
-            CONTINUE: {},
-            STOP: {}
-        };
-        this.init = function () {
-            var self = this;
+        }
+        
+        getX() {
+            return this.currentPart.getValue();
+        }
+        
+        getY() {
+            return this.currentPart.getValue();
+        }
+    }
+
+    /**
+     * XYAnimationPathPart - TODO
+     */
+    class XYAnimationPathPart {
+        constructor() {
+            this.PART_STATE = {
+                CONTINUE: {},
+                STOP: {}
+            };
+        }
+        
+        init() {
+            const self = this;
             xAnimation.init();
             yAnimation.init();
             xAnimation.setRoot(self);
             yAnimation.setRoot(self);
             return this;
-        };
-        this.update = function (current) {
-
-        };
-        this.getX = function () {
+        }
+        
+        update(current) {
+        }
+        
+        getX() {
             return xAnimation.getValue();
-        };
-        this.getY = function () {
+        }
+        
+        getY() {
             return yAnimation.getValue();
-        };
+        }
+    }
 
-    };
 //==============================================================================
 //Conrete Animation Implementations
-//
-//
-    PKG.OnOffIntervalls = function (eachMsec, forMsec) {
-        PKG.AnimationComponent.call(this);
-        this.elapsed = 0;
-        this.addedMsec = eachMsec + forMsec;
-        this.on = false;
-        this.eachMsec = eachMsec;
-    };
-    PKG.OnOffIntervalls.inheritsFrom(PKG.AnimationComponent);
-    PKG.OnOffIntervalls.prototype.update = function (current) {
-        this.elapsed += (current - this.lastUpdateTime);
-        if (this.elapsed > this.eachMsec) {
-            if (this.elapsed > this.addedMsec) {
-                this.elapsed = 0;
-                this.value = 0;
-                this.on = false;
-            } else {
-                this.on = true;
-            }
-        }
-        return PKG.AnimationComponent.prototype.update.call(this, current);
-    };
-    PKG.OnOffIntervalls.prototype.isOn = function () {
-        return this.on;
-    };
-//
-//
-    PKG.PosShake = function (onOffControl, shakeValue) {
-        PKG.CompositeAnimationComponent.call(this, [onOffControl]);
-        this.value = 0;
-        this.mult = 1;
-        this.onOffControl = onOffControl;
-        this.shakeValue = shakeValue;
-    };
-    PKG.PosShake.inheritsFrom(PKG.CompositeAnimationComponent);
-    PKG.PosShake.prototype.update = function (current) {
-        if (this.onOffControl.isOn()) {
-            this.mult = this.mult - 2 * this.mult;
-            this.value = this.mult * this.shakeValue;
-        } else {
-            this.value = 0;
-        }
-        return PKG.CompositeAnimationComponent.prototype.update.call(this, current);
-    };
-    PKG.PosShake.prototype.getValue = function () {
-        return this.value;
-    };
-    //
-    //
-    PKG.SumPosition = function (positionA, positionB) {
-        PKG.CompositeAnimationComponent.call(this, [positionA, positionB]);
-        this.getValue = function () {
-            return positionA.getValue() + positionB.getValue();
-        };
-    };
-    PKG.SumPosition.inheritsFrom(PKG.CompositeAnimationComponent);
 
-
-    PKG.Accellerator = function (lowSpeed, highSpeed, speedIncPerMs) {
-        PKG.AnimationComponent.call(this);
-        this.currentSpeed = lowSpeed;
-        this.lowSpeed = lowSpeed;
-        this.highSpeed = highSpeed;
-        this.speedIncPerMs = speedIncPerMs;
-    };
-    PKG.Accellerator.inheritsFrom(PKG.AnimationComponent);
-    PKG.Accellerator.prototype.init = function () {
-        this.lastUpdateTime = performance.now();
-        return this;
-    };
-    PKG.Accellerator.prototype.update = function (current) {
-        var delta = current - this.lastUpdateTime;
-        this.currentSpeed += delta * this.speedIncPerMs;
-        if (this.currentSpeed > this.highSpeed) {
-            this.currentSpeed = this.highSpeed;
-        }
-    };
-    PKG.Accellerator.prototype.getValue = function () {
-        return this.currentSpeed;
-    };
-    //
-    //
     /**
-     * Provides an Arc Value computed based on the time elapsed and a 
-     * Degree-Per-Millisecond velocity value;
-     * @param {type} startDeg
-     * @param {type} direction
-     * @param {type} degPerMs
-     * @returns {undefined}
+     * OnOffIntervalls
      */
-    PKG.ArcBaseAnmimation = function (startDeg, direction, degPerMs) {
-        PKG.AnimationComponent.call(this);
-        var PI_PER_DEG = Math.PI / 180;
-        //current pos
-        this.currentArc = startDeg * PI_PER_DEG;
-        //multiply direction in, so go forward or backward according to given parameter
-        this.arcPerMs = direction * degPerMs * PI_PER_DEG;
-        this.direction = direction;
-    };
-    PKG.ArcBaseAnmimation.inheritsFrom(PKG.AnimationComponent);
-    PKG.ArcBaseAnmimation.prototype.update = function (current) {
-        var delta = current - this.lastUpdateTime;
-        this.currentArc = (this.currentArc + delta * this.arcPerMs);
-        return PKG.AnimationComponent.prototype.update.call(this, current);
-    };
-    PKG.ArcBaseAnmimation.prototype.getValue = function () {
-        return this.currentArc;
-    };
-    //
-    //
-    PKG.SinValue = function (radius, arcValueFct) {
-        this.arcValueFct = arcValueFct;
-        this.radius = radius;
-    };
-    PKG.SinValue.prototype.getValue = function () {
-        return this.radius * Math.sin(this.arcValueFct.getValue());
-    };
-    //
-    //
-    PKG.CosValue = function (radius, arcValueFct) {
-        this.arcValueFct = arcValueFct;
-        this.radius = radius;
-    };
-    PKG.CosValue.prototype.getValue = function () {
-        return this.radius * Math.cos(this.arcValueFct.getValue());
-    };
-    //
-    //
-    PKG.DeltaValue = function (delta, inputValueFct) {
-        this.inputValueFct = inputValueFct;
-        this.delta = delta;
-    };
-    PKG.DeltaValue.prototype.getValue = function () {
-        return this.inputValueFct.getValue() + delta;
-    };
-    //
-    //
-    PKG.CirclePathAnimation = function (radius, startDeg, direction, degPerMs) {
-        PKG.AnimationComponent.call(this);
-        this.arcValueFct = new PKG.ArcBaseAnmimation(startDeg, direction, degPerMs);
-        this.cos = new PKG.CosValue(radius, this.arcValueFct);
-        this.sin = new PKG.SinValue(radius, this.arcValueFct);
-    };
-    PKG.CirclePathAnimation.inheritsFrom(PKG.AnimationComponent);
-    PKG.CirclePathAnimation.prototype.update = function (current) {
-        this.arcValueFct.update(current);
-        return PKG.AnimationComponent.prototype.update.call(this, current);
-    };
-    PKG.CirclePathAnimation.prototype.getX = function () {
-        return this.cos.getValue();
-    };
-    PKG.CirclePathAnimation.prototype.getY = function () {
-        return this.sin.getValue();
-    };
-    /**
-     * 
-     * @param {type} posMin
-     * @param {type} posMax
-     * @param {type} pixelPerMs
-     * @returns {undefined}
-     */
-    PKG.BouncingPathAnimation = function (posMin, posMax, pixelPerMs) {
-        PKG.AnimationComponent.call(this);
-        //current pos
-        this.currentPos = posMin;
-        this.direction = (posMax - posMin) / Math.abs(posMax - posMin);
-        this.pixelPerMs = pixelPerMs;
-        this.posMax = posMax;
-        this.posMin = posMin;
-    };
-    PKG.BouncingPathAnimation.inheritsFrom(PKG.AnimationComponent);
-    PKG.BouncingPathAnimation.prototype.init = function () {
-        lastUpdateTime = performance.now();
-        return this;
-    };
-    PKG.BouncingPathAnimation.prototype.update = function (current) {
-        var delta = current - this.lastUpdateTime;
-        this.currentPos = this.currentPos + this.direction * delta * this.pixelPerMs;
-        if (this.currentPos >= this.posMax)
-            this.direction = -1;
-        if (this.currentPos <= this.posMin)
-            this.direction = 1;
-        this.lastUpdateTime = current;
-    };
-    PKG.BouncingPathAnimation.prototype.getValue = function () {
-        return this.currentPos;
-    };
-    //
-    //
-    /**
-     * Computes a path from "from" to "to" with velocity of "pixelPerMs" pixels per millisecond.
-     * @param {int} from start position in pixel 
-     * @param {int} to end postion in pixel
-     * @param {double} pixelPerMs velocity in pixel per millisecond
-     * @returns {undefined}
-     */
-    PKG.PathAnimation2 = function (from, to, pixelPerMs) {
-        PKG.AnimationComponent.call(this);
-        //current pos
-        this.currentPos = from;
-        this.direction = (to - from) / Math.abs(to - from);
-        this.pixelPerMs = pixelPerMs;
-        this.to = to;
-        this.from = from;
-    };
-    PKG.PathAnimation2.inheritsFrom(PKG.AnimationComponent);
-    PKG.PathAnimation2.prototype.init = function () {
-        this.currentPos = this.from;
-        this.lastUpdateTime = performance.now();
-        return this;
-    };
-    PKG.PathAnimation2.prototype.update = function (current) {
-        var delta = current - this.lastUpdateTime;
-        this.lastUpdateTime = current;
-        //console.log(delta);
-        this.currentPos = this.currentPos + this.direction * delta * this.pixelPerMs;
-        if (compare(this.currentPos, this.to)) {
-            if (this.getState() !== PKG.STATE.INACTIVE_PENDING) {
-                this.fire(PKG.EVENT_TYPES.OFF_SCREEN, this);
-            }
-            this.setState(PKG.STATE.INACTIVE_PENDING);
+    class OnOffIntervalls extends AnimationComponent {
+        constructor(eachMsec, forMsec) {
+            super();
+            this.elapsed = 0;
+            this.addedMsec = eachMsec + forMsec;
+            this.on = false;
+            this.eachMsec = eachMsec;
         }
-        return this.getState();
-    };
-    PKG.PathAnimation2.prototype.getValue = function () {
-        return this.currentPos;
-    };
-    var compareNeg = function (cur, to) {
-        return cur <= to;
-    };
-    var comparePos = function (cur, to) {
-        return cur >= to;
-    };
-    var compare = this.direction <= 0 ? compareNeg : comparePos;
-
-//
-//
-    PKG.FixValueAnimation = function (value) {
-        PKG.AnimationComponent.call(this);
-        this.value = value;
-    };
-    PKG.FixValueAnimation.inheritsFrom(PKG.AnimationComponent);
-    PKG.FixValueAnimation.prototype.getValue = function () {
-        return this.value;
-    };
-    PKG.FixValueAnimation.prototype.setPos = function (pos) {
-        //use this for XYAnimationPathPart
-        this.value = pos;
-    };
-
-//
-//
-    PKG.SpriteDescriptor = function (img, sx, sy, gridWidth, noSprites) {
-        this.img = img;
-        this.sx = sx;
-        this.sy = sy;
-        this.gridWidth = gridWidth;
-        this.noSprites = noSprites;
-    };
-//
-//
-    PKG.SpriteAnimation = function (spriteDescriptor, direction, oneTime, updateDelay, alpha) {
-        PKG.AnimationComponent.call(this);
-        this.spriteDescriptor = spriteDescriptor;
-        //current index into spritephases - nosprites is maximum
-        this.currentPos = 0;
-        //animBase is 0 if direction is +1 and nosprites if direction is -1
-        //this allows for backward and forward animation
-        this.animBase = direction === -1 ? spriteDescriptor.noSprites - 1 : 0;
-        this.oneTime = oneTime;
-        this.updateDelay = updateDelay;
-        this.alpha = alpha;
-        this.direction = direction;
-    };
-    PKG.SpriteAnimation.inheritsFrom(PKG.AnimationComponent);
-    PKG.SpriteAnimation.prototype.update = function (current) {
-        //reference shortcuts for better performance and shorter expressions
-        var noSprites = this.spriteDescriptor.noSprites;
-        //only update if updateDelay has benn exceeded. this allows for different
-        //update sppeds. but be aware that the delay may exceed one sprite-step
-        //so we have to check if we have to do more than one step here
-        var delay = current - this.lastUpdateTime;
-        if (delay > this.updateDelay) {
-            this.currentPos = this.currentPos + Math.floor(delay / this.updateDelay);
-            if (this.oneTime) {
-                //console.log("Sprite: "+nosprites+"; "+this.currentPos+"; "+(direction)+"; "+delay+"; "+updateDelay);
-                if ((this.direction === 1 && this.currentPos >= noSprites) || (this.direction === -1 && this.currentPos <= 0)) {
-                    if (this.getState() !== PKG.STATE.INACTIVE_PENDING) {
-                        this.fire(PKG.EVENT_TYPES.OFF_SCREEN, this);
-                    }
-                    this.setState(PKG.STATE.INACTIVE_PENDING);
+        
+        update(current) {
+            this.elapsed += (current - this.lastUpdateTime);
+            if (this.elapsed > this.eachMsec) {
+                if (this.elapsed > this.addedMsec) {
+                    this.elapsed = 0;
+                    this.value = 0;
+                    this.on = false;
+                } else {
+                    this.on = true;
                 }
             }
-            this.currentPos = this.currentPos % noSprites;
+            return super.update(current);
+        }
+        
+        isOn() {
+            return this.on;
+        }
+    }
+
+    /**
+     * PosShake
+     */
+    class PosShake extends CompositeAnimationComponent {
+        constructor(onOffControl, shakeValue) {
+            super([onOffControl]);
+            this.value = 0;
+            this.mult = 1;
+            this.onOffControl = onOffControl;
+            this.shakeValue = shakeValue;
+        }
+        
+        update(current) {
+            if (this.onOffControl.isOn()) {
+                this.mult = this.mult - 2 * this.mult;
+                this.value = this.mult * this.shakeValue;
+            } else {
+                this.value = 0;
+            }
+            return super.update(current);
+        }
+        
+        getValue() {
+            return this.value;
+        }
+    }
+
+    /**
+     * SumPosition
+     */
+    class SumPosition extends CompositeAnimationComponent {
+        constructor(positionA, positionB) {
+            super([positionA, positionB]);
+            this.positionA = positionA;
+            this.positionB = positionB;
+        }
+        
+        getValue() {
+            return this.positionA.getValue() + this.positionB.getValue();
+        }
+    }
+
+    /**
+     * Accellerator
+     */
+    class Accellerator extends AnimationComponent {
+        constructor(lowSpeed, highSpeed, speedIncPerMs) {
+            super();
+            this.currentSpeed = lowSpeed;
+            this.lowSpeed = lowSpeed;
+            this.highSpeed = highSpeed;
+            this.speedIncPerMs = speedIncPerMs;
+        }
+        
+        init() {
+            this.lastUpdateTime = performance.now();
+            return this;
+        }
+        
+        update(current) {
+            const delta = current - this.lastUpdateTime;
+            this.currentSpeed += delta * this.speedIncPerMs;
+            if (this.currentSpeed > this.highSpeed) {
+                this.currentSpeed = this.highSpeed;
+            }
+        }
+        
+        getValue() {
+            return this.currentSpeed;
+        }
+    }
+
+    /**
+     * Provides an Arc Value computed based on the time elapsed and a
+     * Degree-Per-Millisecond velocity value;
+     */
+    class ArcBaseAnmimation extends AnimationComponent {
+        constructor(startDeg, direction, degPerMs) {
+            super();
+            const PI_PER_DEG = Math.PI / 180;
+            //current pos
+            this.currentArc = startDeg * PI_PER_DEG;
+            //multiply direction in, so go forward or backward according to given parameter
+            this.arcPerMs = direction * degPerMs * PI_PER_DEG;
+            this.direction = direction;
+        }
+        
+        update(current) {
+            const delta = current - this.lastUpdateTime;
+            this.currentArc = (this.currentArc + delta * this.arcPerMs);
+            return super.update(current);
+        }
+        
+        getValue() {
+            return this.currentArc;
+        }
+    }
+
+    /**
+     * SinValue
+     */
+    class SinValue {
+        constructor(radius, arcValueFct) {
+            this.arcValueFct = arcValueFct;
+            this.radius = radius;
+        }
+        
+        getValue() {
+            return this.radius * Math.sin(this.arcValueFct.getValue());
+        }
+    }
+
+    /**
+     * CosValue
+     */
+    class CosValue {
+        constructor(radius, arcValueFct) {
+            this.arcValueFct = arcValueFct;
+            this.radius = radius;
+        }
+        
+        getValue() {
+            return this.radius * Math.cos(this.arcValueFct.getValue());
+        }
+    }
+
+    /**
+     * DeltaValue
+     */
+    class DeltaValue {
+        constructor(delta, inputValueFct) {
+            this.inputValueFct = inputValueFct;
+            this.delta = delta;
+        }
+        
+        getValue() {
+            return this.inputValueFct.getValue() + this.delta;
+        }
+    }
+
+    /**
+     * CirclePathAnimation
+     */
+    class CirclePathAnimation extends AnimationComponent {
+        constructor(radius, startDeg, direction, degPerMs) {
+            super();
+            this.arcValueFct = new ArcBaseAnmimation(startDeg, direction, degPerMs);
+            this.cos = new CosValue(radius, this.arcValueFct);
+            this.sin = new SinValue(radius, this.arcValueFct);
+        }
+        
+        update(current) {
+            this.arcValueFct.update(current);
+            return super.update(current);
+        }
+        
+        getX() {
+            return this.cos.getValue();
+        }
+        
+        getY() {
+            return this.sin.getValue();
+        }
+    }
+
+    /**
+     * BouncingPathAnimation
+     */
+    class BouncingPathAnimation extends AnimationComponent {
+        constructor(posMin, posMax, pixelPerMs) {
+            super();
+            //current pos
+            this.currentPos = posMin;
+            this.direction = (posMax - posMin) / Math.abs(posMax - posMin);
+            this.pixelPerMs = pixelPerMs;
+            this.posMax = posMax;
+            this.posMin = posMin;
+        }
+        
+        init() {
+            this.lastUpdateTime = performance.now();
+            return this;
+        }
+        
+        update(current) {
+            const delta = current - this.lastUpdateTime;
+            this.currentPos = this.currentPos + this.direction * delta * this.pixelPerMs;
+            if (this.currentPos >= this.posMax)
+                this.direction = -1;
+            if (this.currentPos <= this.posMin)
+                this.direction = 1;
             this.lastUpdateTime = current;
         }
-    };
-    PKG.SpriteAnimation.prototype.paint = function (ctx, px, py) {
-        //reference shortcuts for better performance and shorter expressions
-        var spriteDesc = this.spriteDescriptor;
-        var sx = spriteDesc.sx;
-        var sy = spriteDesc.sy;
-        //compute idx based on animBase and direction - this allows for forward and backward animation
-        var idx = (this.animBase + this.direction * this.currentPos);
-        var y = Math.floor(idx / spriteDesc.gridWidth);
-        var x = Math.floor(idx % spriteDesc.gridWidth);
-        var currentAlpha = ctx.globalAlpha;
-        ctx.globalAlpha = this.alpha;
-        ctx.drawImage(spriteDesc.img, x * sx, y * sy, sx, sy, px, py, sx, sy);
-        ctx.globalAlpha = currentAlpha;
-    };
+        
+        getValue() {
+            return this.currentPos;
+        }
+    }
 
-//
-//
-    PKG.ImgPainter = function (img, width, height) {
-        PKG.AnimationComponent.call(this);
-        this.paint = function (ctx, px, py) {
-            ctx.drawImage(img, px, py, width, height);
-        };
-    };
-    PKG.ImgPainter.inheritsFrom(PKG.AnimationComponent);
-//
-
-
-    PKG.CirclePainter = function (color, radius, position) {
-        PKG.AnimationComponent.call(this);
-        this.init = function () {
+    /**
+     * Computes a path from "from" to "to" with velocity of "pixelPerMs" pixels per millisecond.
+     */
+    class PathAnimation2 extends AnimationComponent {
+        constructor(from, to, pixelPerMs) {
+            super();
+            //current pos
+            this.currentPos = from;
+            this.direction = (to - from) / Math.abs(to - from);
+            this.pixelPerMs = pixelPerMs;
+            this.to = to;
+            this.from = from;
+            this.compare = this.direction <= 0 ? compareNeg : comparePos;
+        }
+        
+        init() {
+            this.currentPos = this.from;
+            this.lastUpdateTime = performance.now();
             return this;
-        };
-        this.update = function (current) {
-        };
-        this.paint = function (ctx, px, py) {
+        }
+        
+        update(current) {
+            const delta = current - this.lastUpdateTime;
+            this.lastUpdateTime = current;
+            //console.log(delta);
+            this.currentPos = this.currentPos + this.direction * delta * this.pixelPerMs;
+            if (this.compare(this.currentPos, this.to)) {
+                if (this.getState() !== PKG.STATE.INACTIVE_PENDING) {
+                    this.fire(PKG.EVENT_TYPES.OFF_SCREEN, this);
+                }
+                this.setState(PKG.STATE.INACTIVE_PENDING);
+            }
+            return this.getState();
+        }
+        
+        getValue() {
+            return this.currentPos;
+        }
+    }
+
+    /**
+     * FixValueAnimation
+     */
+    class FixValueAnimation extends AnimationComponent {
+        constructor(value) {
+            super();
+            this.value = value;
+        }
+        
+        getValue() {
+            return this.value;
+        }
+        
+        setPos(pos) {
+            //use this for XYAnimationPathPart
+            this.value = pos;
+        }
+    }
+
+    /**
+     * SpriteDescriptor
+     */
+    class SpriteDescriptor {
+        constructor(img, sx, sy, gridWidth, noSprites) {
+            this.img = img;
+            this.sx = sx;
+            this.sy = sy;
+            this.gridWidth = gridWidth;
+            this.noSprites = noSprites;
+        }
+    }
+
+    /**
+     * SpriteAnimation
+     */
+    class SpriteAnimation extends AnimationComponent {
+        constructor(spriteDescriptor, direction, oneTime, updateDelay, alpha) {
+            super();
+            this.spriteDescriptor = spriteDescriptor;
+            //current index into spritephases - nosprites is maximum
+            this.currentPos = 0;
+            //animBase is 0 if direction is +1 and nosprites if direction is -1
+            //this allows for backward and forward animation
+            this.animBase = direction === -1 ? spriteDescriptor.noSprites - 1 : 0;
+            this.oneTime = oneTime;
+            this.updateDelay = updateDelay;
+            this.alpha = alpha;
+            this.direction = direction;
+        }
+        
+        update(current) {
+            //reference shortcuts for better performance and shorter expressions
+            const noSprites = this.spriteDescriptor.noSprites;
+            //only update if updateDelay has benn exceeded. this allows for different
+            //update sppeds. but be aware that the delay may exceed one sprite-step
+            //so we have to check if we have to do more than one step here
+            const delay = current - this.lastUpdateTime;
+            if (delay > this.updateDelay) {
+                this.currentPos = this.currentPos + Math.floor(delay / this.updateDelay);
+                if (this.oneTime) {
+                    //console.log("Sprite: "+nosprites+"; "+this.currentPos+"; "+(direction)+"; "+delay+"; "+updateDelay);
+                    if ((this.direction === 1 && this.currentPos >= noSprites) || (this.direction === -1 && this.currentPos <= 0)) {
+                        if (this.getState() !== PKG.STATE.INACTIVE_PENDING) {
+                            this.fire(PKG.EVENT_TYPES.OFF_SCREEN, this);
+                        }
+                        this.setState(PKG.STATE.INACTIVE_PENDING);
+                    }
+                }
+                this.currentPos = this.currentPos % noSprites;
+                this.lastUpdateTime = current;
+            }
+        }
+        
+        paint(ctx, px, py) {
+            //reference shortcuts for better performance and shorter expressions
+            const spriteDesc = this.spriteDescriptor;
+            const sx = spriteDesc.sx;
+            const sy = spriteDesc.sy;
+            //compute idx based on animBase and direction - this allows for forward and backward animation
+            const idx = (this.animBase + this.direction * this.currentPos);
+            const y = Math.floor(idx / spriteDesc.gridWidth);
+            const x = Math.floor(idx % spriteDesc.gridWidth);
+            const currentAlpha = ctx.globalAlpha;
+            ctx.globalAlpha = this.alpha;
+            ctx.drawImage(spriteDesc.img, x * sx, y * sy, sx, sy, px, py, sx, sy);
+            ctx.globalAlpha = currentAlpha;
+        }
+    }
+
+    /**
+     * ImgPainter
+     */
+    class ImgPainter extends AnimationComponent {
+        constructor(img, width, height) {
+            super();
+            this.img = img;
+            this.width = width;
+            this.height = height;
+        }
+        
+        paint(ctx, px, py) {
+            ctx.drawImage(this.img, px, py, this.width, this.height);
+        }
+    }
+
+    /**
+     * CirclePainter
+     */
+    class CirclePainter extends AnimationComponent {
+        constructor(color, radius, position) {
+            super();
+            this.color = color;
+            this.radius = radius;
+            this.position = position;
+        }
+        
+        init() {
+            return this;
+        }
+        
+        update(current) {
+        }
+        
+        paint(ctx, px, py) {
             ctx.beginPath();
-            ctx.arc(position.getX(), position.getY(), radius, 0, 2 * Math.PI, false);
+            ctx.arc(this.position.getX(), this.position.getY(), this.radius, 0, 2 * Math.PI, false);
             ctx.lineWidth = 1;
             ctx.strokeStyle = '#FFFFFF';
             ctx.stroke();
-        };
-    };
-    PKG.CirclePainter.inheritsFrom(PKG.AnimationComponent);
+        }
+    }
 
-    PKG.FPSRenderer = function () {
-        PKG.AnimationComponent.call(this);
-        this.paints = 0;
-        this.accumulatedDelay = 0;
-        this.fps = 0;
-        this.msec = 2000;
-        this.init = function () {
+    /**
+     * FPSRenderer
+     */
+    class FPSRenderer extends AnimationComponent {
+        constructor() {
+            super();
+            this.paints = 0;
+            this.accumulatedDelay = 0;
+            this.fps = 0;
+            this.msec = 2000;
+        }
+        
+        init() {
             return this;
-        };
-        this.update = function (current) {
-
-        };
-        this.paint = function (ctx) {
+        }
+        
+        update(current) {
+        }
+        
+        paint(ctx) {
             this.paints++;
-            var current = performance.now();
-            var elapsed = current - this.lastUpdateTime;
+            const current = performance.now();
+            const elapsed = current - this.lastUpdateTime;
             this.accumulatedDelay += elapsed;
             this.lastUpdateTime = current;
             if (this.accumulatedDelay >= this.msec) {
@@ -926,8 +1048,42 @@
             ctx.font = '20pt Calibri';
             ctx.fillStyle = 'red';
             ctx.fillText(this.fps.toFixed(1)/*+"; "+elapsed.toFixed(2)*/, 50, 50);
-        };
-    };
-    PKG.FPSRenderer.inheritsFrom(PKG.AnimationComponent);
+        }
+    }
+
+    // Export all classes to PKG
+    PKG.ManagedObject = ManagedObject;
+    PKG.ObjectManager = ObjectManager;
+    PKG.ObjectListener = ObjectListener;
+    PKG.ObjectListenerSupport = ObjectListenerSupport;
+    PKG.AnimationComponent = AnimationComponent;
+    PKG.AnimationComponentDelegate = AnimationComponentDelegate;
+    PKG.CompositeAnimationComponent = CompositeAnimationComponent;
+    PKG.PaintableWithStateIndicator = PaintableWithStateIndicator;
+    PKG.PaintableCombination = PaintableCombination;
+    PKG.PaintableWithAnimation = PaintableWithAnimation;
+    PKG.RelativeXYAnimation = RelativeXYAnimation;
+    PKG.XYCorrection = XYCorrection;
+    PKG.Vector2DAnimation = Vector2DAnimation;
+    PKG.XYAnimation = XYAnimation;
+    PKG.XYAnimationPath = XYAnimationPath;
+    PKG.XYAnimationPathPart = XYAnimationPathPart;
+    PKG.OnOffIntervalls = OnOffIntervalls;
+    PKG.PosShake = PosShake;
+    PKG.SumPosition = SumPosition;
+    PKG.Accellerator = Accellerator;
+    PKG.ArcBaseAnmimation = ArcBaseAnmimation;
+    PKG.SinValue = SinValue;
+    PKG.CosValue = CosValue;
+    PKG.DeltaValue = DeltaValue;
+    PKG.CirclePathAnimation = CirclePathAnimation;
+    PKG.BouncingPathAnimation = BouncingPathAnimation;
+    PKG.PathAnimation2 = PathAnimation2;
+    PKG.FixValueAnimation = FixValueAnimation;
+    PKG.SpriteDescriptor = SpriteDescriptor;
+    PKG.SpriteAnimation = SpriteAnimation;
+    PKG.ImgPainter = ImgPainter;
+    PKG.CirclePainter = CirclePainter;
+    PKG.FPSRenderer = FPSRenderer;
 
 })(window.ANIMATION = window.ANIMATION || {});
