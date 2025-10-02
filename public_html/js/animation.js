@@ -1,38 +1,37 @@
 //==============================================================================
-// Animation Classes
-((PKG) => {
+// Animation Classes - ES6 Module
 
-    PKG.EVENT_TYPES = {
-        OFF_SCREEN: {}
-    };
+export const EVENT_TYPES = {
+    OFF_SCREEN: {}
+};
 
-    PKG.STATE = {
-        UNKNOWN: {value: 0},
-        NEW: {value: 1},
-        RUN: {value: 2},
-        INACTIVE_PENDING: {value: 4},
-        INACTIVE: {value: 8},
-        UNMANAGED_PENDING: {value: 16},
-        UNMANAGED: {value: 32}
-    };
-    
-    const fireSingel = (listener, idx, array, eventType, event) => {
-        if (listener.eventType === eventType) {
-            listener.listen(eventType, event);
-        }
-    };
-    
-    const compareNeg = (cur, to) => {
-        return cur <= to;
-    };
-    const comparePos = (cur, to) => {
-        return cur >= to;
-    };
+export const STATE = {
+    UNKNOWN: {value: 0},
+    NEW: {value: 1},
+    RUN: {value: 2},
+    INACTIVE_PENDING: {value: 4},
+    INACTIVE: {value: 8},
+    UNMANAGED_PENDING: {value: 16},
+    UNMANAGED: {value: 32}
+};
 
-    /**
-     * Base Class for a object managed by ObjectManager.
-     */
-    class ManagedObject {
+const fireSingel = (listener, idx, array, eventType, event) => {
+    if (listener.eventType === eventType) {
+        listener.listen(eventType, event);
+    }
+};
+
+const compareNeg = (cur, to) => {
+    return cur <= to;
+};
+const comparePos = (cur, to) => {
+    return cur >= to;
+};
+
+/**
+ * Base Class for a object managed by ObjectManager.
+ */
+export class ManagedObject {
         constructor() {
             this.objectManager = undefined;
             this.idx = undefined;
@@ -75,10 +74,10 @@
         }
     }
 
-    /**
-     * Manages the Objects, mostly this should be Paintable top level objects.
-     */
-    class ObjectManager {
+/**
+ * Manages the Objects, mostly this should be Paintable top level objects.
+ */
+export class ObjectManager {
         constructor() {
             this.counter = 0;
             this.animations = [];
@@ -139,10 +138,10 @@
         }
     }
 
-    /**
-     * Defines interface for an Object Listener
-     */
-    class ObjectListener {
+/**
+ * Defines interface for an Object Listener
+ */
+export class ObjectListener {
         constructor() {
             this.eventType = () => {
             };
@@ -151,11 +150,11 @@
         }
     }
 
-    /**
-     * Base Class for objects that emit events and support listeners.
-     * Subclass of ManagedObject
-     */
-    class ObjectListenerSupport extends ManagedObject {
+/**
+ * Base Class for objects that emit events and support listeners.
+ * Subclass of ManagedObject
+ */
+export class ObjectListenerSupport extends ManagedObject {
         constructor() {
             super();
             this.listeners = [];
@@ -182,12 +181,12 @@
         }
     }
 
-    /**
-     * Base Class for an AnimationComponent. It's only purpose is
-     * to manage a relationship to a parent of a composition tree.
-     * Subclass of ObjectListenerSupport
-     */
-    class AnimationComponent extends ObjectListenerSupport {
+/**
+ * Base Class for an AnimationComponent. It's only purpose is
+ * to manage a relationship to a parent of a composition tree.
+ * Subclass of ObjectListenerSupport
+ */
+export class AnimationComponent extends ObjectListenerSupport {
         constructor() {
             super();
             this.root = null;
@@ -221,10 +220,10 @@
         }
     }
 
-    /**
-     * AnimationComponentDelegate
-     */
-    class AnimationComponentDelegate extends ObjectListenerSupport {
+/**
+ * AnimationComponentDelegate
+ */
+export class AnimationComponentDelegate extends ObjectListenerSupport {
         constructor(delegate) {
             super();
             this.delegate = delegate;
@@ -264,11 +263,11 @@
         }
     }
 
-    /**
-     * Composition of two or more AnimationComponent object. This CompositionObject
-     * is itself a AnimationComponent
-     */
-    class CompositeAnimationComponent extends AnimationComponent {
+/**
+ * Composition of two or more AnimationComponent object. This CompositionObject
+ * is itself a AnimationComponent
+ */
+export class CompositeAnimationComponent extends AnimationComponent {
         constructor(components) {
             super();
             this.components = components;
@@ -315,10 +314,10 @@
         }
     }
 
-    /**
-     * PaintableWithStateIndicator combines a Paintable with a StateIndicator
-     */
-    class PaintableWithStateIndicator extends AnimationComponentDelegate {
+/**
+ * PaintableWithStateIndicator combines a Paintable with a StateIndicator
+ */
+export class PaintableWithStateIndicator extends AnimationComponentDelegate {
         constructor(paintable, objectStateIndicator) {
             super(paintable);
             this.paintable = paintable;
@@ -343,10 +342,10 @@
         }
     }
 
-    /**
-     * PaintableCombination combines two or more paintables (top level objects)
-     */
-    class PaintableCombination extends CompositeAnimationComponent {
+/**
+ * PaintableCombination combines two or more paintables (top level objects)
+ */
+export class PaintableCombination extends CompositeAnimationComponent {
         constructor(paintables) {
             super(paintables);
         }
@@ -359,10 +358,10 @@
         }
     }
 
-    /**
-     * PaintableWithAnimation
-     */
-    class PaintableWithAnimation extends CompositeAnimationComponent {
+/**
+ * PaintableWithAnimation
+ */
+export class PaintableWithAnimation extends CompositeAnimationComponent {
         constructor(paintable, xyPosition) {
             super([paintable, xyPosition]);
             this.paintable = paintable;
@@ -382,12 +381,12 @@
         }
     }
 
-    /**
-     * Combines two XY animations.
-     * Might be used to combine a simple base animation, let's say to move an object
-     * from to of screen to bottom (XYAnimation) and make a second object circle around it (CirclePathAnimation).
-     */
-    class RelativeXYAnimation extends CompositeAnimationComponent {
+/**
+ * Combines two XY animations.
+ * Might be used to combine a simple base animation, let's say to move an object
+ * from to of screen to bottom (XYAnimation) and make a second object circle around it (CirclePathAnimation).
+ */
+export class RelativeXYAnimation extends CompositeAnimationComponent {
         constructor(relativeXYAnimation, baseXYAnimation) {
             super([relativeXYAnimation, baseXYAnimation]);
             this.baseXYAnimation = baseXYAnimation;
@@ -413,10 +412,10 @@
         }
     }
 
-    /**
-     * XYCorrection
-     */
-    class XYCorrection extends AnimationComponent {
+/**
+ * XYCorrection
+ */
+export class XYCorrection extends AnimationComponent {
         constructor(xyAnimation, deltaX, deltaY) {
             super();
             this.xyAnimation = xyAnimation;
@@ -457,15 +456,15 @@
         }
     }
 
-    /**
-     * Computes a relative position based on a changeable direction "direction2D"
-     * and a speed "pixelPerMs". It will start with position (0,0). The direction can
-     * be updated with "setDirection".
-     * Best use: Use any Unit Vector as "direction2D". To start with a position other
-     * than (0,0) please combine it with a RelativeXYAnimation;
-     * Intention: Use for controling objects with key strokes.
-     */
-    class Vector2DAnimation extends AnimationComponent {
+/**
+ * Computes a relative position based on a changeable direction "direction2D"
+ * and a speed "pixelPerMs". It will start with position (0,0). The direction can
+ * be updated with "setDirection".
+ * Best use: Use any Unit Vector as "direction2D". To start with a position other
+ * than (0,0) please combine it with a RelativeXYAnimation;
+ * Intention: Use for controling objects with key strokes.
+ */
+export class Vector2DAnimation extends AnimationComponent {
         constructor(direction2D, pixelPerMs, boundsRectangle2D) {
             super();
             this.direction2D = direction2D;
@@ -509,11 +508,11 @@
         }
     }
 
-    /**
-     * Combines 2 basic animation objects to get a XYAnimation
-     * which updates coordinates along both principal directions.
-     */
-    class XYAnimation extends CompositeAnimationComponent {
+/**
+ * Combines 2 basic animation objects to get a XYAnimation
+ * which updates coordinates along both principal directions.
+ */
+export class XYAnimation extends CompositeAnimationComponent {
         constructor(xAnimation, yAnimation) {
             super([xAnimation, yAnimation]);
             this.xAnimation = xAnimation;
@@ -539,10 +538,10 @@
         }
     }
 
-    /**
-     * XYAnimationPath
-     */
-    class XYAnimationPath extends AnimationComponent {
+/**
+ * XYAnimationPath
+ */
+export class XYAnimationPath extends AnimationComponent {
         constructor(startX, startY, animationParts) {
             super();
             this.startX = startX;
@@ -578,10 +577,10 @@
         }
     }
 
-    /**
-     * XYAnimationPathPart - TODO
-     */
-    class XYAnimationPathPart {
+/**
+ * XYAnimationPathPart - TODO
+ */
+export class XYAnimationPathPart {
         constructor() {
             this.PART_STATE = {
                 CONTINUE: {},
@@ -613,10 +612,10 @@
 //==============================================================================
 //Conrete Animation Implementations
 
-    /**
-     * OnOffIntervalls
-     */
-    class OnOffIntervalls extends AnimationComponent {
+/**
+ * OnOffIntervalls
+ */
+export class OnOffIntervalls extends AnimationComponent {
         constructor(eachMsec, forMsec) {
             super();
             this.elapsed = 0;
@@ -644,10 +643,10 @@
         }
     }
 
-    /**
-     * PosShake
-     */
-    class PosShake extends CompositeAnimationComponent {
+/**
+ * PosShake
+ */
+export class PosShake extends CompositeAnimationComponent {
         constructor(onOffControl, shakeValue) {
             super([onOffControl]);
             this.value = 0;
@@ -671,10 +670,10 @@
         }
     }
 
-    /**
-     * SumPosition
-     */
-    class SumPosition extends CompositeAnimationComponent {
+/**
+ * SumPosition
+ */
+export class SumPosition extends CompositeAnimationComponent {
         constructor(positionA, positionB) {
             super([positionA, positionB]);
             this.positionA = positionA;
@@ -686,10 +685,10 @@
         }
     }
 
-    /**
-     * Accellerator
-     */
-    class Accellerator extends AnimationComponent {
+/**
+ * Accellerator
+ */
+export class Accellerator extends AnimationComponent {
         constructor(lowSpeed, highSpeed, speedIncPerMs) {
             super();
             this.currentSpeed = lowSpeed;
@@ -716,11 +715,11 @@
         }
     }
 
-    /**
-     * Provides an Arc Value computed based on the time elapsed and a
-     * Degree-Per-Millisecond velocity value;
-     */
-    class ArcBaseAnmimation extends AnimationComponent {
+/**
+ * Provides an Arc Value computed based on the time elapsed and a
+ * Degree-Per-Millisecond velocity value;
+ */
+export class ArcBaseAnmimation extends AnimationComponent {
         constructor(startDeg, direction, degPerMs) {
             super();
             const PI_PER_DEG = Math.PI / 180;
@@ -742,10 +741,10 @@
         }
     }
 
-    /**
-     * SinValue
-     */
-    class SinValue {
+/**
+ * SinValue
+ */
+export class SinValue {
         constructor(radius, arcValueFct) {
             this.arcValueFct = arcValueFct;
             this.radius = radius;
@@ -756,10 +755,10 @@
         }
     }
 
-    /**
-     * CosValue
-     */
-    class CosValue {
+/**
+ * CosValue
+ */
+export class CosValue {
         constructor(radius, arcValueFct) {
             this.arcValueFct = arcValueFct;
             this.radius = radius;
@@ -770,10 +769,10 @@
         }
     }
 
-    /**
-     * DeltaValue
-     */
-    class DeltaValue {
+/**
+ * DeltaValue
+ */
+export class DeltaValue {
         constructor(delta, inputValueFct) {
             this.inputValueFct = inputValueFct;
             this.delta = delta;
@@ -784,10 +783,10 @@
         }
     }
 
-    /**
-     * CirclePathAnimation
-     */
-    class CirclePathAnimation extends AnimationComponent {
+/**
+ * CirclePathAnimation
+ */
+export class CirclePathAnimation extends AnimationComponent {
         constructor(radius, startDeg, direction, degPerMs) {
             super();
             this.arcValueFct = new ArcBaseAnmimation(startDeg, direction, degPerMs);
@@ -809,10 +808,10 @@
         }
     }
 
-    /**
-     * BouncingPathAnimation
-     */
-    class BouncingPathAnimation extends AnimationComponent {
+/**
+ * BouncingPathAnimation
+ */
+export class BouncingPathAnimation extends AnimationComponent {
         constructor(posMin, posMax, pixelPerMs) {
             super();
             //current pos
@@ -843,10 +842,10 @@
         }
     }
 
-    /**
-     * Computes a path from "from" to "to" with velocity of "pixelPerMs" pixels per millisecond.
-     */
-    class PathAnimation2 extends AnimationComponent {
+/**
+ * Computes a path from "from" to "to" with velocity of "pixelPerMs" pixels per millisecond.
+ */
+export class PathAnimation2 extends AnimationComponent {
         constructor(from, to, pixelPerMs) {
             super();
             //current pos
@@ -883,10 +882,10 @@
         }
     }
 
-    /**
-     * FixValueAnimation
-     */
-    class FixValueAnimation extends AnimationComponent {
+/**
+ * FixValueAnimation
+ */
+export class FixValueAnimation extends AnimationComponent {
         constructor(value) {
             super();
             this.value = value;
@@ -902,10 +901,10 @@
         }
     }
 
-    /**
-     * SpriteDescriptor
-     */
-    class SpriteDescriptor {
+/**
+ * SpriteDescriptor
+ */
+export class SpriteDescriptor {
         constructor(img, sx, sy, gridWidth, noSprites) {
             this.img = img;
             this.sx = sx;
@@ -915,10 +914,10 @@
         }
     }
 
-    /**
-     * SpriteAnimation
-     */
-    class SpriteAnimation extends AnimationComponent {
+/**
+ * SpriteAnimation
+ */
+export class SpriteAnimation extends AnimationComponent {
         constructor(spriteDescriptor, direction, oneTime, updateDelay, alpha) {
             super();
             this.spriteDescriptor = spriteDescriptor;
@@ -972,10 +971,10 @@
         }
     }
 
-    /**
-     * ImgPainter
-     */
-    class ImgPainter extends AnimationComponent {
+/**
+ * ImgPainter
+ */
+export class ImgPainter extends AnimationComponent {
         constructor(img, width, height) {
             super();
             this.img = img;
@@ -988,10 +987,10 @@
         }
     }
 
-    /**
-     * CirclePainter
-     */
-    class CirclePainter extends AnimationComponent {
+/**
+ * CirclePainter
+ */
+export class CirclePainter extends AnimationComponent {
         constructor(color, radius, position) {
             super();
             this.color = color;
@@ -1015,10 +1014,10 @@
         }
     }
 
-    /**
-     * FPSRenderer
-     */
-    class FPSRenderer extends AnimationComponent {
+/**
+ * FPSRenderer
+ */
+export class FPSRenderer extends AnimationComponent {
         constructor() {
             super();
             this.paints = 0;
@@ -1051,39 +1050,4 @@
         }
     }
 
-    // Export all classes to PKG
-    PKG.ManagedObject = ManagedObject;
-    PKG.ObjectManager = ObjectManager;
-    PKG.ObjectListener = ObjectListener;
-    PKG.ObjectListenerSupport = ObjectListenerSupport;
-    PKG.AnimationComponent = AnimationComponent;
-    PKG.AnimationComponentDelegate = AnimationComponentDelegate;
-    PKG.CompositeAnimationComponent = CompositeAnimationComponent;
-    PKG.PaintableWithStateIndicator = PaintableWithStateIndicator;
-    PKG.PaintableCombination = PaintableCombination;
-    PKG.PaintableWithAnimation = PaintableWithAnimation;
-    PKG.RelativeXYAnimation = RelativeXYAnimation;
-    PKG.XYCorrection = XYCorrection;
-    PKG.Vector2DAnimation = Vector2DAnimation;
-    PKG.XYAnimation = XYAnimation;
-    PKG.XYAnimationPath = XYAnimationPath;
-    PKG.XYAnimationPathPart = XYAnimationPathPart;
-    PKG.OnOffIntervalls = OnOffIntervalls;
-    PKG.PosShake = PosShake;
-    PKG.SumPosition = SumPosition;
-    PKG.Accellerator = Accellerator;
-    PKG.ArcBaseAnmimation = ArcBaseAnmimation;
-    PKG.SinValue = SinValue;
-    PKG.CosValue = CosValue;
-    PKG.DeltaValue = DeltaValue;
-    PKG.CirclePathAnimation = CirclePathAnimation;
-    PKG.BouncingPathAnimation = BouncingPathAnimation;
-    PKG.PathAnimation2 = PathAnimation2;
-    PKG.FixValueAnimation = FixValueAnimation;
-    PKG.SpriteDescriptor = SpriteDescriptor;
-    PKG.SpriteAnimation = SpriteAnimation;
-    PKG.ImgPainter = ImgPainter;
-    PKG.CirclePainter = CirclePainter;
-    PKG.FPSRenderer = FPSRenderer;
-
-})(window.ANIMATION = window.ANIMATION || {});
+// All classes are now exported as ES6 modules above
