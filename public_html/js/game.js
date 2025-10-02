@@ -1,20 +1,18 @@
 /* 
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * Game module - ES6 version
  */
-((PKG) => {
-    
-    //bit field operator for pressing a key
-    const press = (old, keyValue) => {
-        return old | keyValue.bit;
-    };
-    //bit field operator for releaseing a key
-    const up = (old, keyValue) => {
-        return old ^ keyValue.bit;
-    };
-    
-    class KeyboardControl {
+import * as BASE from './base.js';
+
+//bit field operator for pressing a key
+const press = (old, keyValue) => {
+    return old | keyValue.bit;
+};
+//bit field operator for releaseing a key
+const up = (old, keyValue) => {
+    return old ^ keyValue.bit;
+};
+
+export class KeyboardControl {
         constructor(leftKey, upKey, rightKey, downKey) {
             this.pressedKeysBitField = 0;
             this.leftKey = leftKey;
@@ -74,6 +72,3 @@
             }
         }
     }
-    
-    PKG.KeyboardControl = KeyboardControl;
-})(window.GAME = window.GAME || {});

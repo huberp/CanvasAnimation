@@ -1,12 +1,13 @@
 //==============================================================================
-// Now setup the animations and run it
-((PKG) => {
-    const ANIM = window.ANIMATION;
-    const GAME = window.GAME;
+// Setup the animations and run it - ES6 Module
+import * as ANIM from './animation.js';
+import * as BASE from './base.js';
+import { KeyboardControl } from './game.js';
 
+(() => {
     const canvas = document.getElementById('myCanvas');
     const context = canvas.getContext('2d');
-    
+
     const SCREEN_BOUNDS = BASE.Rectangle2D(0, 0, 600, 600);
 //
 //http://freegameassets.blogspot.de/
@@ -59,7 +60,7 @@
     //
     //A Listener which listens to OFF_SCREEN events
     const listener = {
-        eventType: ANIMATION.EVENT_TYPES.OFF_SCREEN,
+        eventType: ANIM.EVENT_TYPES.OFF_SCREEN,
         listen: (eventType, event) => {
             //console.log("listener remove: "+event.getRoot().toString());
             event.getRoot().remove();
@@ -144,12 +145,12 @@
     objectManager.getAnimations().forEach((elem) => {
         elem.init();
     });
-    const keyboardControl = new GAME.KeyboardControl(37, 38, 39, 40);
+    const keyboardControl = new KeyboardControl(37, 38, 39, 40);
     keyboardControl.activate(canvas, (o, n) => {
         if (o !== n) {
             shipControlAnimation.setDirection(BASE.UNIT_VECTORS_2D[n]);
         }
-        console.log("old: " + o + "; new: " + n + "; isLeft: " + GAME.KeyboardControl.is(n, BASE.DIRECTION.LEFT));
+        console.log("old: " + o + "; new: " + n + "; isLeft: " + KeyboardControl.is(n, BASE.DIRECTION.LEFT));
     });
 
     
@@ -226,5 +227,4 @@
 
     //triggerAnimationFrame();
     triggerAnimationFrameWithTimeOut();
-})(window.SETUP = window.SETUP || {});
-
+})();
