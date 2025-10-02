@@ -86,6 +86,25 @@ Works best in modern browsers that support:
 - ES6 JavaScript features
 - requestAnimationFrame
 
+## Deployment to GitHub Pages
+
+To deploy this project to GitHub Pages:
+
+```bash
+# Make sure you're on the master branch with latest changes
+git checkout master
+git pull origin master
+
+# Merge changes to gh-pages branch
+git checkout gh-pages
+git merge master
+
+# Push to GitHub Pages
+git push origin gh-pages
+```
+
+The site will be available at: `https://huberp.github.io/CanvasAnimation/public_html/`
+
 ## Credits
 
 - Game assets from [Free Game Assets](http://freegameassets.blogspot.de/)
