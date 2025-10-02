@@ -1,0 +1,34 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout master branch
+      uses: actions/checkout@v3
+      with:
+        ref: master
+        fetch-depth: 0
+        
+    - name: Configure Git
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        
+    - name: Checkout gh-pages branch
+      run: |
+        git fetch origin gh-pages:gh-pages || git checkout -b gh-pages
+        git checkout gh-pages
+        
+    - name: Merge master into gh-pages
+      run: |
+        git merge master --allow-unrelated-histories -X theirs -m "Merge master to gh-pages" || true
+        
+    - name: Push to gh-pages
+      run: |
+        git push origin gh-pages

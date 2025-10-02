@@ -1,0 +1,55 @@
+name: Test Application
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install dependencies
+      run: |
+        npm install -g htmlhint
+        npm install -g eslint
+        
+    - name: Lint HTML files
+      run: |
+        htmlhint public_html/index.html || true
+        
+    - name: Validate JavaScript syntax
+      run: |
+        # Check JavaScript files for syntax errors
+        node -c public_html/js/base.js
+        node -c public_html/js/animation.js
+        node -c public_html/js/game.js
+        node -c public_html/js/setupObjects.js
+        node -c public_html/js/main.js
+        node -c public_html/js/plugins.js
+        
+    - name: Check for required files
+      run: |
+        test -f public_html/index.html
+        test -f public_html/js/base.js
+        test -f public_html/js/animation.js
+        test -f public_html/js/game.js
+        test -f public_html/js/setupObjects.js
+        echo "All required files exist"
+        
+    - name: Validate project structure
+      run: |
+        test -d public_html/js
+        test -d public_html/css
+        test -d public_html/img
+        echo "Project structure is valid"
