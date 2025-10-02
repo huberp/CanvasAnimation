@@ -88,7 +88,7 @@ Works best in modern browsers that support:
 
 ## Deployment to GitHub Pages
 
-To deploy this project to GitHub Pages:
+To deploy the latest ES6 refactored code to GitHub Pages (gh-pages branch):
 
 ```bash
 # Make sure you're on the master branch with latest changes
@@ -97,11 +97,13 @@ git pull origin master
 
 # Merge changes to gh-pages branch
 git checkout gh-pages
-git merge master
+git merge master --no-ff -m "Merge ES6 refactored code to gh-pages"
 
 # Push to GitHub Pages
 git push origin gh-pages
 ```
+
+**Note:** The gh-pages branch currently contains ES5 code. Merging from master will bring in the ES6 refactored JavaScript files (animation.js, base.js, game.js, setupObjects.js) along with this README.
 
 The site will be available at: `https://huberp.github.io/CanvasAnimation/public_html/`
 
