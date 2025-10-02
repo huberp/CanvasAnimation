@@ -86,9 +86,33 @@ Works best in modern browsers that support:
 - ES6 JavaScript features
 - requestAnimationFrame
 
-## Deployment to GitHub Pages
+## Continuous Integration & Deployment
 
-To deploy the latest ES6 refactored code to GitHub Pages (gh-pages branch):
+This project uses GitHub Actions for automated testing and deployment:
+
+### Automated Testing
+Every push and pull request to the master branch triggers automated tests that:
+- Validate JavaScript syntax
+- Check HTML files
+- Verify project structure
+- Ensure all required files exist
+
+### Automated Deployment to GitHub Pages
+
+Changes pushed to the master branch are automatically deployed to GitHub Pages (gh-pages branch).
+
+The deployment workflow:
+1. Fetches the latest changes from master
+2. Merges them into the gh-pages branch using the `theirs` strategy
+3. Pushes the updated gh-pages branch
+
+**Note:** The gh-pages branch currently contains ES5 code. The merge strategy `-X theirs` ensures that the ES6 refactored JavaScript files (animation.js, base.js, game.js, setupObjects.js, main.js, plugins.js) from master replace the ES5 versions in case of conflicts.
+
+The site will be available at: `https://huberp.github.io/CanvasAnimation/public_html/`
+
+### Manual Deployment (Alternative)
+
+If you prefer to deploy manually, you can still use the traditional approach:
 
 ```bash
 # Make sure you're on the master branch with latest changes
@@ -104,10 +128,6 @@ git merge master --allow-unrelated-histories -X theirs -m "Merge ES6 refactored 
 # Push to GitHub Pages
 git push origin gh-pages
 ```
-
-**Note:** The gh-pages branch currently contains ES5 code. The merge strategy `-X theirs` ensures that the ES6 refactored JavaScript files (animation.js, base.js, game.js, setupObjects.js, main.js, plugins.js) from master replace the ES5 versions in case of conflicts. This also adds the README.md to gh-pages.
-
-The site will be available at: `https://huberp.github.io/CanvasAnimation/public_html/`
 
 ## Credits
 
