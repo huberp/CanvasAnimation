@@ -15,6 +15,11 @@ export const STATE = {
     UNMANAGED: {value: 32}
 };
 
+export const PART_STATE = {
+    CONTINUE: {},
+    STOP: {}
+};
+
 const fireSingel = (listener, idx, array, eventType, event) => {
     if (listener.eventType === eventType) {
         listener.listen(eventType, event);
@@ -35,7 +40,7 @@ export class ManagedObject {
         constructor() {
             this.objectManager = undefined;
             this.idx = undefined;
-            this.state = PKG.STATE.UNKNOWN;
+            this.state = STATE.UNKNOWN;
             //something like a z-order, order in which objects are about to be painted
             //pbjects that are painted "later" might hide parts of objects that have been
             //painted earlier
@@ -49,7 +54,7 @@ export class ManagedObject {
         
         remove() {
             this.objectManager.remove(this);
-            this.state = PKG.STATE.UNMANAGED_PENDING;
+            this.state = STATE.UNMANAGED_PENDING;
         }
         
         getState() {
@@ -94,7 +99,7 @@ export class ObjectManager {
         
         remove(animObj) {
             this.deletions.push(animObj);
-            animObj.setState(PKG.STATE.UNMANAGED_PENDING);
+            animObj.setState(STATE.UNMANAGED_PENDING);
         }
         
         getAnimations() {
@@ -124,7 +129,7 @@ export class ObjectManager {
                 const len2 = this.animations.length;
                 for (let j = 0; j < len2; j++) {
                     if (this.animations[j].idx === this.deletions[i].idx) {
-                        this.deletions[i].setState(PKG.STATE.UNMANAGED);
+                        this.deletions[i].setState(STATE.UNMANAGED);
                         this.animations.splice(j, 1);
                         break;
                     }
@@ -559,11 +564,11 @@ export class XYAnimationPath extends AnimationComponent {
         
         update(current) {
             const retVal = this.currentPart.update(current);
-            if (retVal === PKG.PART_STATE.STOP) {
+            if (retVal === PART_STATE.STOP) {
                 if (this.animationParts.length > 0) {
                     this.init();
                 } else {
-                    this.fire(PKG.EVENT_TYPES.OFF_SCREEN, this);
+                    this.fire(EVENT_TYPES.OFF_SCREEN, this);
                 }
             }
         }
@@ -869,10 +874,10 @@ export class PathAnimation2 extends AnimationComponent {
             //console.log(delta);
             this.currentPos = this.currentPos + this.direction * delta * this.pixelPerMs;
             if (this.compare(this.currentPos, this.to)) {
-                if (this.getState() !== PKG.STATE.INACTIVE_PENDING) {
-                    this.fire(PKG.EVENT_TYPES.OFF_SCREEN, this);
+                if (this.getState() !== STATE.INACTIVE_PENDING) {
+                    this.fire(EVENT_TYPES.OFF_SCREEN, this);
                 }
-                this.setState(PKG.STATE.INACTIVE_PENDING);
+                this.setState(STATE.INACTIVE_PENDING);
             }
             return this.getState();
         }
@@ -944,10 +949,10 @@ export class SpriteAnimation extends AnimationComponent {
                 if (this.oneTime) {
                     //console.log("Sprite: "+nosprites+"; "+this.currentPos+"; "+(direction)+"; "+delay+"; "+updateDelay);
                     if ((this.direction === 1 && this.currentPos >= noSprites) || (this.direction === -1 && this.currentPos <= 0)) {
-                        if (this.getState() !== PKG.STATE.INACTIVE_PENDING) {
-                            this.fire(PKG.EVENT_TYPES.OFF_SCREEN, this);
+                        if (this.getState() !== STATE.INACTIVE_PENDING) {
+                            this.fire(EVENT_TYPES.OFF_SCREEN, this);
                         }
-                        this.setState(PKG.STATE.INACTIVE_PENDING);
+                        this.setState(STATE.INACTIVE_PENDING);
                     }
                 }
                 this.currentPos = this.currentPos % noSprites;
