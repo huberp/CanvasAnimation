@@ -106,7 +106,7 @@ The deployment workflow:
 2. Merges them into the gh-pages branch using the `theirs` strategy
 3. Pushes the updated gh-pages branch
 
-**Note:** The gh-pages branch currently contains ES5 code. The merge strategy `-X theirs` ensures that the ES6 refactored JavaScript files (animation.js, base.js, game.js, setupObjects.js, main.js, plugins.js) from master replace the ES5 versions in case of conflicts.
+**Note:** The gh-pages branch currently contains ES5 code. The merge strategy `-X theirs` ensures that the ES6 refactored JavaScript files (animation.js, base.js, game.js, setupObjects.js) from master replace the ES5 versions in case of conflicts.
 
 The site will be available at: `https://huberp.github.io/CanvasAnimation/public_html/`
 

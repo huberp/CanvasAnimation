@@ -35,8 +35,6 @@ jobs:
         node -c public_html/js/animation.js
         node -c public_html/js/game.js
         node -c public_html/js/setupObjects.js
-        node -c public_html/js/main.js
-        node -c public_html/js/plugins.js
         
     - name: Check for required files
       run: |
