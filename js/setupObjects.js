@@ -2,7 +2,7 @@
 // Setup the animations and run it - ES6 Module
 import * as ANIM from './animation.js';
 import * as BASE from './base.js';
-import { KeyboardControl } from './game.js';
+import { KeyboardControl, TouchControl } from './game.js';
 
 (() => {
     const canvas = document.getElementById('myCanvas');
@@ -152,6 +152,19 @@ import { KeyboardControl } from './game.js';
         }
         console.log("old: " + o + "; new: " + n + "; isLeft: " + KeyboardControl.is(n, BASE.DIRECTION.LEFT));
     });
+
+    // Setup touch control
+    const touchControlTrack = document.getElementById('touch-control-track');
+    const touchControlThumb = document.getElementById('touch-control-thumb');
+    if (touchControlTrack && touchControlThumb) {
+        const touchControl = new TouchControl(touchControlTrack, touchControlThumb);
+        touchControl.activate((o, n) => {
+            if (o !== n) {
+                shipControlAnimation.setDirection(BASE.UNIT_VECTORS_2D[n]);
+            }
+            console.log("Touch: old: " + o + "; new: " + n);
+        });
+    }
 
     
     //==========================================================================
