@@ -72,3 +72,128 @@ export class KeyboardControl {
             }
         }
     }
+
+export class TouchControl {
+        constructor(trackElement, thumbElement) {
+            this.trackElement = trackElement;
+            this.thumbElement = thumbElement;
+            this.isActive = false;
+            this.currentPosition = 0.5; // 0 = left, 0.5 = center, 1 = right
+            this.changeCallback = null;
+            this.currentDirection = 0; // bitfield for current direction
+        }
+
+        activate(changeCallback) {
+            this.changeCallback = changeCallback;
+            const self = this;
+
+            // Touch events
+            this.trackElement.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                self.handleTouchStart(e);
+            });
+
+            this.trackElement.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                self.handleTouchMove(e);
+            });
+
+            this.trackElement.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                self.handleTouchEnd(e);
+            });
+
+            // Mouse events for desktop testing
+            this.trackElement.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                self.handleTouchStart(e);
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (self.isActive) {
+                    e.preventDefault();
+                    self.handleTouchMove(e);
+                }
+            });
+
+            document.addEventListener('mouseup', (e) => {
+                if (self.isActive) {
+                    e.preventDefault();
+                    self.handleTouchEnd(e);
+                }
+            });
+        }
+
+        handleTouchStart(e) {
+            this.isActive = true;
+            this.thumbElement.classList.add('active');
+            this.updatePosition(e);
+        }
+
+        handleTouchMove(e) {
+            if (this.isActive) {
+                this.updatePosition(e);
+            }
+        }
+
+        handleTouchEnd(e) {
+            this.isActive = false;
+            this.thumbElement.classList.remove('active');
+            // Return to center
+            this.currentPosition = 0.5;
+            this.updateThumbPosition();
+            this.updateDirection();
+        }
+
+        updatePosition(e) {
+            const rect = this.trackElement.getBoundingClientRect();
+            let clientX;
+
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+            } else {
+                clientX = e.clientX;
+            }
+
+            // Calculate position relative to track (0 to 1)
+            let relativeX = (clientX - rect.left) / rect.width;
+            relativeX = Math.max(0, Math.min(1, relativeX)); // Clamp between 0 and 1
+
+            this.currentPosition = relativeX;
+            this.updateThumbPosition();
+            this.updateDirection();
+        }
+
+        updateThumbPosition() {
+            // Position thumb along the track
+            const percentage = this.currentPosition * 100;
+            this.thumbElement.style.left = percentage + '%';
+        }
+
+        updateDirection() {
+            const oldDirection = this.currentDirection;
+            let newDirection = 0;
+
+            // Define dead zone in the center (45% to 55%)
+            const deadZoneMin = 0.45;
+            const deadZoneMax = 0.55;
+
+            if (this.currentPosition < deadZoneMin) {
+                // Left
+                newDirection = BASE.DIRECTION.LEFT.bit;
+            } else if (this.currentPosition > deadZoneMax) {
+                // Right
+                newDirection = BASE.DIRECTION.RIGHT.bit;
+            } else {
+                // Center - no movement
+                newDirection = 0;
+            }
+
+            if (newDirection !== oldDirection) {
+                this.currentDirection = newDirection;
+                if (this.changeCallback) {
+                    this.changeCallback(oldDirection, newDirection);
+                }
+            }
+        }
+    }

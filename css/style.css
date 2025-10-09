@@ -48,3 +48,58 @@ body {
 #toggleAnimation:active {
     background-color: #2a5f8f;
 }
+
+/* Touch Control Styles */
+#touch-control-container {
+    margin-top: 20px;
+    text-align: left;
+    padding-left: 100px; /* Positioned slightly to the left */
+}
+
+#touch-control-track {
+    position: relative;
+    width: 400px;
+    height: 60px;
+    background: linear-gradient(to right, 
+        rgba(74, 158, 255, 0.2) 0%, 
+        rgba(74, 158, 255, 0.1) 33%, 
+        rgba(255, 255, 255, 0.05) 50%,
+        rgba(74, 158, 255, 0.1) 67%,
+        rgba(74, 158, 255, 0.2) 100%);
+    border: 2px solid #4a9eff;
+    border-radius: 30px;
+    cursor: pointer;
+    touch-action: none;
+    user-select: none;
+}
+
+#touch-control-track::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: rgba(255, 255, 255, 0.3);
+    transform: translateX(-50%);
+}
+
+#touch-control-thumb {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 50px;
+    height: 50px;
+    background: radial-gradient(circle at 30% 30%, #6bb0ff, #4a9eff);
+    border: 3px solid #ffffff;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    transition: box-shadow 0.2s, transform 0.2s;
+    pointer-events: none;
+}
+
+#touch-control-thumb.active {
+    box-shadow: 0 6px 12px rgba(74, 158, 255, 0.5);
+    transform: translate(-50%, -50%) scale(1.1);
+}
