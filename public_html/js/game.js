@@ -9,7 +9,7 @@ const press = (old, keyValue) => {
 };
 //bit field operator for releaseing a key
 const up = (old, keyValue) => {
-    return old ^ keyValue.bit;
+    return old & ~keyValue.bit;
 };
 
 export class KeyboardControl {
@@ -25,7 +25,7 @@ export class KeyboardControl {
         }
         
         static is(value, direction) {
-            return value & direction !== 0;
+            return (value & direction.bit) !== 0;
         }
         
         activate(onObject, changeCallback) {
@@ -33,7 +33,7 @@ export class KeyboardControl {
             const func = (e) => {
                 self.handleKeyPress(e);
             };
-            onObject.addEventListener('keypress', func);
+            onObject.addEventListener('keydown', func);
             onObject.addEventListener('keyup', func);
             this.onObject = onObject;
             this.changeCallback = changeCallback;
