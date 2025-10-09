@@ -26,28 +26,28 @@ jobs:
         
     - name: Lint HTML files
       run: |
-        htmlhint public_html/index.html || true
+        htmlhint index.html || true
         
     - name: Validate JavaScript syntax
       run: |
         # Check JavaScript files for syntax errors
-        node -c public_html/js/base.js
-        node -c public_html/js/animation.js
-        node -c public_html/js/game.js
-        node -c public_html/js/setupObjects.js
+        node -c js/base.js
+        node -c js/animation.js
+        node -c js/game.js
+        node -c js/setupObjects.js
         
     - name: Check for required files
       run: |
-        test -f public_html/index.html
-        test -f public_html/js/base.js
-        test -f public_html/js/animation.js
-        test -f public_html/js/game.js
-        test -f public_html/js/setupObjects.js
+        test -f index.html
+        test -f js/base.js
+        test -f js/animation.js
+        test -f js/game.js
+        test -f js/setupObjects.js
         echo "All required files exist"
         
     - name: Validate project structure
       run: |
-        test -d public_html/js
-        test -d public_html/css
-        test -d public_html/img
+        test -d js
+        test -d css
+        test -d img
         echo "Project structure is valid"
