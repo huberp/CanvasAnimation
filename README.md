@@ -17,29 +17,25 @@ Since this is a client-side HTML5/JavaScript application, you can run it in seve
 
 ### Option 1: Using a Local Web Server (Recommended)
 
-The application requires a web server to properly load resources. You can use any of these methods:
+The application requires a web server to properly load ES6 modules. You can use any of these methods:
 
 **Using Python:**
 ```bash
 # Python 3.x
-cd public_html
 python -m http.server 8000
 
 # Python 2.x
-cd public_html
 python -m SimpleHTTPServer 8000
 ```
 
 **Using Node.js (with http-server):**
 ```bash
 npm install -g http-server
-cd public_html
 http-server -p 8000
 ```
 
 **Using PHP:**
 ```bash
-cd public_html
 php -S localhost:8000
 ```
 
@@ -47,10 +43,9 @@ Then open your browser and navigate to: `http://localhost:8000`
 
 ### Option 2: Using a Modern Browser
 
-Some modern browsers allow you to open HTML files directly, but this may have limitations with resource loading:
+Some modern browsers allow you to open HTML files directly, but this may have limitations with ES6 module loading:
 
-1. Navigate to the `public_html` directory
-2. Open `index.html` in your web browser
+1. Open `index.html` in your web browser
 
 ### Controls
 
@@ -61,15 +56,17 @@ Some modern browsers allow you to open HTML files directly, but this may have li
 
 ```
 .
-├── public_html/
-│   ├── index.html          # Main HTML file
-│   ├── js/
-│   │   ├── animation.js    # Animation framework
-│   │   ├── base.js         # Base utilities
-│   │   ├── game.js         # Game logic
-│   │   └── setupObjects.js # Setup animations
-│   ├── img/                # Image assets (sprites)
-│   └── css/                # Stylesheets
+├── index.html          # Main HTML file
+├── css/
+│   └── style.css      # Minimal custom styles
+├── js/
+│   ├── animation.js    # Animation framework
+│   ├── base.js         # Base utilities
+│   ├── game.js         # Game logic
+│   └── setupObjects.js # Setup animations
+├── img/                # Image assets (sprites)
+├── package.json        # Project metadata
+└── .github/workflows/  # CI/CD workflows
 ```
 
 ## Technologies Used
@@ -108,7 +105,7 @@ The deployment workflow:
 
 **Note:** The gh-pages branch currently contains ES5 code. The merge strategy `-X theirs` ensures that the ES6 refactored JavaScript files (animation.js, base.js, game.js, setupObjects.js) from master replace the ES5 versions in case of conflicts.
 
-The site will be available at: `https://huberp.github.io/CanvasAnimation/public_html/`
+The site will be available at: `https://huberp.github.io/CanvasAnimation/`
 
 ### Manual Deployment (Alternative)
 
