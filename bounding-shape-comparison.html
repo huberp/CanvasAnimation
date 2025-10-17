@@ -43,7 +43,7 @@
         }
         .comparison-container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 20px;
             margin: 20px 0;
         }
@@ -122,6 +122,10 @@
         }
         .label-ch {
             background-color: #FF9800;
+            color: white;
+        }
+        .label-sch {
+            background-color: #9C27B0;
             color: white;
         }
         .loading {
@@ -206,9 +210,9 @@
                 <div class="stat-title" style="font-size: 12px;">Avg Points per Polygon</div>
             </div>
             <div class="stat-box">
-                <div class="stat-title">Point Difference</div>
-                <div class="stat-value" id="pointDiff">-</div>
-                <div class="stat-title" style="font-size: 12px;">MS vs CH (avg)</div>
+                <div class="stat-title">Simplified CH <span class="algorithm-label label-sch">SCH</span></div>
+                <div class="stat-value" id="avgPointsSCH">-</div>
+                <div class="stat-title" style="font-size: 12px;">Avg Points per Polygon</div>
             </div>
             <div class="stat-box">
                 <div class="stat-title">Total Sprites</div>
@@ -235,6 +239,13 @@
             </p>
             <div id="sprite-container-ch"></div>
         </div>
+        <div class="algorithm-section">
+            <h2>Simplified Convex Hull <span class="algorithm-label label-sch">SCH</span></h2>
+            <p style="text-align: center; color: #aaa; font-size: 14px;">
+                Convex hull + simplification to remove collinear points
+            </p>
+            <div id="sprite-container-sch"></div>
+        </div>
     </div>
     
     <script type="module">
@@ -256,6 +267,7 @@
         let spriteImage = null;
         let boundingShapesMS = [];
         let boundingShapesCH = [];
+        let boundingShapesSCH = [];
         
         // Load the sprite sheet
         async function loadSpriteSheet() {
@@ -274,6 +286,7 @@
             
             boundingShapesMS = [];
             boundingShapesCH = [];
+            boundingShapesSCH = [];
             
             for (let i = 0; i < SPRITE_CONFIG.totalSprites; i++) {
                 const col = i % SPRITE_CONFIG.gridWidth;
@@ -295,8 +308,16 @@
                     { threshold }
                 );
                 
+                // Simplified Convex Hull
+                const shapeSCH = BoundingShape.computeSimplifiedConvexHullShape(
+                    spriteImage, sx, sy,
+                    SPRITE_CONFIG.width, SPRITE_CONFIG.height,
+                    { threshold, tolerance }
+                );
+                
                 boundingShapesMS.push(shapeMS);
                 boundingShapesCH.push(shapeCH);
+                boundingShapesSCH.push(shapeSCH);
             }
             
             updateStats();
@@ -306,18 +327,19 @@
         function updateStats() {
             const pointCountsMS = boundingShapesMS.map(shape => shape.length);
             const pointCountsCH = boundingShapesCH.map(shape => shape.length);
+            const pointCountsSCH = boundingShapesSCH.map(shape => shape.length);
             
             const totalPointsMS = pointCountsMS.reduce((sum, count) => sum + count, 0);
             const totalPointsCH = pointCountsCH.reduce((sum, count) => sum + count, 0);
+            const totalPointsSCH = pointCountsSCH.reduce((sum, count) => sum + count, 0);
             
             const avgPointsMS = totalPointsMS / boundingShapesMS.length;
             const avgPointsCH = totalPointsCH / boundingShapesCH.length;
-            const diff = avgPointsMS - avgPointsCH;
+            const avgPointsSCH = totalPointsSCH / boundingShapesSCH.length;
             
             document.getElementById('avgPointsMS').textContent = avgPointsMS.toFixed(1);
             document.getElementById('avgPointsCH').textContent = avgPointsCH.toFixed(1);
-            document.getElementById('pointDiff').textContent = diff.toFixed(1);
-            document.getElementById('pointDiff').style.color = diff < 0 ? '#4CAF50' : '#FF5722';
+            document.getElementById('avgPointsSCH').textContent = avgPointsSCH.toFixed(1);
         }
         
         // Render a single sprite with its bounding shape
@@ -384,10 +406,12 @@
             const selectedSprite = document.getElementById('spriteSelect').value;
             const containerMS = document.getElementById('sprite-container-ms');
             const containerCH = document.getElementById('sprite-container-ch');
+            const containerSCH = document.getElementById('sprite-container-sch');
             
             if (selectedSprite === 'all') {
                 const canvasesMS = containerMS.querySelectorAll('canvas');
                 const canvasesCH = containerCH.querySelectorAll('canvas');
+                const canvasesSCH = containerSCH.querySelectorAll('canvas');
                 
                 canvasesMS.forEach((canvas, index) => {
                     renderSprite(canvas, index, boundingShapesMS, 'rgba(33, 150, 243, 0.9)');
@@ -396,14 +420,20 @@
                 canvasesCH.forEach((canvas, index) => {
                     renderSprite(canvas, index, boundingShapesCH, 'rgba(255, 152, 0, 0.9)');
                 });
+                
+                canvasesSCH.forEach((canvas, index) => {
+                    renderSprite(canvas, index, boundingShapesSCH, 'rgba(156, 39, 176, 0.9)');
+                });
             } else {
                 const index = parseInt(selectedSprite);
                 const canvasMS = containerMS.querySelector(`canvas[data-index="${index}"]`);
                 const canvasCH = containerCH.querySelector(`canvas[data-index="${index}"]`);
+                const canvasSCH = containerSCH.querySelector(`canvas[data-index="${index}"]`);
                 
-                if (canvasMS && canvasCH) {
+                if (canvasMS && canvasCH && canvasSCH) {
                     renderSprite(canvasMS, index, boundingShapesMS, 'rgba(33, 150, 243, 0.9)');
                     renderSprite(canvasCH, index, boundingShapesCH, 'rgba(255, 152, 0, 0.9)');
+                    renderSprite(canvasSCH, index, boundingShapesSCH, 'rgba(156, 39, 176, 0.9)');
                 }
             }
         }
@@ -412,8 +442,10 @@
         function initializeDisplay() {
             const containerMS = document.getElementById('sprite-container-ms');
             const containerCH = document.getElementById('sprite-container-ch');
+            const containerSCH = document.getElementById('sprite-container-sch');
             containerMS.innerHTML = '';
             containerCH.innerHTML = '';
+            containerSCH.innerHTML = '';
             
             for (let i = 0; i < SPRITE_CONFIG.totalSprites; i++) {
                 // Create for Marching Squares
@@ -449,6 +481,23 @@
                 wrapperCH.appendChild(canvasCH);
                 wrapperCH.appendChild(labelCH);
                 containerCH.appendChild(wrapperCH);
+                
+                // Create for Simplified Convex Hull
+                const wrapperSCH = document.createElement('div');
+                wrapperSCH.className = 'sprite-wrapper';
+                
+                const canvasSCH = document.createElement('canvas');
+                canvasSCH.width = CANVAS_SIZE;
+                canvasSCH.height = CANVAS_SIZE;
+                canvasSCH.dataset.index = i;
+                
+                const labelSCH = document.createElement('div');
+                labelSCH.className = 'sprite-label';
+                labelSCH.textContent = `Sprite ${i}`;
+                
+                wrapperSCH.appendChild(canvasSCH);
+                wrapperSCH.appendChild(labelSCH);
+                containerSCH.appendChild(wrapperSCH);
             }
         }
         

@@ -135,6 +135,39 @@ img.onload = () => {
 img.src = 'img/asteroid4_32x32.png';
 ```
 
+### Simplified Convex Hull Approach (NEW)
+
+#### `computeSimplifiedConvexHullShape(spriteSheet, sx, sy, width, height, options)`
+
+Computes a convex hull and then simplifies it to reduce collinear points.
+
+**Parameters:**
+- `spriteSheet` (Image) - The sprite sheet image
+- `sx` (number) - Source x coordinate in pixels
+- `sy` (number) - Source y coordinate in pixels
+- `width` (number) - Width of sprite in pixels
+- `height` (number) - Height of sprite in pixels
+- `options` (Object) - Optional configuration
+  - `threshold` (number) - Alpha threshold (0-255), default: 128
+  - `tolerance` (number) - Simplification tolerance, default: 1.0
+
+**Returns:** Array of `{x, y}` points forming the simplified convex hull polygon
+
+**Example:**
+```javascript
+import * as BoundingShape from './js/boundingShape.js';
+
+const img = new Image();
+img.onload = () => {
+    const polygon = BoundingShape.computeSimplifiedConvexHullShape(
+        img, 0, 0, 32, 32,
+        { threshold: 128, tolerance: 1.0 }
+    );
+    console.log(`Simplified convex hull has ${polygon.length} points`);
+};
+img.src = 'img/asteroid4_32x32.png';
+```
+
 #### `convexHull(points)`
 
 Low-level function to compute convex hull using Graham Scan algorithm.

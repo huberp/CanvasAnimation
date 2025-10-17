@@ -259,6 +259,28 @@
             assert(pixels.some(p => p.x === 2 && p.y === 2), 'Should include (2,2)');
         });
         
+        // Test 13: Simplified convex hull reduces collinear points
+        test('Simplified convex hull reduces collinear points', () => {
+            // Create points forming a rectangle with extra collinear points
+            const points = [
+                { x: 0, y: 0 },
+                { x: 5, y: 0 },
+                { x: 10, y: 0 },  // Collinear with previous two
+                { x: 10, y: 5 },
+                { x: 10, y: 10 }, // Collinear with previous two
+                { x: 5, y: 10 },
+                { x: 0, y: 10 },  // Collinear with previous two
+                { x: 0, y: 5 }    // Collinear with first and this
+            ];
+            
+            const hull = BoundingShape.convexHull(points);
+            const simplified = BoundingShape.douglasPeucker(hull, 1.0);
+            
+            assert(hull.length === 4, 'Convex hull should have 4 corners');
+            assert(simplified.length === 4, 'Simplified should maintain 4 corners');
+            assert(simplified.length <= hull.length, 'Simplified should have same or fewer points');
+        });
+        
         // Display results
         function displayResults() {
             const container = document.getElementById('test-results');

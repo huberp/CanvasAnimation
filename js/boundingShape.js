@@ -369,6 +369,59 @@ export function computeAllConvexHullShapes(spriteDescriptor, options = {}) {
 }
 
 /**
+ * Compute simplified convex hull bounding shape for a sprite
+ * This combines convex hull with Douglas-Peucker simplification to reduce collinear points
+ * @param {Image} spriteSheet - The sprite sheet image
+ * @param {number} sx - Source x in pixels
+ * @param {number} sy - Source y in pixels
+ * @param {number} width - Width of sprite
+ * @param {number} height - Height of sprite
+ * @param {Object} options - Options for shape generation
+ * @param {number} options.threshold - Alpha threshold (default: 128)
+ * @param {number} options.tolerance - Simplification tolerance (default: 1.0)
+ * @returns {Array<{x: number, y: number}>} - Simplified convex hull polygon points
+ */
+export function computeSimplifiedConvexHullShape(spriteSheet, sx, sy, width, height, options = {}) {
+    const threshold = options.threshold !== undefined ? options.threshold : 128;
+    const tolerance = options.tolerance !== undefined ? options.tolerance : 1.0;
+    
+    // First compute the convex hull
+    const hull = computeConvexHullShape(spriteSheet, sx, sy, width, height, { threshold });
+    
+    if (hull.length === 0) {
+        return [];
+    }
+    
+    // Then simplify it using Douglas-Peucker to remove collinear points
+    const simplified = douglasPeucker(hull, tolerance);
+    
+    return simplified;
+}
+
+/**
+ * Compute simplified convex hull shapes for all sprites in a sprite descriptor
+ * @param {Object} spriteDescriptor - Sprite descriptor with img, sx, sy, gridWidth, noSprites
+ * @param {Object} options - Options for shape generation
+ * @returns {Array<Array<{x: number, y: number}>>} - Array of simplified convex hull polygons, one per sprite
+ */
+export function computeAllSimplifiedConvexHullShapes(spriteDescriptor, options = {}) {
+    const { img, sx, sy, gridWidth, noSprites } = spriteDescriptor;
+    const boundingShapes = [];
+    
+    for (let i = 0; i < noSprites; i++) {
+        const col = i % gridWidth;
+        const row = Math.floor(i / gridWidth);
+        const sourceX = col * sx;
+        const sourceY = row * sy;
+        
+        const shape = computeSimplifiedConvexHullShape(img, sourceX, sourceY, sx, sy, options);
+        boundingShapes.push(shape);
+    }
+    
+    return boundingShapes;
+}
+
+/**
  * Simple AABB (Axis-Aligned Bounding Box) computation for comparison
  * @param {Array<{x: number, y: number}>} polygon - Polygon points
  * @returns {{xmin: number, ymin: number, xmax: number, ymax: number}} - AABB
