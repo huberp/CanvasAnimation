@@ -10,6 +10,7 @@ This project demonstrates HTML5 Canvas animation capabilities using ES6 JavaScri
 - A controllable spaceship
 - Smooth animation using `requestAnimationFrame`
 - Object-oriented animation framework
+- **NEW**: 2D bounding shape utility for collision detection (see [BOUNDING_SHAPE_README.md](BOUNDING_SHAPE_README.md))
 
 ## How to Run the Sample
 
@@ -57,15 +58,20 @@ Some modern browsers allow you to open HTML files directly, but this may have li
 ```
 .
 ├── index.html          # Main HTML file
+├── bounding-shape-demo.html  # Bounding shape demonstration
 ├── css/
 │   └── style.css      # Minimal custom styles
 ├── js/
 │   ├── animation.js    # Animation framework
 │   ├── base.js         # Base utilities
 │   ├── game.js         # Game logic
+│   ├── boundingShape.js # Bounding shape utility for collision detection
 │   └── setupObjects.js # Setup animations
 ├── img/                # Image assets (sprites)
+├── research/
+│   └── research_result.md  # Research on collision detection algorithms
 ├── package.json        # Project metadata
+├── BOUNDING_SHAPE_README.md  # Documentation for bounding shape utility
 └── .github/workflows/  # CI/CD workflows
 ```
 
