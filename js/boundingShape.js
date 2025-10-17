@@ -243,6 +243,132 @@ export function computeAllBoundingShapes(spriteDescriptor, options = {}) {
 }
 
 /**
+ * Convex Hull using Graham Scan algorithm
+ * Computes the convex hull of a set of points
+ * @param {Array<{x: number, y: number}>} points - Array of points
+ * @returns {Array<{x: number, y: number}>} - Convex hull points in counter-clockwise order
+ */
+export function convexHull(points) {
+    if (points.length < 3) {
+        return points.slice();
+    }
+    
+    // Sort points by y-coordinate, then by x-coordinate
+    const sorted = points.slice().sort((a, b) => {
+        if (a.y !== b.y) return a.y - b.y;
+        return a.x - b.x;
+    });
+    
+    // Cross product of vectors OA and OB where O is origin point
+    const cross = (o, a, b) => {
+        return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+    };
+    
+    // Build lower hull
+    const lower = [];
+    for (let i = 0; i < sorted.length; i++) {
+        while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], sorted[i]) <= 0) {
+            lower.pop();
+        }
+        lower.push(sorted[i]);
+    }
+    
+    // Build upper hull
+    const upper = [];
+    for (let i = sorted.length - 1; i >= 0; i--) {
+        while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], sorted[i]) <= 0) {
+            upper.pop();
+        }
+        upper.push(sorted[i]);
+    }
+    
+    // Remove last point of each half because it's repeated
+    lower.pop();
+    upper.pop();
+    
+    // Concatenate lower and upper hull
+    return lower.concat(upper);
+}
+
+/**
+ * Extract all solid pixels from image data
+ * @param {ImageData} imageData - Image data to process
+ * @param {number} threshold - Alpha threshold (0-255) for considering a pixel as solid
+ * @returns {Array<{x: number, y: number}>} - Array of solid pixel coordinates
+ */
+export function extractSolidPixels(imageData, threshold = 128) {
+    const width = imageData.width;
+    const height = imageData.height;
+    const data = imageData.data;
+    const pixels = [];
+    
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            const idx = (y * width + x) * 4 + 3; // Alpha channel
+            if (data[idx] >= threshold) {
+                pixels.push({x, y});
+            }
+        }
+    }
+    
+    return pixels;
+}
+
+/**
+ * Compute convex hull bounding shape for a sprite
+ * @param {Image} spriteSheet - The sprite sheet image
+ * @param {number} sx - Source x in pixels
+ * @param {number} sy - Source y in pixels
+ * @param {number} width - Width of sprite
+ * @param {number} height - Height of sprite
+ * @param {Object} options - Options for shape generation
+ * @param {number} options.threshold - Alpha threshold (default: 128)
+ * @returns {Array<{x: number, y: number}>} - Convex hull polygon points
+ */
+export function computeConvexHullShape(spriteSheet, sx, sy, width, height, options = {}) {
+    const threshold = options.threshold !== undefined ? options.threshold : 128;
+    
+    // Extract sprite data
+    const imageData = extractSpriteData(spriteSheet, sx, sy, width, height);
+    
+    // Extract all solid pixels
+    const pixels = extractSolidPixels(imageData, threshold);
+    
+    if (pixels.length === 0) {
+        // Return empty polygon if no solid pixels found
+        return [];
+    }
+    
+    // Compute convex hull
+    const hull = convexHull(pixels);
+    
+    return hull;
+}
+
+/**
+ * Compute convex hull shapes for all sprites in a sprite descriptor
+ * @param {Object} spriteDescriptor - Sprite descriptor with img, sx, sy, gridWidth, noSprites
+ * @param {Object} options - Options for shape generation
+ * @returns {Array<Array<{x: number, y: number}>>} - Array of convex hull polygons, one per sprite
+ */
+export function computeAllConvexHullShapes(spriteDescriptor, options = {}) {
+    const { img, sx, sy, gridWidth, noSprites } = spriteDescriptor;
+    const boundingShapes = [];
+    
+    for (let i = 0; i < noSprites; i++) {
+        const col = i % gridWidth;
+        const row = Math.floor(i / gridWidth);
+        const sourceX = col * sx;
+        const sourceY = row * sy;
+        
+        const shape = computeConvexHullShape(img, sourceX, sourceY, sx, sy, options);
+        boundingShapes.push(shape);
+    }
+    
+    return boundingShapes;
+}
+
+/**
  * Simple AABB (Axis-Aligned Bounding Box) computation for comparison
  * @param {Array<{x: number, y: number}>} polygon - Polygon points
  * @returns {{xmin: number, ymin: number, xmax: number, ymax: number}} - AABB

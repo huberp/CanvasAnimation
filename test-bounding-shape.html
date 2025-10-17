@@ -194,6 +194,71 @@
             assert(result2.length === 2, 'Two points should remain two points');
         });
         
+        // Test 9: Convex hull computes correctly for a square
+        test('Convex hull computes correctly for a square', () => {
+            const points = [
+                { x: 0, y: 0 },
+                { x: 10, y: 0 },
+                { x: 10, y: 10 },
+                { x: 0, y: 10 },
+                { x: 5, y: 5 }  // Interior point
+            ];
+            
+            const hull = BoundingShape.convexHull(points);
+            
+            assert(hull.length === 4, 'Convex hull of square should have 4 points');
+            // Interior point should not be in hull
+            assert(!hull.some(p => p.x === 5 && p.y === 5), 'Interior point should not be in hull');
+        });
+        
+        // Test 10: Convex hull handles collinear points
+        test('Convex hull handles collinear points', () => {
+            const points = [
+                { x: 0, y: 0 },
+                { x: 1, y: 1 },
+                { x: 2, y: 2 },
+                { x: 3, y: 3 }
+            ];
+            
+            const hull = BoundingShape.convexHull(points);
+            
+            assert(hull.length === 2, 'Convex hull of collinear points should have 2 points (endpoints)');
+        });
+        
+        // Test 11: Convex hull handles minimal input
+        test('Convex hull handles minimal input', () => {
+            const onePoint = [{ x: 0, y: 0 }];
+            const twoPoints = [{ x: 0, y: 0 }, { x: 1, y: 1 }];
+            const threePoints = [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 0, y: 1 }];
+            
+            const result1 = BoundingShape.convexHull(onePoint);
+            const result2 = BoundingShape.convexHull(twoPoints);
+            const result3 = BoundingShape.convexHull(threePoints);
+            
+            assert(result1.length === 1, 'One point should remain one point');
+            assert(result2.length === 2, 'Two points should remain two points');
+            assert(result3.length === 3, 'Triangle should have 3 points');
+        });
+        
+        // Test 12: Extract solid pixels works correctly
+        test('Extract solid pixels works correctly', () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 5;
+            canvas.height = 5;
+            const ctx = canvas.getContext('2d');
+            
+            // Draw a 2x2 solid square at (1,1)
+            ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+            ctx.fillRect(1, 1, 2, 2);
+            
+            const imageData = ctx.getImageData(0, 0, 5, 5);
+            const pixels = BoundingShape.extractSolidPixels(imageData, 128);
+            
+            assert(pixels.length === 4, 'Should extract exactly 4 solid pixels');
+            assert(pixels.some(p => p.x === 1 && p.y === 1), 'Should include (1,1)');
+            assert(pixels.some(p => p.x === 2 && p.y === 2), 'Should include (2,2)');
+        });
+        
         // Display results
         function displayResults() {
             const container = document.getElementById('test-results');
