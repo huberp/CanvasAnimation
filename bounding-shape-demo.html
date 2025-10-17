@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bounding Shape Demo - Asteroid4</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+        }
+        #controls {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+        }
+        #controls label {
+            margin: 0 10px;
+            font-weight: bold;
+        }
+        #controls input[type="range"] {
+            width: 200px;
+            vertical-align: middle;
+        }
+        #controls input[type="checkbox"] {
+            margin: 0 5px;
+        }
+        #sprite-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .sprite-wrapper {
+            background-color: #2a2a2a;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .sprite-wrapper canvas {
+            border: 2px solid #444;
+            background-color: #000;
+            image-rendering: pixelated;
+        }
+        .sprite-label {
+            margin-top: 5px;
+            font-size: 12px;
+            color: #aaa;
+        }
+        #info {
+            text-align: center;
+            margin: 20px;
+            padding: 15px;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+        }
+        .stats {
+            display: inline-block;
+            margin: 0 15px;
+            padding: 10px 20px;
+            background-color: #3a3a3a;
+            border-radius: 5px;
+        }
+        .loading {
+            text-align: center;
+            font-size: 18px;
+            margin: 50px;
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎮 Bounding Shape Demo - Asteroid4 Sprites</h1>
+    
+    <div id="controls">
+        <label>
+            Tolerance:
+            <input type="range" id="tolerance" min="0.5" max="10" step="0.5" value="2.0">
+            <span id="toleranceValue">2.0</span>
+        </label>
+        <label>
+            Threshold:
+            <input type="range" id="threshold" min="10" max="255" step="5" value="128">
+            <span id="thresholdValue">128</span>
+        </label>
+        <label>
+            <input type="checkbox" id="showSprite" checked>
+            Show Sprite
+        </label>
+        <label>
+            <input type="checkbox" id="showPolygon" checked>
+            Show Polygon
+        </label>
+        <label>
+            <input type="checkbox" id="showAABB">
+            Show AABB
+        </label>
+        <button id="recompute">Recompute Shapes</button>
+    </div>
+    
+    <div id="info">
+        <div class="stats">
+            <strong>Total Sprites:</strong> <span id="spriteCount">-</span>
+        </div>
+        <div class="stats">
+            <strong>Avg Points:</strong> <span id="avgPoints">-</span>
+        </div>
+        <div class="stats">
+            <strong>Min Points:</strong> <span id="minPoints">-</span>
+        </div>
+        <div class="stats">
+            <strong>Max Points:</strong> <span id="maxPoints">-</span>
+        </div>
+    </div>
+    
+    <div id="loading" class="loading">Loading asteroid sprites...</div>
+    <div id="sprite-container"></div>
+    
+    <script type="module">
+        import * as BoundingShape from './js/boundingShape.js';
+        
+        // Configuration
+        const SPRITE_CONFIG = {
+            src: 'img/asteroid4_32x32.png',
+            width: 32,
+            height: 32,
+            gridWidth: 5,
+            totalSprites: 19
+        };
+        
+        // Scale for display
+        const DISPLAY_SCALE = 3;
+        const CANVAS_SIZE = SPRITE_CONFIG.width * DISPLAY_SCALE;
+        
+        let spriteImage = null;
+        let boundingShapes = [];
+        
+        // Load the sprite sheet
+        async function loadSpriteSheet() {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = SPRITE_CONFIG.src;
+            });
+        }
+        
+        // Compute all bounding shapes
+        function computeShapes() {
+            const tolerance = parseFloat(document.getElementById('tolerance').value);
+            const threshold = parseInt(document.getElementById('threshold').value);
+            
+            boundingShapes = [];
+            
+            for (let i = 0; i < SPRITE_CONFIG.totalSprites; i++) {
+                const col = i % SPRITE_CONFIG.gridWidth;
+                const row = Math.floor(i / SPRITE_CONFIG.gridWidth);
+                const sx = col * SPRITE_CONFIG.width;
+                const sy = row * SPRITE_CONFIG.height;
+                
+                const shape = BoundingShape.computeBoundingShape(
+                    spriteImage, sx, sy, 
+                    SPRITE_CONFIG.width, SPRITE_CONFIG.height,
+                    { tolerance, threshold }
+                );
+                
+                boundingShapes.push(shape);
+            }
+            
+            updateStats();
+        }
+        
+        // Update statistics
+        function updateStats() {
+            const pointCounts = boundingShapes.map(shape => shape.length);
+            const totalPoints = pointCounts.reduce((sum, count) => sum + count, 0);
+            const avgPoints = totalPoints / boundingShapes.length;
+            const minPoints = Math.min(...pointCounts);
+            const maxPoints = Math.max(...pointCounts);
+            
+            document.getElementById('spriteCount').textContent = boundingShapes.length;
+            document.getElementById('avgPoints').textContent = avgPoints.toFixed(1);
+            document.getElementById('minPoints').textContent = minPoints;
+            document.getElementById('maxPoints').textContent = maxPoints;
+        }
+        
+        // Render a single sprite with its bounding shape
+        function renderSprite(canvas, spriteIndex) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            
+            const col = spriteIndex % SPRITE_CONFIG.gridWidth;
+            const row = Math.floor(spriteIndex / SPRITE_CONFIG.gridWidth);
+            const sx = col * SPRITE_CONFIG.width;
+            const sy = row * SPRITE_CONFIG.height;
+            
+            // Draw sprite if enabled
+            if (document.getElementById('showSprite').checked) {
+                ctx.drawImage(
+                    spriteImage,
+                    sx, sy, SPRITE_CONFIG.width, SPRITE_CONFIG.height,
+                    0, 0, CANVAS_SIZE, CANVAS_SIZE
+                );
+            }
+            
+            const shape = boundingShapes[spriteIndex];
+            
+            // Draw AABB if enabled
+            if (document.getElementById('showAABB').checked && shape.length > 0) {
+                const aabb = BoundingShape.computeAABB(shape);
+                ctx.strokeStyle = 'rgba(255, 255, 0, 0.8)';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(
+                    aabb.xmin * DISPLAY_SCALE,
+                    aabb.ymin * DISPLAY_SCALE,
+                    (aabb.xmax - aabb.xmin) * DISPLAY_SCALE,
+                    (aabb.ymax - aabb.ymin) * DISPLAY_SCALE
+                );
+            }
+            
+            // Draw bounding polygon if enabled
+            if (document.getElementById('showPolygon').checked && shape.length > 0) {
+                ctx.strokeStyle = 'rgba(0, 255, 0, 0.9)';
+                ctx.fillStyle = 'rgba(0, 255, 0, 0.2)';
+                ctx.lineWidth = 2;
+                
+                ctx.beginPath();
+                ctx.moveTo(shape[0].x * DISPLAY_SCALE, shape[0].y * DISPLAY_SCALE);
+                for (let i = 1; i < shape.length; i++) {
+                    ctx.lineTo(shape[i].x * DISPLAY_SCALE, shape[i].y * DISPLAY_SCALE);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                
+                // Draw vertices
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.8)';
+                for (let point of shape) {
+                    ctx.beginPath();
+                    ctx.arc(point.x * DISPLAY_SCALE, point.y * DISPLAY_SCALE, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+        
+        // Render all sprites
+        function renderAll() {
+            const container = document.getElementById('sprite-container');
+            const canvases = container.querySelectorAll('canvas');
+            
+            canvases.forEach((canvas, index) => {
+                renderSprite(canvas, index);
+            });
+        }
+        
+        // Initialize the display
+        function initializeDisplay() {
+            const container = document.getElementById('sprite-container');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < SPRITE_CONFIG.totalSprites; i++) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'sprite-wrapper';
+                
+                const canvas = document.createElement('canvas');
+                canvas.width = CANVAS_SIZE;
+                canvas.height = CANVAS_SIZE;
+                
+                const label = document.createElement('div');
+                label.className = 'sprite-label';
+                label.textContent = `Sprite ${i}`;
+                
+                wrapper.appendChild(canvas);
+                wrapper.appendChild(label);
+                container.appendChild(wrapper);
+            }
+        }
+        
+        // Main initialization
+        async function init() {
+            try {
+                spriteImage = await loadSpriteSheet();
+                document.getElementById('loading').style.display = 'none';
+                
+                initializeDisplay();
+                computeShapes();
+                renderAll();
+                
+                // Set up event listeners
+                document.getElementById('tolerance').addEventListener('input', (e) => {
+                    document.getElementById('toleranceValue').textContent = e.target.value;
+                });
+                
+                document.getElementById('threshold').addEventListener('input', (e) => {
+                    document.getElementById('thresholdValue').textContent = e.target.value;
+                });
+                
+                document.getElementById('recompute').addEventListener('click', () => {
+                    computeShapes();
+                    renderAll();
+                });
+                
+                document.getElementById('showSprite').addEventListener('change', renderAll);
+                document.getElementById('showPolygon').addEventListener('change', renderAll);
+                document.getElementById('showAABB').addEventListener('change', renderAll);
+                
+            } catch (error) {
+                document.getElementById('loading').textContent = 'Error loading sprite sheet: ' + error.message;
+                console.error(error);
+            }
+        }
+        
+        // Start the application
+        init();
+    </script>
+</body>
+</html>

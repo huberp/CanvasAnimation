@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Bounding Shape Unit Tests</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        .test-results {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-case {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 4px solid #ccc;
+        }
+        .test-case.pass {
+            border-color: #4CAF50;
+            background-color: #f1f8f4;
+        }
+        .test-case.fail {
+            border-color: #f44336;
+            background-color: #ffebee;
+        }
+        .test-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .test-details {
+            font-size: 14px;
+            color: #666;
+        }
+        .summary {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e3f2fd;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Bounding Shape Utility - Unit Tests</h1>
+    <div id="test-results" class="test-results">
+        <p>Running tests...</p>
+    </div>
+    
+    <script type="module">
+        import * as BoundingShape from './js/boundingShape.js';
+        
+        const results = [];
+        
+        function assert(condition, message) {
+            if (!condition) {
+                throw new Error(message || 'Assertion failed');
+            }
+        }
+        
+        function test(name, fn) {
+            try {
+                fn();
+                results.push({ name, pass: true, message: 'Test passed' });
+            } catch (error) {
+                results.push({ name, pass: false, message: error.message });
+            }
+        }
+        
+        // Test 1: Douglas-Peucker simplification
+        test('Douglas-Peucker simplifies polygon correctly', () => {
+            const points = [
+                { x: 0, y: 0 },
+                { x: 1, y: 0.1 },
+                { x: 2, y: 0 },
+                { x: 3, y: 0.1 },
+                { x: 4, y: 0 }
+            ];
+            
+            const simplified = BoundingShape.douglasPeucker(points, 0.5);
+            assert(simplified.length < points.length, 'Should have fewer points after simplification');
+            assert(simplified.length >= 2, 'Should have at least 2 points');
+            assert(simplified[0].x === 0 && simplified[0].y === 0, 'Should keep first point');
+            assert(simplified[simplified.length - 1].x === 4 && simplified[simplified.length - 1].y === 0, 'Should keep last point');
+        });
+        
+        // Test 2: Douglas-Peucker with low tolerance keeps more points
+        test('Douglas-Peucker tolerance affects simplification', () => {
+            const points = [];
+            for (let i = 0; i < 20; i++) {
+                points.push({ x: i, y: Math.sin(i * 0.5) });
+            }
+            
+            const simplified1 = BoundingShape.douglasPeucker(points, 0.1);
+            const simplified2 = BoundingShape.douglasPeucker(points, 1.0);
+            
+            assert(simplified1.length > simplified2.length, 'Lower tolerance should keep more points');
+        });
+        
+        // Test 3: AABB computation
+        test('AABB computation is correct', () => {
+            const polygon = [
+                { x: 5, y: 10 },
+                { x: 15, y: 5 },
+                { x: 20, y: 15 },
+                { x: 10, y: 20 }
+            ];
+            
+            const aabb = BoundingShape.computeAABB(polygon);
+            
+            assert(aabb.xmin === 5, 'xmin should be 5');
+            assert(aabb.ymin === 5, 'ymin should be 5');
+            assert(aabb.xmax === 20, 'xmax should be 20');
+            assert(aabb.ymax === 20, 'ymax should be 20');
+        });
+        
+        // Test 4: AABB with empty polygon
+        test('AABB handles empty polygon', () => {
+            const polygon = [];
+            const aabb = BoundingShape.computeAABB(polygon);
+            
+            assert(aabb.xmin === 0, 'xmin should be 0 for empty polygon');
+            assert(aabb.xmax === 0, 'xmax should be 0 for empty polygon');
+        });
+        
+        // Test 5: Extract sprite data creates correct size canvas
+        test('Extract sprite data creates correct dimensions', () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            
+            // Create a simple test pattern
+            ctx.fillStyle = 'red';
+            ctx.fillRect(10, 10, 20, 20);
+            
+            const img = new Image();
+            img.onload = () => {
+                const imageData = BoundingShape.extractSpriteData(img, 0, 0, 32, 32);
+                assert(imageData.width === 32, 'Width should be 32');
+                assert(imageData.height === 32, 'Height should be 32');
+            };
+            img.src = canvas.toDataURL();
+        });
+        
+        // Test 6: Marching squares handles all-transparent image
+        test('Marching squares handles transparent image', () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 10;
+            canvas.height = 10;
+            const ctx = canvas.getContext('2d');
+            const imageData = ctx.getImageData(0, 0, 10, 10);
+            
+            const contour = BoundingShape.marchingSquares(imageData, 128);
+            
+            assert(Array.isArray(contour), 'Should return an array');
+            assert(contour.length === 0, 'Should return empty array for transparent image');
+        });
+        
+        // Test 7: Marching squares finds contour in solid square
+        test('Marching squares finds contour in solid square', () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 10;
+            canvas.height = 10;
+            const ctx = canvas.getContext('2d');
+            
+            // Draw a solid square
+            ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+            ctx.fillRect(2, 2, 6, 6);
+            
+            const imageData = ctx.getImageData(0, 0, 10, 10);
+            const contour = BoundingShape.marchingSquares(imageData, 128);
+            
+            assert(contour.length > 0, 'Should find contour points');
+            assert(contour.length >= 4, 'Should have at least 4 points for a square');
+        });
+        
+        // Test 8: Douglas-Peucker handles edge cases
+        test('Douglas-Peucker handles minimal input', () => {
+            const onePoint = [{ x: 0, y: 0 }];
+            const twoPoints = [{ x: 0, y: 0 }, { x: 1, y: 1 }];
+            
+            const result1 = BoundingShape.douglasPeucker(onePoint, 1.0);
+            const result2 = BoundingShape.douglasPeucker(twoPoints, 1.0);
+            
+            assert(result1.length === 1, 'One point should remain one point');
+            assert(result2.length === 2, 'Two points should remain two points');
+        });
+        
+        // Test 9: Convex hull computes correctly for a square
+        test('Convex hull computes correctly for a square', () => {
+            const points = [
+                { x: 0, y: 0 },
+                { x: 10, y: 0 },
+                { x: 10, y: 10 },
+                { x: 0, y: 10 },
+                { x: 5, y: 5 }  // Interior point
+            ];
+            
+            const hull = BoundingShape.convexHull(points);
+            
+            assert(hull.length === 4, 'Convex hull of square should have 4 points');
+            // Interior point should not be in hull
+            assert(!hull.some(p => p.x === 5 && p.y === 5), 'Interior point should not be in hull');
+        });
+        
+        // Test 10: Convex hull handles collinear points
+        test('Convex hull handles collinear points', () => {
+            const points = [
+                { x: 0, y: 0 },
+                { x: 1, y: 1 },
+                { x: 2, y: 2 },
+                { x: 3, y: 3 }
+            ];
+            
+            const hull = BoundingShape.convexHull(points);
+            
+            assert(hull.length === 2, 'Convex hull of collinear points should have 2 points (endpoints)');
+        });
+        
+        // Test 11: Convex hull handles minimal input
+        test('Convex hull handles minimal input', () => {
+            const onePoint = [{ x: 0, y: 0 }];
+            const twoPoints = [{ x: 0, y: 0 }, { x: 1, y: 1 }];
+            const threePoints = [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 0, y: 1 }];
+            
+            const result1 = BoundingShape.convexHull(onePoint);
+            const result2 = BoundingShape.convexHull(twoPoints);
+            const result3 = BoundingShape.convexHull(threePoints);
+            
+            assert(result1.length === 1, 'One point should remain one point');
+            assert(result2.length === 2, 'Two points should remain two points');
+            assert(result3.length === 3, 'Triangle should have 3 points');
+        });
+        
+        // Test 12: Extract solid pixels works correctly
+        test('Extract solid pixels works correctly', () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 5;
+            canvas.height = 5;
+            const ctx = canvas.getContext('2d');
+            
+            // Draw a 2x2 solid square at (1,1)
+            ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+            ctx.fillRect(1, 1, 2, 2);
+            
+            const imageData = ctx.getImageData(0, 0, 5, 5);
+            const pixels = BoundingShape.extractSolidPixels(imageData, 128);
+            
+            assert(pixels.length === 4, 'Should extract exactly 4 solid pixels');
+            assert(pixels.some(p => p.x === 1 && p.y === 1), 'Should include (1,1)');
+            assert(pixels.some(p => p.x === 2 && p.y === 2), 'Should include (2,2)');
+        });
+        
+        // Test 13: Simplified convex hull reduces collinear points
+        test('Simplified convex hull reduces collinear points', () => {
+            // Create points forming a rectangle with extra collinear points
+            const points = [
+                { x: 0, y: 0 },
+                { x: 5, y: 0 },
+                { x: 10, y: 0 },  // Collinear with previous two
+                { x: 10, y: 5 },
+                { x: 10, y: 10 }, // Collinear with previous two
+                { x: 5, y: 10 },
+                { x: 0, y: 10 },  // Collinear with previous two
+                { x: 0, y: 5 }    // Collinear with first and this
+            ];
+            
+            const hull = BoundingShape.convexHull(points);
+            const simplified = BoundingShape.douglasPeucker(hull, 1.0);
+            
+            assert(hull.length === 4, 'Convex hull should have 4 corners');
+            assert(simplified.length === 4, 'Simplified should maintain 4 corners');
+            assert(simplified.length <= hull.length, 'Simplified should have same or fewer points');
+        });
+        
+        // Display results
+        function displayResults() {
+            const container = document.getElementById('test-results');
+            const passed = results.filter(r => r.pass).length;
+            const failed = results.filter(r => !r.pass).length;
+            
+            let html = '';
+            
+            results.forEach(result => {
+                html += `
+                    <div class="test-case ${result.pass ? 'pass' : 'fail'}">
+                        <div class="test-name">${result.pass ? '✓' : '✗'} ${result.name}</div>
+                        <div class="test-details">${result.message}</div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                <div class="summary">
+                    Summary: ${passed} passed, ${failed} failed out of ${results.length} tests
+                </div>
+            `;
+            
+            container.innerHTML = html;
+        }
+        
+        // Run tests
+        displayResults();
+    </script>
+</body>
+</html>

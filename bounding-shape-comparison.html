@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bounding Shape Comparison - Marching Squares vs Convex Hull</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+        }
+        #controls {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+        }
+        #controls label {
+            margin: 0 10px;
+            font-weight: bold;
+        }
+        #controls input[type="range"] {
+            width: 200px;
+            vertical-align: middle;
+        }
+        #controls input[type="checkbox"] {
+            margin: 0 5px;
+        }
+        #controls select {
+            margin: 0 5px;
+            padding: 5px;
+            background-color: #3a3a3a;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 4px;
+        }
+        .comparison-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .algorithm-section {
+            background-color: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .algorithm-section h2 {
+            text-align: center;
+            color: #4CAF50;
+            margin-top: 0;
+        }
+        #sprite-container-ms, #sprite-container-ch {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .sprite-wrapper {
+            background-color: #3a3a3a;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .sprite-wrapper canvas {
+            border: 2px solid #444;
+            background-color: #000;
+            image-rendering: pixelated;
+        }
+        .sprite-label {
+            margin-top: 5px;
+            font-size: 12px;
+            color: #aaa;
+        }
+        #info {
+            text-align: center;
+            margin: 20px;
+            padding: 15px;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .stat-box {
+            background-color: #3a3a3a;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .stat-title {
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        .algorithm-label {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .label-ms {
+            background-color: #2196F3;
+            color: white;
+        }
+        .label-ch {
+            background-color: #FF9800;
+            color: white;
+        }
+        .label-sch {
+            background-color: #9C27B0;
+            color: white;
+        }
+        .loading {
+            text-align: center;
+            font-size: 18px;
+            margin: 50px;
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔬 Bounding Shape Comparison</h1>
+    
+    <div id="controls">
+        <div style="margin-bottom: 10px;">
+            <label>
+                Sprite to View:
+                <select id="spriteSelect">
+                    <option value="all">All Sprites</option>
+                    <option value="0">Sprite 0</option>
+                    <option value="1">Sprite 1</option>
+                    <option value="2">Sprite 2</option>
+                    <option value="3">Sprite 3</option>
+                    <option value="4">Sprite 4</option>
+                    <option value="5">Sprite 5</option>
+                    <option value="6">Sprite 6</option>
+                    <option value="7">Sprite 7</option>
+                    <option value="8">Sprite 8</option>
+                    <option value="9">Sprite 9</option>
+                    <option value="10">Sprite 10</option>
+                    <option value="11">Sprite 11</option>
+                    <option value="12">Sprite 12</option>
+                    <option value="13">Sprite 13</option>
+                    <option value="14">Sprite 14</option>
+                    <option value="15">Sprite 15</option>
+                    <option value="16">Sprite 16</option>
+                    <option value="17">Sprite 17</option>
+                    <option value="18">Sprite 18</option>
+                </select>
+            </label>
+        </div>
+        <div>
+            <label>
+                Tolerance (MS):
+                <input type="range" id="tolerance" min="0.5" max="10" step="0.5" value="2.0">
+                <span id="toleranceValue">2.0</span>
+            </label>
+            <label>
+                Threshold:
+                <input type="range" id="threshold" min="10" max="255" step="5" value="128">
+                <span id="thresholdValue">128</span>
+            </label>
+        </div>
+        <div style="margin-top: 10px;">
+            <label>
+                <input type="checkbox" id="showSprite" checked>
+                Show Sprite
+            </label>
+            <label>
+                <input type="checkbox" id="showPolygon" checked>
+                Show Polygon
+            </label>
+            <label>
+                <input type="checkbox" id="showAABB">
+                Show AABB
+            </label>
+            <button id="recompute">Recompute Shapes</button>
+        </div>
+    </div>
+    
+    <div id="info">
+        <h3>Comparison Statistics</h3>
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-title">Marching Squares <span class="algorithm-label label-ms">MS</span></div>
+                <div class="stat-value" id="avgPointsMS">-</div>
+                <div class="stat-title" style="font-size: 12px;">Avg Points per Polygon</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-title">Convex Hull <span class="algorithm-label label-ch">CH</span></div>
+                <div class="stat-value" id="avgPointsCH">-</div>
+                <div class="stat-title" style="font-size: 12px;">Avg Points per Polygon</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-title">Simplified CH <span class="algorithm-label label-sch">SCH</span></div>
+                <div class="stat-value" id="avgPointsSCH">-</div>
+                <div class="stat-title" style="font-size: 12px;">Avg Points per Polygon</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-title">Total Sprites</div>
+                <div class="stat-value" id="spriteCount">19</div>
+                <div class="stat-title" style="font-size: 12px;">Asteroid4</div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="loading" class="loading">Loading asteroid sprites...</div>
+    
+    <div class="comparison-container" style="display: none;" id="comparisonContainer">
+        <div class="algorithm-section">
+            <h2>Marching Squares + Douglas-Peucker <span class="algorithm-label label-ms">MS</span></h2>
+            <p style="text-align: center; color: #aaa; font-size: 14px;">
+                Traces contour, then simplifies polygon
+            </p>
+            <div id="sprite-container-ms"></div>
+        </div>
+        <div class="algorithm-section">
+            <h2>Convex Hull <span class="algorithm-label label-ch">CH</span></h2>
+            <p style="text-align: center; color: #aaa; font-size: 14px;">
+                Computes smallest convex polygon containing all pixels
+            </p>
+            <div id="sprite-container-ch"></div>
+        </div>
+        <div class="algorithm-section">
+            <h2>Simplified Convex Hull <span class="algorithm-label label-sch">SCH</span></h2>
+            <p style="text-align: center; color: #aaa; font-size: 14px;">
+                Convex hull + simplification to remove collinear points
+            </p>
+            <div id="sprite-container-sch"></div>
+        </div>
+    </div>
+    
+    <script type="module">
+        import * as BoundingShape from './js/boundingShape.js';
+        
+        // Configuration
+        const SPRITE_CONFIG = {
+            src: 'img/asteroid4_32x32.png',
+            width: 32,
+            height: 32,
+            gridWidth: 5,
+            totalSprites: 19
+        };
+        
+        // Scale for display
+        const DISPLAY_SCALE = 3;
+        const CANVAS_SIZE = SPRITE_CONFIG.width * DISPLAY_SCALE;
+        
+        let spriteImage = null;
+        let boundingShapesMS = [];
+        let boundingShapesCH = [];
+        let boundingShapesSCH = [];
+        
+        // Load the sprite sheet
+        async function loadSpriteSheet() {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = SPRITE_CONFIG.src;
+            });
+        }
+        
+        // Compute all bounding shapes
+        function computeShapes() {
+            const tolerance = parseFloat(document.getElementById('tolerance').value);
+            const threshold = parseInt(document.getElementById('threshold').value);
+            
+            boundingShapesMS = [];
+            boundingShapesCH = [];
+            boundingShapesSCH = [];
+            
+            for (let i = 0; i < SPRITE_CONFIG.totalSprites; i++) {
+                const col = i % SPRITE_CONFIG.gridWidth;
+                const row = Math.floor(i / SPRITE_CONFIG.gridWidth);
+                const sx = col * SPRITE_CONFIG.width;
+                const sy = row * SPRITE_CONFIG.height;
+                
+                // Marching Squares + Douglas-Peucker
+                const shapeMS = BoundingShape.computeBoundingShape(
+                    spriteImage, sx, sy, 
+                    SPRITE_CONFIG.width, SPRITE_CONFIG.height,
+                    { tolerance, threshold }
+                );
+                
+                // Convex Hull
+                const shapeCH = BoundingShape.computeConvexHullShape(
+                    spriteImage, sx, sy,
+                    SPRITE_CONFIG.width, SPRITE_CONFIG.height,
+                    { threshold }
+                );
+                
+                // Simplified Convex Hull
+                const shapeSCH = BoundingShape.computeSimplifiedConvexHullShape(
+                    spriteImage, sx, sy,
+                    SPRITE_CONFIG.width, SPRITE_CONFIG.height,
+                    { threshold, tolerance }
+                );
+                
+                boundingShapesMS.push(shapeMS);
+                boundingShapesCH.push(shapeCH);
+                boundingShapesSCH.push(shapeSCH);
+            }
+            
+            updateStats();
+        }
+        
+        // Update statistics
+        function updateStats() {
+            const pointCountsMS = boundingShapesMS.map(shape => shape.length);
+            const pointCountsCH = boundingShapesCH.map(shape => shape.length);
+            const pointCountsSCH = boundingShapesSCH.map(shape => shape.length);
+            
+            const totalPointsMS = pointCountsMS.reduce((sum, count) => sum + count, 0);
+            const totalPointsCH = pointCountsCH.reduce((sum, count) => sum + count, 0);
+            const totalPointsSCH = pointCountsSCH.reduce((sum, count) => sum + count, 0);
+            
+            const avgPointsMS = totalPointsMS / boundingShapesMS.length;
+            const avgPointsCH = totalPointsCH / boundingShapesCH.length;
+            const avgPointsSCH = totalPointsSCH / boundingShapesSCH.length;
+            
+            document.getElementById('avgPointsMS').textContent = avgPointsMS.toFixed(1);
+            document.getElementById('avgPointsCH').textContent = avgPointsCH.toFixed(1);
+            document.getElementById('avgPointsSCH').textContent = avgPointsSCH.toFixed(1);
+        }
+        
+        // Render a single sprite with its bounding shape
+        function renderSprite(canvas, spriteIndex, shapes, color) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            
+            const col = spriteIndex % SPRITE_CONFIG.gridWidth;
+            const row = Math.floor(spriteIndex / SPRITE_CONFIG.gridWidth);
+            const sx = col * SPRITE_CONFIG.width;
+            const sy = row * SPRITE_CONFIG.height;
+            
+            // Draw sprite if enabled
+            if (document.getElementById('showSprite').checked) {
+                ctx.drawImage(
+                    spriteImage,
+                    sx, sy, SPRITE_CONFIG.width, SPRITE_CONFIG.height,
+                    0, 0, CANVAS_SIZE, CANVAS_SIZE
+                );
+            }
+            
+            const shape = shapes[spriteIndex];
+            
+            // Draw AABB if enabled
+            if (document.getElementById('showAABB').checked && shape.length > 0) {
+                const aabb = BoundingShape.computeAABB(shape);
+                ctx.strokeStyle = 'rgba(255, 255, 0, 0.8)';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(
+                    aabb.xmin * DISPLAY_SCALE,
+                    aabb.ymin * DISPLAY_SCALE,
+                    (aabb.xmax - aabb.xmin) * DISPLAY_SCALE,
+                    (aabb.ymax - aabb.ymin) * DISPLAY_SCALE
+                );
+            }
+            
+            // Draw bounding polygon if enabled
+            if (document.getElementById('showPolygon').checked && shape.length > 0) {
+                ctx.strokeStyle = color;
+                ctx.fillStyle = color.replace('0.9', '0.2');
+                ctx.lineWidth = 2;
+                
+                ctx.beginPath();
+                ctx.moveTo(shape[0].x * DISPLAY_SCALE, shape[0].y * DISPLAY_SCALE);
+                for (let i = 1; i < shape.length; i++) {
+                    ctx.lineTo(shape[i].x * DISPLAY_SCALE, shape[i].y * DISPLAY_SCALE);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                
+                // Draw vertices
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.8)';
+                for (let point of shape) {
+                    ctx.beginPath();
+                    ctx.arc(point.x * DISPLAY_SCALE, point.y * DISPLAY_SCALE, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        }
+        
+        // Render all sprites or a single sprite
+        function renderAll() {
+            const selectedSprite = document.getElementById('spriteSelect').value;
+            const containerMS = document.getElementById('sprite-container-ms');
+            const containerCH = document.getElementById('sprite-container-ch');
+            const containerSCH = document.getElementById('sprite-container-sch');
+            
+            if (selectedSprite === 'all') {
+                const canvasesMS = containerMS.querySelectorAll('canvas');
+                const canvasesCH = containerCH.querySelectorAll('canvas');
+                const canvasesSCH = containerSCH.querySelectorAll('canvas');
+                
+                canvasesMS.forEach((canvas, index) => {
+                    renderSprite(canvas, index, boundingShapesMS, 'rgba(33, 150, 243, 0.9)');
+                });
+                
+                canvasesCH.forEach((canvas, index) => {
+                    renderSprite(canvas, index, boundingShapesCH, 'rgba(255, 152, 0, 0.9)');
+                });
+                
+                canvasesSCH.forEach((canvas, index) => {
+                    renderSprite(canvas, index, boundingShapesSCH, 'rgba(156, 39, 176, 0.9)');
+                });
+            } else {
+                const index = parseInt(selectedSprite);
+                const canvasMS = containerMS.querySelector(`canvas[data-index="${index}"]`);
+                const canvasCH = containerCH.querySelector(`canvas[data-index="${index}"]`);
+                const canvasSCH = containerSCH.querySelector(`canvas[data-index="${index}"]`);
+                
+                if (canvasMS && canvasCH && canvasSCH) {
+                    renderSprite(canvasMS, index, boundingShapesMS, 'rgba(33, 150, 243, 0.9)');
+                    renderSprite(canvasCH, index, boundingShapesCH, 'rgba(255, 152, 0, 0.9)');
+                    renderSprite(canvasSCH, index, boundingShapesSCH, 'rgba(156, 39, 176, 0.9)');
+                }
+            }
+        }
+        
+        // Initialize the display
+        function initializeDisplay() {
+            const containerMS = document.getElementById('sprite-container-ms');
+            const containerCH = document.getElementById('sprite-container-ch');
+            const containerSCH = document.getElementById('sprite-container-sch');
+            containerMS.innerHTML = '';
+            containerCH.innerHTML = '';
+            containerSCH.innerHTML = '';
+            
+            for (let i = 0; i < SPRITE_CONFIG.totalSprites; i++) {
+                // Create for Marching Squares
+                const wrapperMS = document.createElement('div');
+                wrapperMS.className = 'sprite-wrapper';
+                
+                const canvasMS = document.createElement('canvas');
+                canvasMS.width = CANVAS_SIZE;
+                canvasMS.height = CANVAS_SIZE;
+                canvasMS.dataset.index = i;
+                
+                const labelMS = document.createElement('div');
+                labelMS.className = 'sprite-label';
+                labelMS.textContent = `Sprite ${i}`;
+                
+                wrapperMS.appendChild(canvasMS);
+                wrapperMS.appendChild(labelMS);
+                containerMS.appendChild(wrapperMS);
+                
+                // Create for Convex Hull
+                const wrapperCH = document.createElement('div');
+                wrapperCH.className = 'sprite-wrapper';
+                
+                const canvasCH = document.createElement('canvas');
+                canvasCH.width = CANVAS_SIZE;
+                canvasCH.height = CANVAS_SIZE;
+                canvasCH.dataset.index = i;
+                
+                const labelCH = document.createElement('div');
+                labelCH.className = 'sprite-label';
+                labelCH.textContent = `Sprite ${i}`;
+                
+                wrapperCH.appendChild(canvasCH);
+                wrapperCH.appendChild(labelCH);
+                containerCH.appendChild(wrapperCH);
+                
+                // Create for Simplified Convex Hull
+                const wrapperSCH = document.createElement('div');
+                wrapperSCH.className = 'sprite-wrapper';
+                
+                const canvasSCH = document.createElement('canvas');
+                canvasSCH.width = CANVAS_SIZE;
+                canvasSCH.height = CANVAS_SIZE;
+                canvasSCH.dataset.index = i;
+                
+                const labelSCH = document.createElement('div');
+                labelSCH.className = 'sprite-label';
+                labelSCH.textContent = `Sprite ${i}`;
+                
+                wrapperSCH.appendChild(canvasSCH);
+                wrapperSCH.appendChild(labelSCH);
+                containerSCH.appendChild(wrapperSCH);
+            }
+        }
+        
+        // Main initialization
+        async function init() {
+            try {
+                spriteImage = await loadSpriteSheet();
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('comparisonContainer').style.display = 'grid';
+                
+                initializeDisplay();
+                computeShapes();
+                renderAll();
+                
+                // Set up event listeners
+                document.getElementById('tolerance').addEventListener('input', (e) => {
+                    document.getElementById('toleranceValue').textContent = e.target.value;
+                });
+                
+                document.getElementById('threshold').addEventListener('input', (e) => {
+                    document.getElementById('thresholdValue').textContent = e.target.value;
+                });
+                
+                document.getElementById('recompute').addEventListener('click', () => {
+                    computeShapes();
+                    renderAll();
+                });
+                
+                document.getElementById('showSprite').addEventListener('change', renderAll);
+                document.getElementById('showPolygon').addEventListener('change', renderAll);
+                document.getElementById('showAABB').addEventListener('change', renderAll);
+                document.getElementById('spriteSelect').addEventListener('change', renderAll);
+                
+            } catch (error) {
+                document.getElementById('loading').textContent = 'Error loading sprite sheet: ' + error.message;
+                console.error(error);
+            }
+        }
+        
+        // Start the application
+        init();
+    </script>
+</body>
+</html>
