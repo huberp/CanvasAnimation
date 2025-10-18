@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bounding Shape Metadata Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+        }
+        #controls {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+        }
+        #controls label {
+            margin: 0 10px;
+            font-weight: bold;
+        }
+        #controls select {
+            padding: 5px;
+            margin: 0 5px;
+            background-color: #3a3a3a;
+            color: #ffffff;
+            border: 1px solid #555;
+            border-radius: 4px;
+        }
+        #canvas-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        canvas {
+            border: 2px solid #444;
+            background-color: #000;
+            image-rendering: pixelated;
+        }
+        #info {
+            text-align: center;
+            margin: 20px;
+            padding: 15px;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+        }
+        .stats {
+            display: inline-block;
+            margin: 0 15px;
+            padding: 10px 20px;
+            background-color: #3a3a3a;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎮 Bounding Shape Metadata Demo</h1>
+    
+    <div id="controls">
+        <label>
+            Sprite Sheet:
+            <select id="spriteSheet">
+                <option value="asteroid4_32x32">Asteroid 4 (32x32)</option>
+                <option value="asteroid3_32x32">Asteroid 3 (32x32)</option>
+            </select>
+        </label>
+        <label>
+            Algorithm:
+            <select id="algorithm">
+                <option value="marchingSquares">Marching Squares</option>
+                <option value="convexHull">Convex Hull</option>
+                <option value="simplifiedConvexHull">Simplified Convex Hull</option>
+            </select>
+        </label>
+        <label>
+            Accuracy:
+            <select id="accuracy">
+                <option value="low">Low</option>
+                <option value="mid" selected>Mid</option>
+                <option value="high">High</option>
+            </select>
+        </label>
+    </div>
+    
+    <div id="canvas-container">
+        <canvas id="canvas" width="640" height="480"></canvas>
+    </div>
+    
+    <div id="info">
+        <div class="stats">
+            <strong>Sprite Count:</strong> <span id="spriteCount">-</span>
+        </div>
+        <div class="stats">
+            <strong>Avg Points:</strong> <span id="avgPoints">-</span>
+        </div>
+        <div class="stats">
+            <strong>Total Points:</strong> <span id="totalPoints">-</span>
+        </div>
+    </div>
+
+    <script type="module">
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let currentMetadata = null;
+        let currentImage = null;
+        
+        // Load metadata and update display
+        async function loadAndDisplay() {
+            const spriteSheet = document.getElementById('spriteSheet').value;
+            const algorithm = document.getElementById('algorithm').value;
+            const accuracy = document.getElementById('accuracy').value;
+            
+            try {
+                // Load metadata
+                const response = await fetch(`img/meta/${spriteSheet}-meta.json`);
+                currentMetadata = await response.json();
+                
+                // Load image
+                currentImage = new Image();
+                currentImage.src = `img/${spriteSheet}.png`;
+                await new Promise((resolve) => {
+                    currentImage.onload = resolve;
+                });
+                
+                // Display
+                displaySprites(algorithm, accuracy);
+                updateStats(algorithm, accuracy);
+                
+            } catch (error) {
+                console.error('Error loading metadata:', error);
+                ctx.fillStyle = '#ff0000';
+                ctx.font = '16px Arial';
+                ctx.fillText('Error loading metadata. Please generate it first.', 10, 30);
+            }
+        }
+        
+        function displaySprites(algorithm, accuracy) {
+            if (!currentMetadata || !currentImage) return;
+            
+            // Clear canvas
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            const sprites = currentMetadata.algorithms[algorithm][accuracy];
+            const { spriteWidth, spriteHeight } = currentMetadata;
+            
+            // Calculate layout
+            const cols = 5;
+            const padding = 20;
+            const scale = 2; // Scale up for better visibility
+            const displayWidth = spriteWidth * scale;
+            const displayHeight = spriteHeight * scale;
+            
+            // Draw sprites with bounding shapes
+            sprites.forEach((sprite, index) => {
+                const col = index % cols;
+                const row = Math.floor(index / cols);
+                
+                const x = col * (displayWidth + padding) + padding;
+                const y = row * (displayHeight + padding) + padding + 30;
+                
+                // Draw sprite
+                ctx.drawImage(
+                    currentImage,
+                    sprite.position.x, sprite.position.y,
+                    spriteWidth, spriteHeight,
+                    x, y,
+                    displayWidth, displayHeight
+                );
+                
+                // Draw bounding shape
+                if (sprite.boundingShape.length > 0) {
+                    ctx.save();
+                    ctx.translate(x, y);
+                    ctx.scale(scale, scale);
+                    
+                    ctx.strokeStyle = '#00ff00';
+                    ctx.lineWidth = 1 / scale;
+                    ctx.beginPath();
+                    ctx.moveTo(sprite.boundingShape[0].x, sprite.boundingShape[0].y);
+                    for (let i = 1; i < sprite.boundingShape.length; i++) {
+                        ctx.lineTo(sprite.boundingShape[i].x, sprite.boundingShape[i].y);
+                    }
+                    ctx.closePath();
+                    ctx.stroke();
+                    
+                    // Draw vertices
+                    ctx.fillStyle = '#ff0000';
+                    for (const point of sprite.boundingShape) {
+                        ctx.beginPath();
+                        ctx.arc(point.x, point.y, 1.5 / scale, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    
+                    ctx.restore();
+                }
+                
+                // Draw sprite index
+                ctx.fillStyle = '#aaaaaa';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(`#${index} (${sprite.pointCount}pts)`, 
+                            x + displayWidth / 2, y + displayHeight + 12);
+            });
+        }
+        
+        function updateStats(algorithm, accuracy) {
+            if (!currentMetadata) return;
+            
+            const sprites = currentMetadata.algorithms[algorithm][accuracy];
+            const totalPoints = sprites.reduce((sum, s) => sum + s.pointCount, 0);
+            const avgPoints = (totalPoints / sprites.length).toFixed(2);
+            
+            document.getElementById('spriteCount').textContent = sprites.length;
+            document.getElementById('avgPoints').textContent = avgPoints;
+            document.getElementById('totalPoints').textContent = totalPoints;
+        }
+        
+        // Event listeners
+        document.getElementById('spriteSheet').addEventListener('change', loadAndDisplay);
+        document.getElementById('algorithm').addEventListener('change', loadAndDisplay);
+        document.getElementById('accuracy').addEventListener('change', loadAndDisplay);
+        
+        // Initial load
+        loadAndDisplay();
+    </script>
+</body>
+</html>
