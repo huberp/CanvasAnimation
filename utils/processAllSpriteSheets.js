@@ -71,6 +71,14 @@ const spriteSheets = [
         height: 96,
         gridWidth: 5,
         numSprites: 20
+    },
+    {
+        name: 'smallfighter0006',
+        path: 'img/smallfighter0006.png',
+        width: 95,
+        height: 151,
+        gridWidth: 1,
+        numSprites: 1
     }
 ];
 
