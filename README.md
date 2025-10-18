@@ -68,6 +68,12 @@ Some modern browsers allow you to open HTML files directly, but this may have li
 │   ├── boundingShape.js # Bounding shape utility for collision detection
 │   └── setupObjects.js # Setup animations
 ├── img/                # Image assets (sprites)
+│   └── meta/          # Generated bounding shape metadata
+├── utils/             # Utilities for generating metadata
+│   ├── boundingShapeNode.js  # Node.js bounding shape algorithms
+│   ├── generateBoundingShapeMeta.js  # Metadata generator
+│   ├── processAllSpriteSheets.js  # Batch processor
+│   └── README.md      # Utility documentation
 ├── research/
 │   └── research_result.md  # Research on collision detection algorithms
 ├── package.json        # Project metadata
@@ -81,6 +87,22 @@ Some modern browsers allow you to open HTML files directly, but this may have li
 - ES6 JavaScript
 - requestAnimationFrame for smooth animations
 - Sprite-based graphics
+
+## Bounding Shape Metadata Generator
+
+The project includes a utility to generate bounding shape metadata for sprite sheets:
+
+```bash
+# Generate metadata for a single sprite sheet
+npm run generate-meta img/asteroid4_32x32.png 32 32 5 19
+
+# Generate metadata for all sprite sheets
+npm run generate-all-meta
+```
+
+The utility computes bounding shapes using three algorithms (Marching Squares, Convex Hull, Simplified Convex Hull) at three accuracy levels (low, mid, high), and creates visual screenshots of the results.
+
+See [utils/README.md](utils/README.md) for detailed documentation.
 
 ## Browser Compatibility
 
