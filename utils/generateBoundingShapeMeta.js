@@ -124,10 +124,30 @@ async function processSpriteSheet(imagePath, spriteWidth, spriteHeight, gridWidt
 }
 
 /**
+ * Custom JSON stringifier that formats point objects compactly
+ */
+function stringifyMetadata(metadata) {
+    // First stringify with normal formatting
+    let json = JSON.stringify(metadata, null, 2);
+    
+    // Replace multi-line point objects with single-line format
+    // Matches patterns like:
+    //   {
+    //     "x": 12,
+    //     "y": 2
+    //   }
+    // and replaces with: { "x": 12, "y": 2 }
+    json = json.replace(/\{\s+"x":\s+(-?\d+),\s+"y":\s+(-?\d+)\s+\}/g, '{ "x": $1, "y": $2 }');
+    
+    return json;
+}
+
+/**
  * Save metadata to JSON file
  */
 function saveMetadata(metadata, outputPath) {
-    fs.writeFileSync(outputPath, JSON.stringify(metadata, null, 2));
+    const json = stringifyMetadata(metadata);
+    fs.writeFileSync(outputPath, json);
     console.log(`\nMetadata saved to: ${outputPath}`);
 }
 
