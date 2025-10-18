@@ -102,6 +102,8 @@ npm run generate-all-meta
 
 The utility computes bounding shapes using three algorithms (Marching Squares, Convex Hull, Simplified Convex Hull) at three accuracy levels (low, mid, high), and creates visual screenshots of the results.
 
+**Demo:** Open `bounding-shape-meta-demo.html` in your browser to see how to load and use the generated metadata in your game.
+
 See [utils/README.md](utils/README.md) for detailed documentation.
 
 ## Browser Compatibility
