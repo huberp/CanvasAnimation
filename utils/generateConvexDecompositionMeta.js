@@ -270,9 +270,15 @@ async function main() {
         const metadataPath = path.join(outputDir, `${baseName}-convex-decomposition-meta.json`);
         saveMetadata(metadata, metadataPath);
         
+        // Create visualizations directory if it doesn't exist
+        const visualizationsDir = path.join(path.dirname(imagePath), 'visualizations');
+        if (!fs.existsSync(visualizationsDir)) {
+            fs.mkdirSync(visualizationsDir, { recursive: true });
+        }
+        
         // Create screenshots for each accuracy level
         for (const accuracy of Object.keys(ACCURACY_LEVELS)) {
-            const screenshotPath = path.join(outputDir, `${baseName}-convexDecomposition-${accuracy}.png`);
+            const screenshotPath = path.join(visualizationsDir, `${baseName}-convexDecomposition-${accuracy}.png`);
             await createScreenshot(imagePath, metadata, screenshotPath, accuracy);
         }
         
@@ -281,7 +287,8 @@ async function main() {
         console.log(`  - Processed ${numSprites} sprites`);
         console.log(`  - Generated convex decomposition metadata`);
         console.log(`  - Created ${Object.keys(ACCURACY_LEVELS).length} screenshots`);
-        console.log(`  - Output directory: ${outputDir}`);
+        console.log(`  - Metadata directory: ${outputDir}`);
+        console.log(`  - Visualizations directory: ${path.join(path.dirname(imagePath), 'visualizations')}`);
         
     } catch (error) {
         console.error('Error:', error.message);

@@ -283,10 +283,16 @@ async function main() {
         const metadataPath = path.join(outputDir, `${baseName}-meta.json`);
         saveMetadata(metadata, metadataPath);
         
+        // Create visualizations directory if it doesn't exist
+        const visualizationsDir = path.join(path.dirname(imagePath), 'visualizations');
+        if (!fs.existsSync(visualizationsDir)) {
+            fs.mkdirSync(visualizationsDir, { recursive: true });
+        }
+        
         // Create screenshots for each algorithm and accuracy level
         for (const algorithm of ALGORITHMS) {
             for (const accuracy of Object.keys(ACCURACY_LEVELS)) {
-                const screenshotPath = path.join(outputDir, `${baseName}-${algorithm}-${accuracy}.png`);
+                const screenshotPath = path.join(visualizationsDir, `${baseName}-${algorithm}-${accuracy}.png`);
                 await createScreenshot(imagePath, metadata, screenshotPath, algorithm, accuracy);
             }
         }
@@ -296,7 +302,8 @@ async function main() {
         console.log(`  - Processed ${numSprites} sprites`);
         console.log(`  - Generated metadata for ${ALGORITHMS.length} algorithms`);
         console.log(`  - Created ${ALGORITHMS.length * Object.keys(ACCURACY_LEVELS).length} screenshots`);
-        console.log(`  - Output directory: ${outputDir}`);
+        console.log(`  - Metadata directory: ${outputDir}`);
+        console.log(`  - Visualizations directory: ${visualizationsDir}`);
         
     } catch (error) {
         console.error('Error:', error.message);
