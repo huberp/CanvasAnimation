@@ -626,15 +626,15 @@ function phase2_decomposeIntoConvexPolygons(polygon) {
  * Phase 3: Optimize each convex polygon
  */
 function phase3_optimizeConvexPolygons(polygons, tolerance = 1.0) {
-    return polygons.map(polygon => {
-        const simplified = douglasPeucker(polygon, tolerance);
-        
-        if (isConvex(simplified)) {
-            return simplified;
-        } else {
-            return polygon;
-        }
-    });
+    // Use reduced tolerance to preserve small features
+    const reducedTolerance = Math.max(tolerance * 0.3, 0.5);
+    
+    return polygons
+        .map(polygon => {
+            const simplified = douglasPeucker(polygon, reducedTolerance);
+            return isConvex(simplified) ? simplified : polygon;
+        })
+        .filter(polygon => polygon.length >= 3); // Remove degenerate polygons
 }
 
 /**

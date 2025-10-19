@@ -4,7 +4,7 @@
   "spriteHeight": 151,
   "gridWidth": 1,
   "numSprites": 1,
-  "timestamp": "2025-10-19T19:10:41.606Z",
+  "timestamp": "2025-10-19T20:12:57.299Z",
   "algorithm": "convexDecomposition",
   "description": "Bayazit algorithm (FACD) - Fast Approximate Convex Decomposition",
   "accuracyLevels": {
@@ -32,11 +32,13 @@
             { "x": 56, "y": 132 },
             { "x": 38, "y": 132 },
             { "x": 22, "y": 123 },
+            { "x": 20, "y": 114 },
             { "x": 21, "y": 108 },
             { "x": 33, "y": 92 }
           ],
           [
             { "x": 38, "y": 79 },
+            { "x": 56, "y": 79 },
             { "x": 61, "y": 81 },
             { "x": 61, "y": 92 }
           ],
@@ -50,7 +52,7 @@
           ]
         ],
         "polygonCount": 5,
-        "totalPoints": 25
+        "totalPoints": 27
       }
     ],
     "mid": [
@@ -97,13 +99,14 @@
           ],
           [
             { "x": 41, "y": 26 },
+            { "x": 45, "y": 13 },
             { "x": 46, "y": 12 },
             { "x": 49, "y": 13 },
             { "x": 53, "y": 26 }
           ]
         ],
         "polygonCount": 6,
-        "totalPoints": 31
+        "totalPoints": 32
       }
     ],
     "high": [
