@@ -310,9 +310,9 @@ Complete three-phase algorithm that produces SAT-compatible convex polygons from
 **Best for:** Accurate collision detection with SAT on irregular sprites
 
 **How it works:**
-1. **Phase 1**: Extract contour using Marching Squares - provides accurate boundary
+1. **Phase 1**: Extract contour using Marching Squares and simplify with Douglas-Peucker - provides accurate boundary with fewer points
 2. **Phase 2**: Decompose concave polygon into minimal convex polygons using **Bayazit algorithm (FACD)** - makes it SAT-compatible
-3. **Phase 3**: Optimize each convex polygon by reducing points - improves performance
+3. **Phase 3**: Further optimize each convex polygon by reducing points - improves performance
 
 **Parameters:**
 - `spriteSheet` (Image) - The sprite sheet image
@@ -322,7 +322,7 @@ Complete three-phase algorithm that produces SAT-compatible convex polygons from
 - `height` (number) - Height of sprite in pixels
 - `options` (Object) - Optional configuration
   - `threshold` (number) - Alpha threshold (0-255), default: 128
-  - `tolerance` (number) - Simplification tolerance, default: 2.0
+  - `tolerance` (number) - Simplification tolerance, default: 1.0
 
 **Returns:** Array of convex polygon arrays (each polygon is an array of `{x, y}` points)
 
@@ -336,10 +336,10 @@ Complete three-phase algorithm that produces SAT-compatible convex polygons from
 - Multiple polygons per sprite (requires checking each for collision)
 - More computationally intensive than simple convex hull
 
-**Typical Results (fighter sprite):**
-- Phase 1: ~174 points (single concave polygon)
-- Phase 2: ~17 convex polygons (improved from 28 with Bayazit algorithm)
-- Phase 3: ~50 total points (71.3% reduction, improved from 59.2%)
+**Typical Results (fighter sprite, 95x151):**
+- Phase 1: 22 points (simplified concave polygon with high accuracy)
+- Phase 2: 6 convex polygons (using Bayazit algorithm)
+- Phase 3: 31 total points (further optimized)
 
 **Example:**
 ```javascript
@@ -447,12 +447,14 @@ The Phase 2 convex decomposition now uses the **Bayazit algorithm**, also known 
 3. Recursively divides the polygon at these points
 4. Produces minimal set of convex polygons
 
-**Performance comparison** (fighter sprite):
-| Metric | Old (Triangulation) | New (Bayazit) | Improvement |
-|--------|---------------------|---------------|-------------|
-| Phase 2 Polygons | 28 | 17 | 39% fewer |
-| Phase 3 Total Points | 71 | 50 | 30% fewer |
-| Overall Reduction | 59.2% | 71.3% | 12.1% better |
+**Performance comparison** (fighter sprite 95x151):
+| Metric | Before (Raw Marching Squares) | After (With Simplification) |
+|--------|-------------------------------|----------------------------|
+| Phase 1 Points | 174 (raw contour) | 22 (with tolerance 1.0) |
+| Phase 2 Polygons | 17 | 6 |
+| Phase 3 Total Points | 50 | 31 |
+
+**Key improvement**: Phase 1 now applies Douglas-Peucker simplification (matching metadata generation), reducing points from 174 to 22 with high accuracy settings.
 
 ## Future Enhancements
 

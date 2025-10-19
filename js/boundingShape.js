@@ -970,14 +970,25 @@ function pointsEqual(p1, p2) {
 }
 
 /**
- * Phase 1: Extract contour using marching squares
- * (Wrapper for existing marchingSquares function)
+ * Phase 1: Extract contour using marching squares and simplify
+ * Applies Douglas-Peucker simplification to reduce point count while maintaining accuracy
  * @param {ImageData} imageData - Image data to process
  * @param {number} threshold - Alpha threshold (0-255)
- * @returns {Array<{x: number, y: number}>} - Contour points
+ * @param {number} tolerance - Simplification tolerance (default: 1.0 for high accuracy)
+ * @returns {Array<{x: number, y: number}>} - Simplified contour points
  */
-export function phase1_marchingSquares(imageData, threshold = 128) {
-    return marchingSquares(imageData, threshold);
+export function phase1_marchingSquares(imageData, threshold = 128, tolerance = 1.0) {
+    const contour = marchingSquares(imageData, threshold);
+    
+    if (contour.length === 0) {
+        return [];
+    }
+    
+    // Apply Douglas-Peucker simplification to reduce points
+    // This matches the approach used in metadata generation
+    const simplified = douglasPeucker(contour, tolerance);
+    
+    return simplified;
 }
 
 /**
@@ -1025,18 +1036,18 @@ export function phase3_optimizeConvexPolygons(convexPolygons, tolerance = 2.0) {
  * @param {number} height - Height of sprite
  * @param {Object} options - Options for shape generation
  * @param {number} options.threshold - Alpha threshold (default: 128)
- * @param {number} options.tolerance - Simplification tolerance (default: 2.0)
+ * @param {number} options.tolerance - Simplification tolerance (default: 1.0)
  * @returns {Array<Array<{x: number, y: number}>>} - Array of optimized convex polygons
  */
 export function computeOptimizedConvexDecomposition(spriteSheet, sx, sy, width, height, options = {}) {
     const threshold = options.threshold !== undefined ? options.threshold : 128;
-    const tolerance = options.tolerance !== undefined ? options.tolerance : 2.0;
+    const tolerance = options.tolerance !== undefined ? options.tolerance : 1.0;
     
     // Extract sprite data
     const imageData = extractSpriteData(spriteSheet, sx, sy, width, height);
     
-    // Phase 1: Extract contour using marching squares
-    const contour = phase1_marchingSquares(imageData, threshold);
+    // Phase 1: Extract contour using marching squares and simplify
+    const contour = phase1_marchingSquares(imageData, threshold, tolerance);
     
     if (contour.length === 0) {
         return [];
