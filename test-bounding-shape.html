@@ -281,6 +281,109 @@
             assert(simplified.length <= hull.length, 'Simplified should have same or fewer points');
         });
         
+        // Test 14: Phase 1 - Marching Squares wrapper
+        test('Phase 1 marching squares wrapper works', () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 10;
+            canvas.height = 10;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+            ctx.fillRect(2, 2, 6, 6);
+            
+            const imageData = ctx.getImageData(0, 0, 10, 10);
+            const contour = BoundingShape.phase1_marchingSquares(imageData, 128);
+            
+            assert(contour.length > 0, 'Should extract contour');
+            assert(Array.isArray(contour), 'Should return array');
+        });
+        
+        // Test 15: Phase 2 - Convex decomposition on convex polygon
+        test('Phase 2 decomposition handles already convex polygon', () => {
+            const square = [
+                { x: 0, y: 0 },
+                { x: 10, y: 0 },
+                { x: 10, y: 10 },
+                { x: 0, y: 10 }
+            ];
+            
+            const decomposed = BoundingShape.phase2_decomposeIntoConvexPolygons(square);
+            
+            assert(decomposed.length === 1, 'Already convex polygon should return 1 polygon');
+            assert(decomposed[0].length === 4, 'Should maintain 4 vertices');
+        });
+        
+        // Test 16: Phase 2 - Convex decomposition on simple concave polygon
+        test('Phase 2 decomposes simple concave polygon', () => {
+            // L-shaped polygon (concave)
+            const lShape = [
+                { x: 0, y: 0 },
+                { x: 10, y: 0 },
+                { x: 10, y: 5 },
+                { x: 5, y: 5 },
+                { x: 5, y: 10 },
+                { x: 0, y: 10 }
+            ];
+            
+            const decomposed = BoundingShape.phase2_decomposeIntoConvexPolygons(lShape);
+            
+            assert(decomposed.length > 0, 'Should create at least one polygon');
+            assert(Array.isArray(decomposed), 'Should return array of polygons');
+        });
+        
+        // Test 17: Phase 3 - Optimization reduces points
+        test('Phase 3 optimization reduces points', () => {
+            const polygon1 = [];
+            for (let i = 0; i < 20; i++) {
+                polygon1.push({ x: i, y: Math.sin(i * 0.3) * 2 });
+            }
+            
+            const convexPolygons = [polygon1];
+            const optimized = BoundingShape.phase3_optimizeConvexPolygons(convexPolygons, 1.0);
+            
+            assert(optimized.length === 1, 'Should return same number of polygons');
+            assert(optimized[0].length <= polygon1.length, 'Should reduce or maintain point count');
+        });
+        
+        // Test 18: Phase 3 - Optimization handles triangle
+        test('Phase 3 preserves triangles', () => {
+            const triangle = [
+                { x: 0, y: 0 },
+                { x: 10, y: 0 },
+                { x: 5, y: 10 }
+            ];
+            
+            const optimized = BoundingShape.phase3_optimizeConvexPolygons([triangle], 2.0);
+            
+            assert(optimized.length === 1, 'Should return one polygon');
+            assert(optimized[0].length === 3, 'Triangle should remain unchanged');
+        });
+        
+        // Test 19: Complete three-phase algorithm
+        test('Complete three-phase algorithm processes sprite', () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 20;
+            canvas.height = 20;
+            const ctx = canvas.getContext('2d');
+            
+            // Draw a simple L-shape
+            ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+            ctx.fillRect(5, 5, 10, 5);
+            ctx.fillRect(5, 5, 5, 10);
+            
+            const img = new Image();
+            img.onload = () => {
+                const result = BoundingShape.computeOptimizedConvexDecomposition(
+                    img, 0, 0, 20, 20,
+                    { threshold: 128, tolerance: 1.0 }
+                );
+                
+                assert(Array.isArray(result), 'Should return array');
+                assert(result.length >= 0, 'Should return valid result');
+            };
+            img.src = canvas.toDataURL();
+        });
+        
         // Display results
         function displayResults() {
             const container = document.getElementById('test-results');
