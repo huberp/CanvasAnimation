@@ -59,20 +59,24 @@ Some modern browsers allow you to open HTML files directly, but this may have li
 .
 ├── index.html          # Main HTML file
 ├── bounding-shape-demo.html  # Bounding shape demonstration
+├── convex-decomposition-comparison.html  # NEW: Comparison demo
 ├── css/
 │   └── style.css      # Minimal custom styles
 ├── js/
 │   ├── animation.js    # Animation framework
 │   ├── base.js         # Base utilities
 │   ├── game.js         # Game logic
-│   ├── boundingShape.js # Bounding shape utility for collision detection
+│   ├── boundingShape.js # Bounding shape utility with convex decomposition
 │   └── setupObjects.js # Setup animations
 ├── img/                # Image assets (sprites)
-│   └── meta/          # Generated bounding shape metadata
+│   ├── meta/          # Generated bounding shape metadata (JSON)
+│   └── visualizations/ # NEW: Visual screenshots of generated shapes
 ├── utils/             # Utilities for generating metadata
 │   ├── boundingShapeNode.js  # Node.js bounding shape algorithms
-│   ├── generateBoundingShapeMeta.js  # Metadata generator
-│   ├── processAllSpriteSheets.js  # Batch processor
+│   ├── generateBoundingShapeMeta.js  # Single polygon metadata generator
+│   ├── generateConvexDecompositionMeta.js  # NEW: Convex decomposition generator
+│   ├── processAllSpriteSheets.js  # Batch processor (single polygon)
+│   ├── processAllSpriteSheetsConvex.js  # NEW: Batch processor (convex decomp)
 │   └── README.md      # Utility documentation
 ├── research/
 │   └── research_result.md  # Research on collision detection algorithms
@@ -90,7 +94,9 @@ Some modern browsers allow you to open HTML files directly, but this may have li
 
 ## Bounding Shape Metadata Generator
 
-The project includes a utility to generate bounding shape metadata for sprite sheets:
+The project includes utilities to generate bounding shape metadata for sprite sheets:
+
+### Single Polygon Approach
 
 ```bash
 # Generate metadata for a single sprite sheet
@@ -103,6 +109,25 @@ npm run generate-all-meta
 The utility computes bounding shapes using three algorithms (Marching Squares, Convex Hull, Simplified Convex Hull) at three accuracy levels (low, mid, high), and creates visual screenshots of the results.
 
 **Demo:** Open `bounding-shape-meta-demo.html` in your browser to see how to load and use the generated metadata in your game.
+
+### Convex Decomposition Approach (NEW)
+
+```bash
+# Generate convex decomposition metadata for a single sprite sheet
+npm run generate-convex-meta img/asteroid4_32x32.png 32 32 5 19
+
+# Generate convex decomposition metadata for all sprite sheets
+npm run generate-all-convex-meta
+```
+
+This new utility uses the **Bayazit algorithm (FACD)** from PR #36 to decompose sprite shapes into multiple convex polygons. This is ideal for accurate collision detection while maintaining compatibility with SAT (Separating Axis Theorem).
+
+**Benefits:**
+- All resulting polygons are convex (SAT-compatible)
+- Better fit for complex, concave shapes like asteroids
+- More accurate collision detection than single polygon approach
+
+**Demo:** Open `convex-decomposition-comparison.html` in your browser to see a side-by-side comparison of both approaches.
 
 See [utils/README.md](utils/README.md) for detailed documentation.
 

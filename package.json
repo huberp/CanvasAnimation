@@ -7,7 +7,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "generate-meta": "node utils/generateBoundingShapeMeta.js",
-    "generate-all-meta": "node utils/processAllSpriteSheets.js"
+    "generate-all-meta": "node utils/processAllSpriteSheets.js",
+    "generate-convex-meta": "node utils/generateConvexDecompositionMeta.js",
+    "generate-all-convex-meta": "node utils/processAllSpriteSheetsConvex.js"
   },
   "repository": {
     "type": "git",

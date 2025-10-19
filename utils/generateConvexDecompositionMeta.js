@@ -1,16 +1,19 @@
 #!/usr/bin/env node
 
 /**
- * Bounding Shape Meta Generator
+ * Convex Decomposition Meta Generator
  * 
- * This utility generates spritesheet metadata files containing bounding shapes
- * for all sprites in a sprite sheet, using multiple algorithms and accuracy levels.
+ * This utility generates spritesheet metadata files containing convex polygon decompositions
+ * for all sprites in a sprite sheet, using the Bayazit algorithm from PR #36.
+ * 
+ * Unlike generateBoundingShapeMeta.js which generates single polygons, this generates
+ * multiple convex polygons per sprite for improved collision detection.
  * 
  * Usage:
- *   node generateBoundingShapeMeta.js <image-path> <sprite-width> <sprite-height> <grid-width> <num-sprites>
+ *   node generateConvexDecompositionMeta.js <image-path> <sprite-width> <sprite-height> <grid-width> <num-sprites>
  * 
  * Example:
- *   node generateBoundingShapeMeta.js img/asteroid4_32x32.png 32 32 5 19
+ *   node generateConvexDecompositionMeta.js img/asteroid4_32x32.png 32 32 5 19
  */
 
 import fs from 'fs';
@@ -21,30 +24,18 @@ import * as boundingShape from './boundingShapeNode.js';
 // Accuracy levels with different tolerance values
 const ACCURACY_LEVELS = {
     low: {
-        marchingSquares: 4.0,
-        convexHull: 2.0,
-        simplifiedConvexHull: 2.0
+        tolerance: 2.0
     },
     mid: {
-        marchingSquares: 2.0,
-        convexHull: 1.0,
-        simplifiedConvexHull: 1.0
+        tolerance: 1.0
     },
     high: {
-        marchingSquares: 1.0,
-        convexHull: 0.5,
-        simplifiedConvexHull: 0.5
+        tolerance: 0.5
     }
 };
 
-const ALGORITHMS = [
-    'marchingSquares',
-    'convexHull',
-    'simplifiedConvexHull'
-];
-
 /**
- * Process a single sprite sheet and generate metadata
+ * Process a single sprite sheet and generate convex decomposition metadata
  */
 async function processSpriteSheet(imagePath, spriteWidth, spriteHeight, gridWidth, numSprites) {
     console.log(`\nProcessing sprite sheet: ${imagePath}`);
@@ -67,57 +58,54 @@ async function processSpriteSheet(imagePath, spriteWidth, spriteHeight, gridWidt
         gridWidth,
         numSprites,
         timestamp: new Date().toISOString(),
-        algorithms: {}
+        algorithm: 'convexDecomposition',
+        description: 'Bayazit algorithm (FACD) - Fast Approximate Convex Decomposition',
+        accuracyLevels: {}
     };
     
-    // Process each algorithm
-    for (const algorithm of ALGORITHMS) {
-        console.log(`\n  Processing algorithm: ${algorithm}`);
-        metadata.algorithms[algorithm] = {};
+    // Process each accuracy level
+    for (const [accuracy, config] of Object.entries(ACCURACY_LEVELS)) {
+        console.log(`\n  Processing accuracy level: ${accuracy} (tolerance: ${config.tolerance})`);
         
-        // Process each accuracy level
-        for (const [accuracy, tolerances] of Object.entries(ACCURACY_LEVELS)) {
-            console.log(`    Accuracy level: ${accuracy} (tolerance: ${tolerances[algorithm]})`);
+        const sprites = [];
+        
+        // Process each sprite
+        for (let i = 0; i < numSprites; i++) {
+            const col = i % gridWidth;
+            const row = Math.floor(i / gridWidth);
+            const sx = col * spriteWidth;
+            const sy = row * spriteHeight;
             
-            const sprites = [];
+            // Compute convex decomposition
+            const options = { 
+                threshold: 128,
+                tolerance: config.tolerance
+            };
             
-            // Process each sprite
-            for (let i = 0; i < numSprites; i++) {
-                const col = i % gridWidth;
-                const row = Math.floor(i / gridWidth);
-                const sx = col * spriteWidth;
-                const sy = row * spriteHeight;
-                
-                // Compute bounding shape based on algorithm
-                let shape;
-                const options = { 
-                    threshold: 128,
-                    tolerance: tolerances[algorithm]
-                };
-                
-                if (algorithm === 'marchingSquares') {
-                    shape = boundingShape.computeBoundingShape(ctx, sx, sy, spriteWidth, spriteHeight, options);
-                } else if (algorithm === 'convexHull') {
-                    shape = boundingShape.computeConvexHullShape(ctx, sx, sy, spriteWidth, spriteHeight, options);
-                } else if (algorithm === 'simplifiedConvexHull') {
-                    shape = boundingShape.computeSimplifiedConvexHullShape(ctx, sx, sy, spriteWidth, spriteHeight, options);
-                }
-                
-                sprites.push({
-                    index: i,
-                    position: { x: sx, y: sy },
-                    boundingShape: shape,
-                    pointCount: shape.length
-                });
-            }
+            const convexPolygons = boundingShape.computeOptimizedConvexDecomposition(
+                ctx, sx, sy, spriteWidth, spriteHeight, options
+            );
             
-            metadata.algorithms[algorithm][accuracy] = sprites;
+            // Count total points across all polygons
+            const totalPoints = convexPolygons.reduce((sum, poly) => sum + poly.length, 0);
             
-            // Calculate statistics
-            const totalPoints = sprites.reduce((sum, s) => sum + s.pointCount, 0);
-            const avgPoints = sprites.length > 0 ? (totalPoints / sprites.length).toFixed(2) : 0;
-            console.log(`      Generated ${sprites.length} shapes, avg ${avgPoints} points per shape`);
+            sprites.push({
+                index: i,
+                position: { x: sx, y: sy },
+                convexPolygons: convexPolygons,
+                polygonCount: convexPolygons.length,
+                totalPoints: totalPoints
+            });
         }
+        
+        metadata.accuracyLevels[accuracy] = sprites;
+        
+        // Calculate statistics
+        const totalPolygons = sprites.reduce((sum, s) => sum + s.polygonCount, 0);
+        const totalPoints = sprites.reduce((sum, s) => sum + s.totalPoints, 0);
+        const avgPolygons = sprites.length > 0 ? (totalPolygons / sprites.length).toFixed(2) : 0;
+        const avgPoints = sprites.length > 0 ? (totalPoints / sprites.length).toFixed(2) : 0;
+        console.log(`      Generated ${sprites.length} sprites, avg ${avgPolygons} polygons per sprite, avg ${avgPoints} points per sprite`);
     }
     
     return metadata;
@@ -127,16 +115,9 @@ async function processSpriteSheet(imagePath, spriteWidth, spriteHeight, gridWidt
  * Custom JSON stringifier that formats point objects compactly
  */
 function stringifyMetadata(metadata) {
-    // First stringify with normal formatting
     let json = JSON.stringify(metadata, null, 2);
     
     // Replace multi-line point objects with single-line format
-    // Matches patterns like:
-    //   {
-    //     "x": 12,
-    //     "y": 2
-    //   }
-    // and replaces with: { "x": 12, "y": 2 }
     json = json.replace(/\{\s+"x":\s+(-?\d+),\s+"y":\s+(-?\d+)\s+\}/g, '{ "x": $1, "y": $2 }');
     
     return json;
@@ -154,11 +135,11 @@ function saveMetadata(metadata, outputPath) {
 /**
  * Create visualization screenshot
  */
-async function createScreenshot(imagePath, metadata, outputPath, algorithm, accuracy) {
-    console.log(`\nCreating screenshot for ${algorithm} (${accuracy})...`);
+async function createScreenshot(imagePath, metadata, outputPath, accuracy) {
+    console.log(`\nCreating screenshot for convexDecomposition (${accuracy})...`);
     
     const image = await loadImage(imagePath);
-    const sprites = metadata.algorithms[algorithm][accuracy];
+    const sprites = metadata.accuracyLevels[accuracy];
     
     // Calculate canvas size - arrange sprites in a grid
     const cols = Math.min(5, metadata.numSprites);
@@ -180,9 +161,12 @@ async function createScreenshot(imagePath, metadata, outputPath, algorithm, accu
     ctx.fillStyle = '#4CAF50';
     ctx.font = 'bold 20px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText(`${metadata.sourceImage} - ${algorithm} (${accuracy})`, canvasWidth / 2, 30);
+    ctx.fillText(`${metadata.sourceImage} - Convex Decomposition (${accuracy})`, canvasWidth / 2, 30);
     
-    // Draw each sprite with its bounding shape
+    // Define colors for different polygons
+    const polygonColors = ['#00ff00', '#00ccff', '#ff00ff', '#ffff00', '#ff9900', '#ff0099'];
+    
+    // Draw each sprite with its convex polygons
     for (let i = 0; i < metadata.numSprites; i++) {
         const sprite = sprites[i];
         const col = i % cols;
@@ -202,34 +186,37 @@ async function createScreenshot(imagePath, metadata, outputPath, algorithm, accu
             metadata.spriteWidth, metadata.spriteHeight
         );
         
-        // Draw bounding shape
-        if (sprite.boundingShape.length > 0) {
-            ctx.strokeStyle = '#00ff00';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(sprite.boundingShape[0].x, sprite.boundingShape[0].y);
-            for (let j = 1; j < sprite.boundingShape.length; j++) {
-                ctx.lineTo(sprite.boundingShape[j].x, sprite.boundingShape[j].y);
-            }
-            ctx.closePath();
-            ctx.stroke();
-            
-            // Draw vertices
-            ctx.fillStyle = '#ff0000';
-            for (const point of sprite.boundingShape) {
+        // Draw each convex polygon with a different color
+        sprite.convexPolygons.forEach((polygon, polyIndex) => {
+            if (polygon.length > 0) {
+                const color = polygonColors[polyIndex % polygonColors.length];
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1;
                 ctx.beginPath();
-                ctx.arc(point.x, point.y, 2, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.moveTo(polygon[0].x, polygon[0].y);
+                for (let j = 1; j < polygon.length; j++) {
+                    ctx.lineTo(polygon[j].x, polygon[j].y);
+                }
+                ctx.closePath();
+                ctx.stroke();
+                
+                // Draw vertices
+                ctx.fillStyle = '#ff0000';
+                for (const point of polygon) {
+                    ctx.beginPath();
+                    ctx.arc(point.x, point.y, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
             }
-        }
+        });
         
         ctx.restore();
         
-        // Draw sprite index
+        // Draw sprite index and polygon count
         ctx.fillStyle = '#aaaaaa';
         ctx.font = '10px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(`#${i} (${sprite.pointCount}pts)`, x, y + spriteDisplaySize / 2 - 5);
+        ctx.fillText(`#${i} (${sprite.polygonCount}poly, ${sprite.totalPoints}pts)`, x, y + spriteDisplaySize / 2 - 5);
     }
     
     // Save screenshot
@@ -245,8 +232,8 @@ async function main() {
     const args = process.argv.slice(2);
     
     if (args.length < 5) {
-        console.error('Usage: node generateBoundingShapeMeta.js <image-path> <sprite-width> <sprite-height> <grid-width> <num-sprites>');
-        console.error('Example: node generateBoundingShapeMeta.js img/asteroid4_32x32.png 32 32 5 19');
+        console.error('Usage: node generateConvexDecompositionMeta.js <image-path> <sprite-width> <sprite-height> <grid-width> <num-sprites>');
+        console.error('Example: node generateConvexDecompositionMeta.js img/asteroid4_32x32.png 32 32 5 19');
         process.exit(1);
     }
     
@@ -280,7 +267,7 @@ async function main() {
             fs.mkdirSync(outputDir, { recursive: true });
         }
         
-        const metadataPath = path.join(outputDir, `${baseName}-meta.json`);
+        const metadataPath = path.join(outputDir, `${baseName}-convex-decomposition-meta.json`);
         saveMetadata(metadata, metadataPath);
         
         // Create visualizations directory if it doesn't exist
@@ -289,21 +276,19 @@ async function main() {
             fs.mkdirSync(visualizationsDir, { recursive: true });
         }
         
-        // Create screenshots for each algorithm and accuracy level
-        for (const algorithm of ALGORITHMS) {
-            for (const accuracy of Object.keys(ACCURACY_LEVELS)) {
-                const screenshotPath = path.join(visualizationsDir, `${baseName}-${algorithm}-${accuracy}.png`);
-                await createScreenshot(imagePath, metadata, screenshotPath, algorithm, accuracy);
-            }
+        // Create screenshots for each accuracy level
+        for (const accuracy of Object.keys(ACCURACY_LEVELS)) {
+            const screenshotPath = path.join(visualizationsDir, `${baseName}-convexDecomposition-${accuracy}.png`);
+            await createScreenshot(imagePath, metadata, screenshotPath, accuracy);
         }
         
         console.log('\n✅ Processing complete!');
         console.log(`\nSummary:`);
         console.log(`  - Processed ${numSprites} sprites`);
-        console.log(`  - Generated metadata for ${ALGORITHMS.length} algorithms`);
-        console.log(`  - Created ${ALGORITHMS.length * Object.keys(ACCURACY_LEVELS).length} screenshots`);
+        console.log(`  - Generated convex decomposition metadata`);
+        console.log(`  - Created ${Object.keys(ACCURACY_LEVELS).length} screenshots`);
         console.log(`  - Metadata directory: ${outputDir}`);
-        console.log(`  - Visualizations directory: ${visualizationsDir}`);
+        console.log(`  - Visualizations directory: ${path.join(path.dirname(imagePath), 'visualizations')}`);
         
     } catch (error) {
         console.error('Error:', error.message);

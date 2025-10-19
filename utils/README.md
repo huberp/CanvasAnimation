@@ -223,11 +223,112 @@ const shape = asteroidCollision.getBoundingShape(5);
 - **Load once**: Load metadata at game initialization, not per-frame
 - **Broad-phase first**: Use AABB for initial collision checks, then polygon collision
 
+## Convex Decomposition Utility (NEW)
+
+### Overview
+
+The convex decomposition utility generates metadata containing multiple convex polygons per sprite using the **Bayazit algorithm (FACD)** from PR #36. This is ideal for accurate collision detection with complex shapes while maintaining SAT compatibility.
+
+### Process a Single Sprite Sheet
+
+```bash
+node utils/generateConvexDecompositionMeta.js <image-path> <sprite-width> <sprite-height> <grid-width> <num-sprites>
+```
+
+Or using npm:
+
+```bash
+npm run generate-convex-meta <image-path> <sprite-width> <sprite-height> <grid-width> <num-sprites>
+```
+
+**Example:**
+
+```bash
+node utils/generateConvexDecompositionMeta.js img/asteroid4_32x32.png 32 32 5 19
+```
+
+### Process All Sprite Sheets
+
+```bash
+node utils/processAllSpriteSheetsConvex.js
+```
+
+Or using npm:
+
+```bash
+npm run generate-all-convex-meta
+```
+
+### Output
+
+The utility generates:
+
+1. **Metadata JSON File** - `<sprite-sheet>-convex-decomposition-meta.json` in `img/meta/`
+2. **Visual Screenshots** - Three PNG files in `img/visualizations/`:
+   - `<sprite-sheet>-convexDecomposition-low.png`
+   - `<sprite-sheet>-convexDecomposition-mid.png`
+   - `<sprite-sheet>-convexDecomposition-high.png`
+
+### Metadata Structure
+
+```json
+{
+  "sourceImage": "asteroid4_32x32.png",
+  "algorithm": "convexDecomposition",
+  "description": "Bayazit algorithm (FACD) - Fast Approximate Convex Decomposition",
+  "accuracyLevels": {
+    "low": [
+      {
+        "index": 0,
+        "position": { "x": 0, "y": 0 },
+        "convexPolygons": [
+          [
+            { "x": 6, "y": 12 },
+            { "x": 25, "y": 12 },
+            ...
+          ]
+        ],
+        "polygonCount": 1,
+        "totalPoints": 6
+      }
+    ]
+  }
+}
+```
+
+### Comparison: Single Polygon vs Convex Decomposition
+
+| Approach | Best For | Pros | Cons |
+|----------|----------|------|------|
+| **Single Polygon** (generateBoundingShapeMeta.js) | Simple collision detection | One polygon per sprite | May be concave |
+| **Convex Decomposition** (generateConvexDecompositionMeta.js) | Accurate collision with SAT | All polygons convex, better fit | More polygons per sprite |
+
+### Using Convex Decomposition in Your Game
+
+```javascript
+import metadata from './img/meta/asteroid4_32x32-convex-decomposition-meta.json';
+
+const accuracy = 'mid';
+const sprite = metadata.accuracyLevels[accuracy][0];
+
+// Get all convex polygons for this sprite
+const convexPolygons = sprite.convexPolygons;
+console.log(`Sprite has ${sprite.polygonCount} convex polygons`);
+
+// Use each polygon for collision detection (e.g., with SAT)
+convexPolygons.forEach(polygon => {
+    // polygon is an array of {x, y} points
+    checkCollisionWithSAT(polygon, otherPolygon);
+});
+```
+
 ## Files
 
-- **`boundingShapeNode.js`** - Node.js compatible bounding shape algorithms
-- **`generateBoundingShapeMeta.js`** - Main utility for single sprite sheet
-- **`processAllSpriteSheets.js`** - Batch processor for all sprite sheets
+- **`boundingShapeNode.js`** - Node.js compatible bounding shape algorithms (including convex decomposition)
+- **`generateBoundingShapeMeta.js`** - Main utility for single polygon per sprite
+- **`processAllSpriteSheets.js`** - Batch processor for single polygons
+- **`generateConvexDecompositionMeta.js`** - NEW: Utility for convex decomposition
+- **`processAllSpriteSheetsConvex.js`** - NEW: Batch processor for convex decomposition
 - **`README.md`** - This file
 
 ## Troubleshooting

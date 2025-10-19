@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bounding Shape vs Convex Decomposition Comparison</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+        }
+        .description {
+            max-width: 1200px;
+            margin: 0 auto 20px;
+            padding: 15px;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            line-height: 1.6;
+        }
+        #controls {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+        }
+        #controls label {
+            margin: 0 10px;
+            font-weight: bold;
+        }
+        #controls select {
+            padding: 5px;
+            background-color: #3a3a3a;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 4px;
+            margin: 5px;
+        }
+        #canvasContainer {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            margin: 20px auto;
+        }
+        .canvas-section {
+            background-color: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .canvas-section h3 {
+            color: #4CAF50;
+            margin-top: 0;
+        }
+        .canvas-section canvas {
+            border: 2px solid #555;
+            background-color: #000;
+        }
+        .stats {
+            margin-top: 15px;
+            text-align: left;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+        .stats-label {
+            color: #aaa;
+        }
+        .stats-value {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bounding Shape vs Convex Decomposition Comparison</h1>
+    
+    <div class="description">
+        <p>
+            This demo compares two approaches for generating collision shapes:
+        </p>
+        <ul>
+            <li><strong>Marching Squares (Single Polygon):</strong> Traces sprite outline to create one polygon. May be concave.</li>
+            <li><strong>Convex Decomposition (Multiple Polygons):</strong> Uses Bayazit algorithm to split into multiple convex polygons for SAT compatibility.</li>
+        </ul>
+    </div>
+    
+    <div id="controls">
+        <label for="spriteSelect">Sprite Sheet:</label>
+        <select id="spriteSelect">
+            <option value="smallfighter0006">Small Fighter</option>
+            <option value="asteroid4_32x32" selected>Asteroid 4</option>
+            <option value="asteroid3_32x32">Asteroid 3</option>
+            <option value="asteroid1_72x72">Asteroid 1</option>
+        </select>
+        
+        <label for="accuracySelect">Accuracy:</label>
+        <select id="accuracySelect">
+            <option value="low">Low</option>
+            <option value="mid" selected>Mid</option>
+            <option value="high">High</option>
+        </select>
+        
+        <label for="spriteIndexInput">Sprite Index:</label>
+        <input type="number" id="spriteIndexInput" value="0" min="0" style="width: 60px; padding: 5px;">
+    </div>
+    
+    <div id="canvasContainer">
+        <div class="canvas-section">
+            <h3>Single Polygon (Marching Squares)</h3>
+            <canvas id="singleCanvas"></canvas>
+            <div class="stats">
+                <div><span class="stats-label">Polygons:</span> <span class="stats-value" id="singlePolygons">-</span></div>
+                <div><span class="stats-label">Total Points:</span> <span class="stats-value" id="singlePoints">-</span></div>
+                <div><span class="stats-label">Type:</span> <span class="stats-value" id="singleType">-</span></div>
+            </div>
+        </div>
+        
+        <div class="canvas-section">
+            <h3>Convex Decomposition (Bayazit)</h3>
+            <canvas id="convexCanvas"></canvas>
+            <div class="stats">
+                <div><span class="stats-label">Polygons:</span> <span class="stats-value" id="convexPolygons">-</span></div>
+                <div><span class="stats-label">Total Points:</span> <span class="stats-value" id="convexPoints">-</span></div>
+                <div><span class="stats-label">Type:</span> <span class="stats-value">All Convex ✓</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module">
+        import * as BoundingShape from './js/boundingShape.js';
+        
+        let spriteImages = {};
+        let singleMetadata = {};
+        let convexMetadata = {};
+        
+        const CANVAS_SIZE = 400;
+        
+        // Sprite configurations
+        const spriteConfigs = {
+            'smallfighter0006': { width: 95, height: 151, gridWidth: 1, numSprites: 1 },
+            'asteroid4_32x32': { width: 32, height: 32, gridWidth: 5, numSprites: 19 },
+            'asteroid3_32x32': { width: 32, height: 32, gridWidth: 5, numSprites: 19 },
+            'asteroid1_72x72': { width: 72, height: 72, gridWidth: 5, numSprites: 19 }
+        };
+        
+        // Setup canvases
+        document.getElementById('singleCanvas').width = CANVAS_SIZE;
+        document.getElementById('singleCanvas').height = CANVAS_SIZE;
+        document.getElementById('convexCanvas').width = CANVAS_SIZE;
+        document.getElementById('convexCanvas').height = CANVAS_SIZE;
+        
+        // Load resources
+        async function loadResources(spriteName) {
+            const imagePath = `img/${spriteName}.png`;
+            const singleMetaPath = `img/meta/${spriteName}-meta.json`;
+            const convexMetaPath = `img/meta/${spriteName}-convex-decomposition-meta.json`;
+            
+            // Load image
+            if (!spriteImages[spriteName]) {
+                spriteImages[spriteName] = await new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.onerror = reject;
+                    img.src = imagePath;
+                });
+            }
+            
+            // Load single polygon metadata
+            if (!singleMetadata[spriteName]) {
+                singleMetadata[spriteName] = await fetch(singleMetaPath).then(r => r.json());
+            }
+            
+            // Load convex decomposition metadata
+            if (!convexMetadata[spriteName]) {
+                convexMetadata[spriteName] = await fetch(convexMetaPath).then(r => r.json());
+            }
+        }
+        
+        // Check if polygon is convex
+        function isConvex(polygon) {
+            if (polygon.length < 3) return true;
+            
+            const cross = (o, a, b) => {
+                return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+            };
+            
+            let sign = 0;
+            const n = polygon.length;
+            
+            for (let i = 0; i < n; i++) {
+                const o = polygon[i];
+                const a = polygon[(i + 1) % n];
+                const b = polygon[(i + 2) % n];
+                const c = cross(o, a, b);
+                
+                if (c !== 0) {
+                    if (sign === 0) {
+                        sign = c > 0 ? 1 : -1;
+                    } else if ((c > 0 ? 1 : -1) !== sign) {
+                        return false;
+                    }
+                }
+            }
+            
+            return true;
+        }
+        
+        // Render sprite with bounding shape
+        function renderSingle() {
+            const canvas = document.getElementById('singleCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            
+            const spriteName = document.getElementById('spriteSelect').value;
+            const accuracy = document.getElementById('accuracySelect').value;
+            const spriteIndex = parseInt(document.getElementById('spriteIndexInput').value);
+            
+            const image = spriteImages[spriteName];
+            const metadata = singleMetadata[spriteName];
+            const config = spriteConfigs[spriteName];
+            const sprite = metadata.algorithms.marchingSquares[accuracy][spriteIndex];
+            
+            if (!sprite) return;
+            
+            // Calculate scale
+            const scale = Math.min(CANVAS_SIZE / config.width, CANVAS_SIZE / config.height) * 0.8;
+            const offsetX = (CANVAS_SIZE - config.width * scale) / 2;
+            const offsetY = (CANVAS_SIZE - config.height * scale) / 2;
+            
+            ctx.save();
+            ctx.translate(offsetX, offsetY);
+            ctx.scale(scale, scale);
+            
+            // Draw sprite
+            ctx.globalAlpha = 0.5;
+            ctx.drawImage(image, sprite.position.x, sprite.position.y, config.width, config.height, 0, 0, config.width, config.height);
+            ctx.globalAlpha = 1.0;
+            
+            // Draw bounding shape
+            const polygon = sprite.boundingShape;
+            if (polygon.length > 0) {
+                ctx.strokeStyle = '#00ff00';
+                ctx.lineWidth = 2 / scale;
+                ctx.beginPath();
+                ctx.moveTo(polygon[0].x, polygon[0].y);
+                for (let i = 1; i < polygon.length; i++) {
+                    ctx.lineTo(polygon[i].x, polygon[i].y);
+                }
+                ctx.closePath();
+                ctx.stroke();
+                
+                // Draw vertices
+                ctx.fillStyle = '#ff0000';
+                for (const point of polygon) {
+                    ctx.beginPath();
+                    ctx.arc(point.x, point.y, 3 / scale, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            
+            ctx.restore();
+            
+            // Update stats
+            document.getElementById('singlePolygons').textContent = '1';
+            document.getElementById('singlePoints').textContent = sprite.pointCount;
+            document.getElementById('singleType').textContent = isConvex(polygon) ? 'Convex ✓' : 'Concave ⚠';
+        }
+        
+        // Render sprite with convex decomposition
+        function renderConvex() {
+            const canvas = document.getElementById('convexCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            
+            const spriteName = document.getElementById('spriteSelect').value;
+            const accuracy = document.getElementById('accuracySelect').value;
+            const spriteIndex = parseInt(document.getElementById('spriteIndexInput').value);
+            
+            const image = spriteImages[spriteName];
+            const metadata = convexMetadata[spriteName];
+            const config = spriteConfigs[spriteName];
+            const sprite = metadata.accuracyLevels[accuracy][spriteIndex];
+            
+            if (!sprite) return;
+            
+            // Calculate scale
+            const scale = Math.min(CANVAS_SIZE / config.width, CANVAS_SIZE / config.height) * 0.8;
+            const offsetX = (CANVAS_SIZE - config.width * scale) / 2;
+            const offsetY = (CANVAS_SIZE - config.height * scale) / 2;
+            
+            ctx.save();
+            ctx.translate(offsetX, offsetY);
+            ctx.scale(scale, scale);
+            
+            // Draw sprite
+            ctx.globalAlpha = 0.5;
+            ctx.drawImage(image, sprite.position.x, sprite.position.y, config.width, config.height, 0, 0, config.width, config.height);
+            ctx.globalAlpha = 1.0;
+            
+            // Draw each convex polygon with different colors
+            const colors = ['#00ff00', '#00ccff', '#ff00ff', '#ffff00', '#ff9900', '#ff0099'];
+            sprite.convexPolygons.forEach((polygon, idx) => {
+                if (polygon.length > 0) {
+                    ctx.strokeStyle = colors[idx % colors.length];
+                    ctx.lineWidth = 2 / scale;
+                    ctx.beginPath();
+                    ctx.moveTo(polygon[0].x, polygon[0].y);
+                    for (let i = 1; i < polygon.length; i++) {
+                        ctx.lineTo(polygon[i].x, polygon[i].y);
+                    }
+                    ctx.closePath();
+                    ctx.stroke();
+                    
+                    // Draw vertices
+                    ctx.fillStyle = '#ff0000';
+                    for (const point of polygon) {
+                        ctx.beginPath();
+                        ctx.arc(point.x, point.y, 3 / scale, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            });
+            
+            ctx.restore();
+            
+            // Update stats
+            document.getElementById('convexPolygons').textContent = sprite.polygonCount;
+            document.getElementById('convexPoints').textContent = sprite.totalPoints;
+        }
+        
+        // Render both
+        async function render() {
+            const spriteName = document.getElementById('spriteSelect').value;
+            const spriteIndex = parseInt(document.getElementById('spriteIndexInput').value);
+            const config = spriteConfigs[spriteName];
+            
+            // Validate sprite index
+            document.getElementById('spriteIndexInput').max = config.numSprites - 1;
+            if (spriteIndex >= config.numSprites) {
+                document.getElementById('spriteIndexInput').value = 0;
+            }
+            
+            await loadResources(spriteName);
+            renderSingle();
+            renderConvex();
+        }
+        
+        // Event listeners
+        document.getElementById('spriteSelect').addEventListener('change', render);
+        document.getElementById('accuracySelect').addEventListener('change', render);
+        document.getElementById('spriteIndexInput').addEventListener('input', render);
+        
+        // Initial render
+        render();
+    </script>
+</body>
+</html>
