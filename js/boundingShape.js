@@ -422,6 +422,408 @@ export function computeAllSimplifiedConvexHullShapes(spriteDescriptor, options =
 }
 
 /**
+ * Check if a polygon is convex
+ * @param {Array<{x: number, y: number}>} polygon - Polygon points
+ * @returns {boolean} - True if polygon is convex
+ */
+function isConvex(polygon) {
+    if (polygon.length < 3) return true;
+    
+    const cross = (o, a, b) => {
+        return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+    };
+    
+    let sign = 0;
+    const n = polygon.length;
+    
+    for (let i = 0; i < n; i++) {
+        const o = polygon[i];
+        const a = polygon[(i + 1) % n];
+        const b = polygon[(i + 2) % n];
+        const c = cross(o, a, b);
+        
+        if (c !== 0) {
+            if (sign === 0) {
+                sign = c > 0 ? 1 : -1;
+            } else if ((c > 0 ? 1 : -1) !== sign) {
+                return false;
+            }
+        }
+    }
+    
+    return true;
+}
+
+/**
+ * Compute the squared distance between two points
+ * @param {Object} p1 - First point {x, y}
+ * @param {Object} p2 - Second point {x, y}
+ * @returns {number} - Squared distance
+ */
+function distSquared(p1, p2) {
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    return dx * dx + dy * dy;
+}
+
+/**
+ * Check if a diagonal between two vertices is inside the polygon
+ * @param {Array<{x: number, y: number}>} polygon - Polygon points
+ * @param {number} i - First vertex index
+ * @param {number} j - Second vertex index
+ * @returns {boolean} - True if diagonal is valid
+ */
+function isValidDiagonal(polygon, i, j) {
+    const n = polygon.length;
+    const p1 = polygon[i];
+    const p2 = polygon[j];
+    
+    // Cross product helper
+    const cross = (o, a, b) => {
+        return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+    };
+    
+    // Check if diagonal is inside the polygon
+    // by checking if midpoint is inside
+    const mid = {
+        x: (p1.x + p2.x) / 2,
+        y: (p1.y + p2.y) / 2
+    };
+    
+    // Check if the diagonal crosses any edges
+    for (let k = 0; k < n; k++) {
+        const k1 = k;
+        const k2 = (k + 1) % n;
+        
+        // Skip edges adjacent to the diagonal
+        if (k1 === i || k1 === j || k2 === i || k2 === j) continue;
+        
+        // Check if segments intersect
+        const a1 = polygon[k1];
+        const a2 = polygon[k2];
+        
+        const d1 = cross(p1, p2, a1);
+        const d2 = cross(p1, p2, a2);
+        const d3 = cross(a1, a2, p1);
+        const d4 = cross(a1, a2, p2);
+        
+        if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
+            ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+/**
+ * Phase 2: Decompose a concave polygon into convex polygons
+ * Uses a modified Hertel-Mehlhorn algorithm for convex decomposition
+ * @param {Array<{x: number, y: number}>} polygon - Concave polygon points
+ * @returns {Array<Array<{x: number, y: number}>>} - Array of convex polygons
+ */
+export function decomposeIntoConvexPolygons(polygon) {
+    if (polygon.length < 3) {
+        return [];
+    }
+    
+    // If already convex, return as is
+    if (isConvex(polygon)) {
+        return [polygon];
+    }
+    
+    // Triangulate first (ear clipping method)
+    const triangles = triangulate(polygon);
+    
+    // Merge triangles into convex polygons
+    const convexPolygons = mergeTrianglesIntoConvexPolygons(triangles);
+    
+    return convexPolygons;
+}
+
+/**
+ * Simple ear clipping triangulation
+ * @param {Array<{x: number, y: number}>} polygon - Polygon points
+ * @returns {Array<Array<{x: number, y: number}>>} - Array of triangles
+ */
+function triangulate(polygon) {
+    const triangles = [];
+    const vertices = polygon.slice();
+    const n = vertices.length;
+    
+    if (n < 3) return triangles;
+    if (n === 3) return [vertices];
+    
+    const cross = (o, a, b) => {
+        return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+    };
+    
+    const isInTriangle = (p, a, b, c) => {
+        const c1 = cross(a, b, p);
+        const c2 = cross(b, c, p);
+        const c3 = cross(c, a, p);
+        
+        return (c1 >= 0 && c2 >= 0 && c3 >= 0) || (c1 <= 0 && c2 <= 0 && c3 <= 0);
+    };
+    
+    const indices = [];
+    for (let i = 0; i < n; i++) {
+        indices.push(i);
+    }
+    
+    while (indices.length > 3) {
+        let earFound = false;
+        
+        for (let i = 0; i < indices.length; i++) {
+            const prev = indices[(i - 1 + indices.length) % indices.length];
+            const curr = indices[i];
+            const next = indices[(i + 1) % indices.length];
+            
+            const a = vertices[prev];
+            const b = vertices[curr];
+            const c = vertices[next];
+            
+            // Check if this is a convex vertex
+            if (cross(a, b, c) <= 0) continue;
+            
+            // Check if any other vertex is inside this triangle
+            let hasVertexInside = false;
+            for (let j = 0; j < indices.length; j++) {
+                if (j === i || j === (i - 1 + indices.length) % indices.length || j === (i + 1) % indices.length) {
+                    continue;
+                }
+                
+                const p = vertices[indices[j]];
+                if (isInTriangle(p, a, b, c)) {
+                    hasVertexInside = true;
+                    break;
+                }
+            }
+            
+            if (!hasVertexInside) {
+                // Found an ear
+                triangles.push([a, b, c]);
+                indices.splice(i, 1);
+                earFound = true;
+                break;
+            }
+        }
+        
+        if (!earFound) {
+            // Fallback: just create triangles from remaining vertices
+            for (let i = 1; i < indices.length - 1; i++) {
+                triangles.push([
+                    vertices[indices[0]],
+                    vertices[indices[i]],
+                    vertices[indices[i + 1]]
+                ]);
+            }
+            break;
+        }
+    }
+    
+    if (indices.length === 3) {
+        triangles.push([
+            vertices[indices[0]],
+            vertices[indices[1]],
+            vertices[indices[2]]
+        ]);
+    }
+    
+    return triangles;
+}
+
+/**
+ * Merge triangles into larger convex polygons
+ * @param {Array<Array<{x: number, y: number}>>} triangles - Array of triangles
+ * @returns {Array<Array<{x: number, y: number}>>} - Array of convex polygons
+ */
+function mergeTrianglesIntoConvexPolygons(triangles) {
+    if (triangles.length === 0) return [];
+    if (triangles.length === 1) return triangles;
+    
+    const merged = triangles.map(t => t.slice());
+    let changed = true;
+    
+    while (changed) {
+        changed = false;
+        
+        for (let i = 0; i < merged.length && !changed; i++) {
+            for (let j = i + 1; j < merged.length && !changed; j++) {
+                const poly1 = merged[i];
+                const poly2 = merged[j];
+                
+                // Try to merge these two polygons
+                const mergedPoly = tryMergePolygons(poly1, poly2);
+                
+                if (mergedPoly && isConvex(mergedPoly)) {
+                    merged[i] = mergedPoly;
+                    merged.splice(j, 1);
+                    changed = true;
+                }
+            }
+        }
+    }
+    
+    return merged;
+}
+
+/**
+ * Try to merge two polygons if they share an edge
+ * @param {Array<{x: number, y: number}>} poly1 - First polygon
+ * @param {Array<{x: number, y: number}>} poly2 - Second polygon
+ * @returns {Array<{x: number, y: number}>|null} - Merged polygon or null
+ */
+function tryMergePolygons(poly1, poly2) {
+    // Find shared edge
+    for (let i = 0; i < poly1.length; i++) {
+        const a1 = poly1[i];
+        const a2 = poly1[(i + 1) % poly1.length];
+        
+        for (let j = 0; j < poly2.length; j++) {
+            const b1 = poly2[j];
+            const b2 = poly2[(j + 1) % poly2.length];
+            
+            // Check if edge a1-a2 matches edge b2-b1 (reverse direction)
+            if (pointsEqual(a1, b2) && pointsEqual(a2, b1)) {
+                // Found shared edge, merge polygons
+                const merged = [];
+                
+                // Add vertices from poly1, excluding the shared edge
+                for (let k = (i + 1) % poly1.length; k !== i; k = (k + 1) % poly1.length) {
+                    merged.push(poly1[k]);
+                }
+                
+                // Add vertices from poly2, excluding the shared edge
+                for (let k = (j + 1) % poly2.length; k !== j; k = (k + 1) % poly2.length) {
+                    merged.push(poly2[k]);
+                }
+                
+                return merged;
+            }
+        }
+    }
+    
+    return null;
+}
+
+/**
+ * Check if two points are equal (with tolerance)
+ * @param {Object} p1 - First point {x, y}
+ * @param {Object} p2 - Second point {x, y}
+ * @returns {boolean} - True if points are equal
+ */
+function pointsEqual(p1, p2) {
+    const tolerance = 0.001;
+    return Math.abs(p1.x - p2.x) < tolerance && Math.abs(p1.y - p2.y) < tolerance;
+}
+
+/**
+ * Phase 1: Extract contour using marching squares
+ * (Wrapper for existing marchingSquares function)
+ * @param {ImageData} imageData - Image data to process
+ * @param {number} threshold - Alpha threshold (0-255)
+ * @returns {Array<{x: number, y: number}>} - Contour points
+ */
+export function phase1_marchingSquares(imageData, threshold = 128) {
+    return marchingSquares(imageData, threshold);
+}
+
+/**
+ * Phase 2: Decompose polygon into convex polygons
+ * (Wrapper for decomposeIntoConvexPolygons)
+ * @param {Array<{x: number, y: number}>} polygon - Polygon to decompose
+ * @returns {Array<Array<{x: number, y: number}>>} - Array of convex polygons
+ */
+export function phase2_decomposeIntoConvexPolygons(polygon) {
+    return decomposeIntoConvexPolygons(polygon);
+}
+
+/**
+ * Phase 3: Optimize each convex polygon by reducing points
+ * @param {Array<Array<{x: number, y: number}>>} convexPolygons - Array of convex polygons
+ * @param {number} tolerance - Simplification tolerance
+ * @returns {Array<Array<{x: number, y: number}>>} - Optimized convex polygons
+ */
+export function phase3_optimizeConvexPolygons(convexPolygons, tolerance = 2.0) {
+    return convexPolygons.map(polygon => {
+        // Only simplify if polygon has more than 3 vertices
+        if (polygon.length <= 3) {
+            return polygon;
+        }
+        
+        // Apply Douglas-Peucker simplification
+        const simplified = douglasPeucker(polygon, tolerance);
+        
+        // Ensure result is still convex
+        if (isConvex(simplified)) {
+            return simplified;
+        } else {
+            // If simplification made it non-convex, return original
+            return polygon;
+        }
+    });
+}
+
+/**
+ * Complete three-phase algorithm for optimized convex decomposition
+ * @param {Image} spriteSheet - The sprite sheet image
+ * @param {number} sx - Source x in pixels
+ * @param {number} sy - Source y in pixels
+ * @param {number} width - Width of sprite
+ * @param {number} height - Height of sprite
+ * @param {Object} options - Options for shape generation
+ * @param {number} options.threshold - Alpha threshold (default: 128)
+ * @param {number} options.tolerance - Simplification tolerance (default: 2.0)
+ * @returns {Array<Array<{x: number, y: number}>>} - Array of optimized convex polygons
+ */
+export function computeOptimizedConvexDecomposition(spriteSheet, sx, sy, width, height, options = {}) {
+    const threshold = options.threshold !== undefined ? options.threshold : 128;
+    const tolerance = options.tolerance !== undefined ? options.tolerance : 2.0;
+    
+    // Extract sprite data
+    const imageData = extractSpriteData(spriteSheet, sx, sy, width, height);
+    
+    // Phase 1: Extract contour using marching squares
+    const contour = phase1_marchingSquares(imageData, threshold);
+    
+    if (contour.length === 0) {
+        return [];
+    }
+    
+    // Phase 2: Decompose into convex polygons
+    const convexPolygons = phase2_decomposeIntoConvexPolygons(contour);
+    
+    // Phase 3: Optimize each convex polygon
+    const optimized = phase3_optimizeConvexPolygons(convexPolygons, tolerance);
+    
+    return optimized;
+}
+
+/**
+ * Compute optimized convex decompositions for all sprites
+ * @param {Object} spriteDescriptor - Sprite descriptor with img, sx, sy, gridWidth, noSprites
+ * @param {Object} options - Options for shape generation
+ * @returns {Array<Array<Array<{x: number, y: number}>>>} - Array of convex polygon arrays per sprite
+ */
+export function computeAllOptimizedConvexDecompositions(spriteDescriptor, options = {}) {
+    const { img, sx, sy, gridWidth, noSprites } = spriteDescriptor;
+    const results = [];
+    
+    for (let i = 0; i < noSprites; i++) {
+        const col = i % gridWidth;
+        const row = Math.floor(i / gridWidth);
+        const sourceX = col * sx;
+        const sourceY = row * sy;
+        
+        const decomposition = computeOptimizedConvexDecomposition(img, sourceX, sourceY, sx, sy, options);
+        results.push(decomposition);
+    }
+    
+    return results;
+}
+
+/**
  * Simple AABB (Axis-Aligned Bounding Box) computation for comparison
  * @param {Array<{x: number, y: number}>} polygon - Polygon points
  * @returns {{xmin: number, ymin: number, xmax: number, ymax: number}} - AABB
