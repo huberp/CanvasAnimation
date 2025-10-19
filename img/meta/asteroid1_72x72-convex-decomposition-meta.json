@@ -4,7 +4,7 @@
   "spriteHeight": 72,
   "gridWidth": 5,
   "numSprites": 19,
-  "timestamp": "2025-10-19T19:06:57.795Z",
+  "timestamp": "2025-10-19T20:12:54.797Z",
   "algorithm": "convexDecomposition",
   "description": "Bayazit algorithm (FACD) - Fast Approximate Convex Decomposition",
   "accuracyLevels": {
@@ -15,10 +15,12 @@
         "convexPolygons": [
           [
             { "x": 32, "y": 7 },
+            { "x": 33, "y": 6 },
             { "x": 41, "y": 6 }
           ],
           [
             { "x": 41, "y": 6 },
+            { "x": 55, "y": 13 },
             { "x": 61, "y": 18 },
             { "x": 64, "y": 26 },
             { "x": 63, "y": 47 },
@@ -32,7 +34,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 13
+        "totalPoints": 15
       },
       {
         "index": 1,
@@ -40,6 +42,7 @@
         "convexPolygons": [
           [
             { "x": 29, "y": 6 },
+            { "x": 30, "y": 5 },
             { "x": 48, "y": 10 }
           ],
           [
@@ -50,14 +53,16 @@
             { "x": 61, "y": 54 },
             { "x": 37, "y": 66 },
             { "x": 25, "y": 66 },
+            { "x": 20, "y": 63 },
             { "x": 8, "y": 51 },
+            { "x": 6, "y": 43 },
             { "x": 6, "y": 27 },
             { "x": 12, "y": 15 },
             { "x": 29, "y": 6 }
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 13
+        "totalPoints": 16
       },
       {
         "index": 2,
@@ -65,6 +70,7 @@
         "convexPolygons": [
           [
             { "x": 28, "y": 6 },
+            { "x": 29, "y": 5 },
             { "x": 43, "y": 7 }
           ],
           [
@@ -72,7 +78,9 @@
             { "x": 59, "y": 18 },
             { "x": 67, "y": 29 },
             { "x": 63, "y": 53 },
+            { "x": 33, "y": 67 },
             { "x": 28, "y": 67 },
+            { "x": 15, "y": 59 },
             { "x": 10, "y": 54 },
             { "x": 7, "y": 43 },
             { "x": 10, "y": 16 },
@@ -80,7 +88,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 11
+        "totalPoints": 14
       },
       {
         "index": 3,
@@ -88,6 +96,7 @@
         "convexPolygons": [
           [
             { "x": 31, "y": 7 },
+            { "x": 32, "y": 6 },
             { "x": 44, "y": 7 }
           ],
           [
@@ -95,6 +104,7 @@
             { "x": 67, "y": 28 },
             { "x": 64, "y": 50 },
             { "x": 53, "y": 62 },
+            { "x": 46, "y": 65 },
             { "x": 28, "y": 66 },
             { "x": 16, "y": 60 },
             { "x": 9, "y": 51 },
@@ -103,7 +113,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 11
+        "totalPoints": 13
       },
       {
         "index": 4,
@@ -111,6 +121,7 @@
         "convexPolygons": [
           [
             { "x": 34, "y": 6 },
+            { "x": 35, "y": 5 },
             { "x": 48, "y": 9 }
           ],
           [
@@ -128,7 +139,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 13
+        "totalPoints": 14
       },
       {
         "index": 5,
@@ -136,6 +147,7 @@
         "convexPolygons": [
           [
             { "x": 31, "y": 6 },
+            { "x": 32, "y": 5 },
             { "x": 42, "y": 5 }
           ],
           [
@@ -154,7 +166,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 14
+        "totalPoints": 15
       },
       {
         "index": 6,
@@ -162,6 +174,7 @@
         "convexPolygons": [
           [
             { "x": 24, "y": 7 },
+            { "x": 25, "y": 6 },
             { "x": 44, "y": 6 }
           ],
           [
@@ -170,6 +183,7 @@
             { "x": 67, "y": 39 },
             { "x": 54, "y": 62 },
             { "x": 43, "y": 65 },
+            { "x": 24, "y": 64 },
             { "x": 17, "y": 61 },
             { "x": 7, "y": 48 },
             { "x": 5, "y": 37 },
@@ -179,7 +193,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 13
+        "totalPoints": 15
       },
       {
         "index": 7,
@@ -187,6 +201,7 @@
         "convexPolygons": [
           [
             { "x": 27, "y": 8 },
+            { "x": 28, "y": 7 },
             { "x": 51, "y": 10 }
           ],
           [
@@ -204,7 +219,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 13
+        "totalPoints": 14
       },
       {
         "index": 8,
@@ -212,6 +227,7 @@
         "convexPolygons": [
           [
             { "x": 29, "y": 8 },
+            { "x": 30, "y": 7 },
             { "x": 51, "y": 10 }
           ],
           [
@@ -229,7 +245,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 13
+        "totalPoints": 14
       },
       {
         "index": 9,
@@ -237,6 +253,7 @@
         "convexPolygons": [
           [
             { "x": 28, "y": 6 },
+            { "x": 29, "y": 5 },
             { "x": 50, "y": 9 }
           ],
           [
@@ -255,7 +272,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 14
+        "totalPoints": 15
       },
       {
         "index": 10,
@@ -283,6 +300,7 @@
         "convexPolygons": [
           [
             { "x": 31, "y": 5 },
+            { "x": 32, "y": 4 },
             { "x": 52, "y": 9 }
           ],
           [
@@ -301,7 +319,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 14
+        "totalPoints": 15
       },
       {
         "index": 12,
@@ -309,6 +327,7 @@
         "convexPolygons": [
           [
             { "x": 27, "y": 8 },
+            { "x": 28, "y": 7 },
             { "x": 54, "y": 10 }
           ],
           [
@@ -319,12 +338,13 @@
             { "x": 23, "y": 65 },
             { "x": 6, "y": 40 },
             { "x": 5, "y": 29 },
+            { "x": 11, "y": 18 },
             { "x": 18, "y": 10 },
             { "x": 27, "y": 8 }
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 11
+        "totalPoints": 13
       },
       {
         "index": 13,
@@ -332,6 +352,7 @@
         "convexPolygons": [
           [
             { "x": 22, "y": 9 },
+            { "x": 23, "y": 8 },
             { "x": 49, "y": 9 }
           ],
           [
@@ -348,7 +369,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 12
+        "totalPoints": 13
       },
       {
         "index": 14,
@@ -356,6 +377,7 @@
         "convexPolygons": [
           [
             { "x": 23, "y": 7 },
+            { "x": 24, "y": 6 },
             { "x": 41, "y": 6 }
           ],
           [
@@ -367,12 +389,13 @@
             { "x": 30, "y": 67 },
             { "x": 7, "y": 46 },
             { "x": 5, "y": 35 },
+            { "x": 8, "y": 27 },
             { "x": 17, "y": 11 },
             { "x": 23, "y": 7 }
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 12
+        "totalPoints": 14
       },
       {
         "index": 15,
@@ -380,6 +403,7 @@
         "convexPolygons": [
           [
             { "x": 32, "y": 6 },
+            { "x": 33, "y": 5 },
             { "x": 43, "y": 5 }
           ],
           [
@@ -396,7 +420,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 12
+        "totalPoints": 13
       },
       {
         "index": 16,
@@ -404,6 +428,7 @@
         "convexPolygons": [
           [
             { "x": 39, "y": 6 },
+            { "x": 40, "y": 5 },
             { "x": 47, "y": 6 }
           ],
           [
@@ -420,7 +445,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 12
+        "totalPoints": 13
       },
       {
         "index": 17,
@@ -428,6 +453,7 @@
         "convexPolygons": [
           [
             { "x": 32, "y": 6 },
+            { "x": 33, "y": 5 },
             { "x": 52, "y": 9 }
           ],
           [
@@ -444,7 +470,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 12
+        "totalPoints": 13
       },
       {
         "index": 18,
@@ -452,6 +478,7 @@
         "convexPolygons": [
           [
             { "x": 31, "y": 6 },
+            { "x": 32, "y": 5 },
             { "x": 40, "y": 5 }
           ],
           [
@@ -470,7 +497,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 14
+        "totalPoints": 15
       }
     ],
     "mid": [
@@ -480,6 +507,7 @@
         "convexPolygons": [
           [
             { "x": 32, "y": 7 },
+            { "x": 33, "y": 6 },
             { "x": 41, "y": 6 }
           ],
           [
@@ -501,7 +529,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 17
+        "totalPoints": 18
       },
       {
         "index": 1,
@@ -509,10 +537,12 @@
         "convexPolygons": [
           [
             { "x": 29, "y": 6 },
+            { "x": 30, "y": 5 },
             { "x": 37, "y": 5 }
           ],
           [
             { "x": 37, "y": 5 },
+            { "x": 48, "y": 10 },
             { "x": 59, "y": 17 },
             { "x": 65, "y": 25 },
             { "x": 64, "y": 47 },
@@ -530,7 +560,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 17
+        "totalPoints": 19
       },
       {
         "index": 2,
@@ -538,10 +568,12 @@
         "convexPolygons": [
           [
             { "x": 28, "y": 6 },
+            { "x": 29, "y": 5 },
             { "x": 38, "y": 5 }
           ],
           [
             { "x": 38, "y": 5 },
+            { "x": 43, "y": 7 },
             { "x": 59, "y": 18 },
             { "x": 65, "y": 24 },
             { "x": 67, "y": 29 },
@@ -560,7 +592,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 18
+        "totalPoints": 20
       },
       {
         "index": 3,
@@ -568,6 +600,7 @@
         "convexPolygons": [
           [
             { "x": 31, "y": 7 },
+            { "x": 32, "y": 6 },
             { "x": 44, "y": 7 }
           ],
           [
@@ -581,6 +614,7 @@
             { "x": 28, "y": 66 },
             { "x": 16, "y": 60 },
             { "x": 10, "y": 54 },
+            { "x": 9, "y": 51 },
             { "x": 8, "y": 25 },
             { "x": 10, "y": 18 },
             { "x": 13, "y": 15 },
@@ -588,7 +622,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 16
+        "totalPoints": 18
       },
       {
         "index": 4,
@@ -596,6 +630,7 @@
         "convexPolygons": [
           [
             { "x": 34, "y": 6 },
+            { "x": 35, "y": 5 },
             { "x": 40, "y": 5 }
           ],
           [
@@ -617,7 +652,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 17
+        "totalPoints": 18
       },
       {
         "index": 5,
@@ -625,6 +660,7 @@
         "convexPolygons": [
           [
             { "x": 31, "y": 6 },
+            { "x": 32, "y": 5 },
             { "x": 42, "y": 5 }
           ],
           [
@@ -645,7 +681,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 16
+        "totalPoints": 17
       },
       {
         "index": 6,
@@ -653,6 +689,7 @@
         "convexPolygons": [
           [
             { "x": 24, "y": 7 },
+            { "x": 25, "y": 6 },
             { "x": 44, "y": 6 }
           ],
           [
@@ -665,6 +702,7 @@
             { "x": 43, "y": 65 },
             { "x": 24, "y": 64 },
             { "x": 17, "y": 61 },
+            { "x": 7, "y": 48 },
             { "x": 5, "y": 44 },
             { "x": 5, "y": 37 },
             { "x": 9, "y": 25 },
@@ -673,7 +711,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 16
+        "totalPoints": 18
       },
       {
         "index": 7,
@@ -681,6 +719,7 @@
         "convexPolygons": [
           [
             { "x": 27, "y": 8 },
+            { "x": 28, "y": 7 },
             { "x": 42, "y": 7 }
           ],
           [
@@ -703,7 +742,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 18
+        "totalPoints": 19
       },
       {
         "index": 8,
@@ -711,6 +750,7 @@
         "convexPolygons": [
           [
             { "x": 29, "y": 8 },
+            { "x": 30, "y": 7 },
             { "x": 46, "y": 8 }
           ],
           [
@@ -733,7 +773,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 18
+        "totalPoints": 19
       },
       {
         "index": 9,
@@ -741,6 +781,7 @@
         "convexPolygons": [
           [
             { "x": 28, "y": 6 },
+            { "x": 29, "y": 5 },
             { "x": 41, "y": 6 }
           ],
           [
@@ -749,6 +790,7 @@
             { "x": 61, "y": 20 },
             { "x": 66, "y": 32 },
             { "x": 67, "y": 41 },
+            { "x": 64, "y": 48 },
             { "x": 58, "y": 57 },
             { "x": 49, "y": 64 },
             { "x": 33, "y": 65 },
@@ -763,7 +805,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 18
+        "totalPoints": 20
       },
       {
         "index": 10,
@@ -830,6 +872,7 @@
         "convexPolygons": [
           [
             { "x": 27, "y": 8 },
+            { "x": 28, "y": 7 },
             { "x": 45, "y": 7 }
           ],
           [
@@ -851,7 +894,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 17
+        "totalPoints": 18
       },
       {
         "index": 13,
@@ -859,6 +902,7 @@
         "convexPolygons": [
           [
             { "x": 22, "y": 9 },
+            { "x": 23, "y": 8 },
             { "x": 49, "y": 9 },
             { "x": 55, "y": 11 },
             { "x": 58, "y": 14 },
@@ -881,7 +925,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 18
+        "totalPoints": 19
       },
       {
         "index": 14,
@@ -889,6 +933,7 @@
         "convexPolygons": [
           [
             { "x": 23, "y": 7 },
+            { "x": 24, "y": 6 },
             { "x": 41, "y": 6 }
           ],
           [
@@ -901,6 +946,7 @@
             { "x": 48, "y": 62 },
             { "x": 30, "y": 67 },
             { "x": 24, "y": 64 },
+            { "x": 7, "y": 46 },
             { "x": 5, "y": 43 },
             { "x": 5, "y": 35 },
             { "x": 8, "y": 27 },
@@ -909,7 +955,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 16
+        "totalPoints": 18
       },
       {
         "index": 15,
@@ -917,12 +963,14 @@
         "convexPolygons": [
           [
             { "x": 32, "y": 6 },
+            { "x": 33, "y": 5 },
             { "x": 43, "y": 5 }
           ],
           [
             { "x": 43, "y": 5 },
             { "x": 58, "y": 14 },
             { "x": 63, "y": 21 },
+            { "x": 64, "y": 28 },
             { "x": 63, "y": 47 },
             { "x": 60, "y": 55 },
             { "x": 55, "y": 59 },
@@ -937,7 +985,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 16
+        "totalPoints": 18
       },
       {
         "index": 16,
@@ -945,6 +993,7 @@
         "convexPolygons": [
           [
             { "x": 39, "y": 6 },
+            { "x": 40, "y": 5 },
             { "x": 47, "y": 6 }
           ],
           [
@@ -966,7 +1015,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 17
+        "totalPoints": 18
       },
       {
         "index": 17,
@@ -974,6 +1023,7 @@
         "convexPolygons": [
           [
             { "x": 32, "y": 6 },
+            { "x": 33, "y": 5 },
             { "x": 45, "y": 6 }
           ],
           [
@@ -981,7 +1031,9 @@
             { "x": 52, "y": 9 },
             { "x": 63, "y": 21 },
             { "x": 66, "y": 28 },
+            { "x": 67, "y": 36 },
             { "x": 67, "y": 46 },
+            { "x": 65, "y": 49 },
             { "x": 54, "y": 58 },
             { "x": 39, "y": 66 },
             { "x": 32, "y": 66 },
@@ -995,7 +1047,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 17
+        "totalPoints": 20
       },
       {
         "index": 18,
@@ -1003,6 +1055,7 @@
         "convexPolygons": [
           [
             { "x": 31, "y": 6 },
+            { "x": 32, "y": 5 },
             { "x": 40, "y": 5 }
           ],
           [
@@ -1025,7 +1078,7 @@
           ]
         ],
         "polygonCount": 2,
-        "totalPoints": 18
+        "totalPoints": 19
       }
     ],
     "high": [
