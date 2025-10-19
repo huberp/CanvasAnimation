@@ -467,48 +467,123 @@ function distSquared(p1, p2) {
 }
 
 /**
- * Check if a diagonal between two vertices is inside the polygon
- * @param {Array<{x: number, y: number}>} polygon - Polygon points
- * @param {number} i - First vertex index
- * @param {number} j - Second vertex index
- * @returns {boolean} - True if diagonal is valid
+ * Helper: Get area of triangle (signed)
+ * Positive if counter-clockwise, negative if clockwise
  */
-function isValidDiagonal(polygon, i, j) {
-    const n = polygon.length;
-    const p1 = polygon[i];
-    const p2 = polygon[j];
+function triangleArea(a, b, c) {
+    return ((b.x - a.x) * (c.y - a.y)) - ((c.x - a.x) * (b.y - a.y));
+}
+
+/**
+ * Helper: Check if point c is to the left of line ab
+ */
+function isLeft(a, b, c) {
+    return triangleArea(a, b, c) > 0;
+}
+
+/**
+ * Helper: Check if point c is to the left or on line ab
+ */
+function isLeftOn(a, b, c) {
+    return triangleArea(a, b, c) >= 0;
+}
+
+/**
+ * Helper: Check if point c is to the right of line ab
+ */
+function isRight(a, b, c) {
+    return triangleArea(a, b, c) < 0;
+}
+
+/**
+ * Helper: Check if point c is to the right or on line ab
+ */
+function isRightOn(a, b, c) {
+    return triangleArea(a, b, c) <= 0;
+}
+
+/**
+ * Helper: Get polygon vertex at index (wraps around)
+ */
+function at(polygon, i) {
+    const s = polygon.length;
+    return polygon[i < 0 ? i % s + s : i % s];
+}
+
+/**
+ * Helper: Check if vertex at index is a reflex vertex (concave)
+ */
+function isReflex(polygon, i) {
+    return isRight(at(polygon, i - 1), at(polygon, i), at(polygon, i + 1));
+}
+
+/**
+ * Helper: Compute squared distance between two points
+ */
+function sqdist(a, b) {
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    return dx * dx + dy * dy;
+}
+
+/**
+ * Helper: Check if two line segments intersect
+ */
+function segmentsIntersect(p1, p2, q1, q2) {
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const da = q2.x - q1.x;
+    const db = q2.y - q1.y;
     
-    // Cross product helper
-    const cross = (o, a, b) => {
-        return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+    // Segments are parallel
+    if ((da * dy - db * dx) === 0) {
+        return false;
+    }
+    
+    const s = (dx * (q1.y - p1.y) + dy * (p1.x - q1.x)) / (da * dy - db * dx);
+    const t = (da * (p1.y - q1.y) + db * (q1.x - p1.x)) / (db * dx - da * dy);
+    
+    return (s >= 0 && s <= 1 && t >= 0 && t <= 1);
+}
+
+/**
+ * Helper: Get intersection point of two lines
+ */
+function getIntersectionPoint(p1, p2, q1, q2) {
+    const a1 = p2.y - p1.y;
+    const b1 = p1.x - p2.x;
+    const c1 = (a1 * p1.x) + (b1 * p1.y);
+    const a2 = q2.y - q1.y;
+    const b2 = q1.x - q2.x;
+    const c2 = (a2 * q1.x) + (b2 * q1.y);
+    const det = (a1 * b2) - (a2 * b1);
+    
+    if (Math.abs(det) < 0.0001) {
+        return { x: 0, y: 0 };
+    }
+    
+    return {
+        x: ((b2 * c1) - (b1 * c2)) / det,
+        y: ((a1 * c2) - (a2 * c1)) / det
     };
+}
+
+/**
+ * Helper: Check if two vertices can see each other
+ */
+function canSee(polygon, a, b) {
+    if (isLeftOn(at(polygon, a + 1), at(polygon, a), at(polygon, b)) && 
+        isLeftOn(at(polygon, a), at(polygon, b), at(polygon, b - 1))) {
+        return false;
+    }
     
-    // Check if diagonal is inside the polygon
-    // by checking if midpoint is inside
-    const mid = {
-        x: (p1.x + p2.x) / 2,
-        y: (p1.y + p2.y) / 2
-    };
-    
-    // Check if the diagonal crosses any edges
-    for (let k = 0; k < n; k++) {
-        const k1 = k;
-        const k2 = (k + 1) % n;
+    // Check if line segment intersects any polygon edges
+    for (let i = 0; i < polygon.length; ++i) {
+        if ((i + 1) % polygon.length === a || i === a) continue;
+        if ((i + 1) % polygon.length === b || i === b) continue;
         
-        // Skip edges adjacent to the diagonal
-        if (k1 === i || k1 === j || k2 === i || k2 === j) continue;
-        
-        // Check if segments intersect
-        const a1 = polygon[k1];
-        const a2 = polygon[k2];
-        
-        const d1 = cross(p1, p2, a1);
-        const d2 = cross(p1, p2, a2);
-        const d3 = cross(a1, a2, p1);
-        const d4 = cross(a1, a2, p2);
-        
-        if (((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
-            ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0))) {
+        if (segmentsIntersect(at(polygon, a), at(polygon, b), 
+                             at(polygon, i), at(polygon, i + 1))) {
             return false;
         }
     }
@@ -517,8 +592,186 @@ function isValidDiagonal(polygon, i, j) {
 }
 
 /**
+ * Bayazit algorithm for fast approximate convex decomposition (FACD)
+ * This is the core algorithm that decomposes a concave polygon into convex parts
+ * @param {Array<{x: number, y: number}>} polygon - Input polygon
+ * @param {Array} result - Output array to store convex polygons
+ * @param {number} maxlevel - Maximum recursion depth
+ * @param {number} level - Current recursion level
+ */
+function bayazitDecomposition(polygon, result, maxlevel, level) {
+    if (polygon.length < 3) {
+        return;
+    }
+    
+    if (level > maxlevel) {
+        console.warn("bayazitDecomposition: max level reached");
+        result.push(polygon);
+        return;
+    }
+    
+    if (isConvex(polygon)) {
+        result.push(polygon);
+        return;
+    }
+    
+    let upperInt = { x: 0, y: 0 };
+    let lowerInt = { x: 0, y: 0 };
+    let upperDist = 0;
+    let lowerDist = 0;
+    let upperIndex = 0;
+    let lowerIndex = 0;
+    let closestIndex = 0;
+    
+    // Find a reflex vertex
+    for (let i = 0; i < polygon.length; ++i) {
+        if (isReflex(polygon, i)) {
+            upperDist = lowerDist = Number.MAX_VALUE;
+            
+            // Find the closest vertices that can split this reflex vertex
+            for (let j = 0; j < polygon.length; ++j) {
+                // Check if line from vertex i-1 through i intersects edge j-1 to j
+                if (isLeft(at(polygon, i - 1), at(polygon, i), at(polygon, j)) && 
+                    isRightOn(at(polygon, i - 1), at(polygon, i), at(polygon, j - 1))) {
+                    
+                    const p = getIntersectionPoint(
+                        at(polygon, i - 1), at(polygon, i),
+                        at(polygon, j), at(polygon, j - 1)
+                    );
+                    
+                    if (isRight(at(polygon, i + 1), at(polygon, i), p)) {
+                        const d = sqdist(polygon[i], p);
+                        if (d < lowerDist) {
+                            lowerDist = d;
+                            lowerInt = p;
+                            lowerIndex = j;
+                        }
+                    }
+                }
+                
+                // Check if line from vertex i+1 through i intersects edge j to j+1
+                if (isLeft(at(polygon, i + 1), at(polygon, i), at(polygon, j + 1)) && 
+                    isRightOn(at(polygon, i + 1), at(polygon, i), at(polygon, j))) {
+                    
+                    const p = getIntersectionPoint(
+                        at(polygon, i + 1), at(polygon, i),
+                        at(polygon, j), at(polygon, j + 1)
+                    );
+                    
+                    if (isLeft(at(polygon, i - 1), at(polygon, i), p)) {
+                        const d = sqdist(polygon[i], p);
+                        if (d < upperDist) {
+                            upperDist = d;
+                            upperInt = p;
+                            upperIndex = j;
+                        }
+                    }
+                }
+            }
+            
+            // Split the polygon
+            if (lowerIndex === (upperIndex + 1) % polygon.length) {
+                // Use steiner point (midpoint)
+                const p = {
+                    x: (lowerInt.x + upperInt.x) / 2,
+                    y: (lowerInt.y + upperInt.y) / 2
+                };
+                
+                const lowerPoly = [];
+                const upperPoly = [];
+                
+                if (i < upperIndex) {
+                    for (let k = i; k <= upperIndex; k++) {
+                        lowerPoly.push(polygon[k]);
+                    }
+                    lowerPoly.push(p);
+                    upperPoly.push(p);
+                    if (lowerIndex !== 0) {
+                        for (let k = lowerIndex; k < polygon.length; k++) {
+                            upperPoly.push(polygon[k]);
+                        }
+                    }
+                    for (let k = 0; k <= i; k++) {
+                        upperPoly.push(polygon[k]);
+                    }
+                } else {
+                    if (i !== 0) {
+                        for (let k = i; k < polygon.length; k++) {
+                            lowerPoly.push(polygon[k]);
+                        }
+                    }
+                    for (let k = 0; k <= upperIndex; k++) {
+                        lowerPoly.push(polygon[k]);
+                    }
+                    lowerPoly.push(p);
+                    upperPoly.push(p);
+                    for (let k = lowerIndex; k <= i; k++) {
+                        upperPoly.push(polygon[k]);
+                    }
+                }
+                
+                bayazitDecomposition(lowerPoly, result, maxlevel, level + 1);
+                bayazitDecomposition(upperPoly, result, maxlevel, level + 1);
+                return;
+            } else {
+                // Connect to closest point within the triangle
+                let closestDist = Number.MAX_VALUE;
+                
+                if (lowerIndex > upperIndex) {
+                    upperIndex += polygon.length;
+                }
+                
+                for (let j = lowerIndex; j <= upperIndex; ++j) {
+                    if (canSee(polygon, i, j % polygon.length)) {
+                        const d = sqdist(at(polygon, i), at(polygon, j));
+                        if (d < closestDist) {
+                            closestDist = d;
+                            closestIndex = j % polygon.length;
+                        }
+                    }
+                }
+                
+                // Split at closest index
+                const lowerPoly = [];
+                const upperPoly = [];
+                
+                if (i < closestIndex) {
+                    for (let k = i; k <= closestIndex; k++) {
+                        lowerPoly.push(polygon[k]);
+                    }
+                    for (let k = closestIndex; k < polygon.length; k++) {
+                        upperPoly.push(polygon[k]);
+                    }
+                    for (let k = 0; k <= i; k++) {
+                        upperPoly.push(polygon[k]);
+                    }
+                } else {
+                    for (let k = i; k < polygon.length; k++) {
+                        lowerPoly.push(polygon[k]);
+                    }
+                    for (let k = 0; k <= closestIndex; k++) {
+                        lowerPoly.push(polygon[k]);
+                    }
+                    for (let k = closestIndex; k <= i; k++) {
+                        upperPoly.push(polygon[k]);
+                    }
+                }
+                
+                bayazitDecomposition(lowerPoly, result, maxlevel, level + 1);
+                bayazitDecomposition(upperPoly, result, maxlevel, level + 1);
+                return;
+            }
+        }
+    }
+    
+    // No reflex vertices found, polygon is convex
+    result.push(polygon);
+}
+
+/**
  * Phase 2: Decompose a concave polygon into convex polygons
- * Uses a modified Hertel-Mehlhorn algorithm for convex decomposition
+ * Uses the Bayazit algorithm for fast approximate convex decomposition (FACD)
+ * This is more efficient than ear-clipping + merging, producing fewer polygons
  * @param {Array<{x: number, y: number}>} polygon - Concave polygon points
  * @returns {Array<Array<{x: number, y: number}>>} - Array of convex polygons
  */
@@ -532,13 +785,11 @@ export function decomposeIntoConvexPolygons(polygon) {
         return [polygon];
     }
     
-    // Triangulate first (ear clipping method)
-    const triangles = triangulate(polygon);
+    // Use Bayazit algorithm (FACD) for efficient decomposition
+    const result = [];
+    bayazitDecomposition(polygon, result, 100, 0);
     
-    // Merge triangles into convex polygons
-    const convexPolygons = mergeTrianglesIntoConvexPolygons(triangles);
-    
-    return convexPolygons;
+    return result.length > 0 ? result : [polygon];
 }
 
 /**
@@ -719,14 +970,25 @@ function pointsEqual(p1, p2) {
 }
 
 /**
- * Phase 1: Extract contour using marching squares
- * (Wrapper for existing marchingSquares function)
+ * Phase 1: Extract contour using marching squares and simplify
+ * Applies Douglas-Peucker simplification to reduce point count while maintaining accuracy
  * @param {ImageData} imageData - Image data to process
  * @param {number} threshold - Alpha threshold (0-255)
- * @returns {Array<{x: number, y: number}>} - Contour points
+ * @param {number} tolerance - Simplification tolerance (default: 1.0 for high accuracy)
+ * @returns {Array<{x: number, y: number}>} - Simplified contour points
  */
-export function phase1_marchingSquares(imageData, threshold = 128) {
-    return marchingSquares(imageData, threshold);
+export function phase1_marchingSquares(imageData, threshold = 128, tolerance = 1.0) {
+    const contour = marchingSquares(imageData, threshold);
+    
+    if (contour.length === 0) {
+        return [];
+    }
+    
+    // Apply Douglas-Peucker simplification to reduce points
+    // This matches the approach used in metadata generation
+    const simplified = douglasPeucker(contour, tolerance);
+    
+    return simplified;
 }
 
 /**
@@ -774,18 +1036,18 @@ export function phase3_optimizeConvexPolygons(convexPolygons, tolerance = 2.0) {
  * @param {number} height - Height of sprite
  * @param {Object} options - Options for shape generation
  * @param {number} options.threshold - Alpha threshold (default: 128)
- * @param {number} options.tolerance - Simplification tolerance (default: 2.0)
+ * @param {number} options.tolerance - Simplification tolerance (default: 1.0)
  * @returns {Array<Array<{x: number, y: number}>>} - Array of optimized convex polygons
  */
 export function computeOptimizedConvexDecomposition(spriteSheet, sx, sy, width, height, options = {}) {
     const threshold = options.threshold !== undefined ? options.threshold : 128;
-    const tolerance = options.tolerance !== undefined ? options.tolerance : 2.0;
+    const tolerance = options.tolerance !== undefined ? options.tolerance : 1.0;
     
     // Extract sprite data
     const imageData = extractSpriteData(spriteSheet, sx, sy, width, height);
     
-    // Phase 1: Extract contour using marching squares
-    const contour = phase1_marchingSquares(imageData, threshold);
+    // Phase 1: Extract contour using marching squares and simplify
+    const contour = phase1_marchingSquares(imageData, threshold, tolerance);
     
     if (contour.length === 0) {
         return [];
