@@ -1008,23 +1008,23 @@ export function phase2_decomposeIntoConvexPolygons(polygon) {
  * @returns {Array<Array<{x: number, y: number}>>} - Optimized convex polygons
  */
 export function phase3_optimizeConvexPolygons(convexPolygons, tolerance = 2.0) {
-    return convexPolygons.map(polygon => {
-        // Only simplify if polygon has more than 3 vertices
-        if (polygon.length <= 3) {
-            return polygon;
-        }
-        
-        // Apply Douglas-Peucker simplification
-        const simplified = douglasPeucker(polygon, tolerance);
-        
-        // Ensure result is still convex
-        if (isConvex(simplified)) {
-            return simplified;
-        } else {
-            // If simplification made it non-convex, return original
-            return polygon;
-        }
-    });
+    // Use reduced tolerance to preserve small features
+    const reducedTolerance = Math.max(tolerance * 0.3, 0.5);
+    
+    return convexPolygons
+        .map(polygon => {
+            // Apply Douglas-Peucker simplification with reduced tolerance
+            const simplified = douglasPeucker(polygon, reducedTolerance);
+            
+            // Ensure result is still convex
+            if (isConvex(simplified)) {
+                return simplified;
+            } else {
+                // If simplification made it non-convex, return original
+                return polygon;
+            }
+        })
+        .filter(polygon => polygon.length >= 3); // Remove degenerate polygons
 }
 
 /**
