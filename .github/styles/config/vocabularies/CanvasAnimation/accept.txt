@@ -7,3 +7,8 @@ AABB
 ISC
 WASD
 Shoot'em
+tol
+Tol
+poly-decomp
+refactor
+spriteSheetName

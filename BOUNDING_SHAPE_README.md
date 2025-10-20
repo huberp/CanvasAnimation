@@ -1,4 +1,4 @@
-# Bounding Shape Utility
+# Bounding shape utility
 
 This utility provides functions to compute 2D bounding shapes for sprite collision detection in the CanvasAnimation project.
 
@@ -6,20 +6,21 @@ This utility provides functions to compute 2D bounding shapes for sprite collisi
 
 The bounding shape utility uses advanced algorithms to generate tight-fitting polygonal boundaries around sprite images, enabling accurate collision detection for irregular shapes like asteroids.
 
-## Algorithm Comparison
+## Algorithm comparison
 
 The utility now provides two different approaches for computing bounding shapes:
 
-### 1. Marching Squares + Douglas-Peucker (Default)
+### 1. Marching squares with Douglas-Peucker (default)
 
-**Best for:** Irregular, concave shapes where accuracy is important
+**Best for:**
+Irregular, concave shapes where accuracy matters
 
 **How it works:**
 1. Traces the contour of visible pixels using Marching Squares
 2. Simplifies the polygon using Douglas-Peucker algorithm
 
 **Pros:**
-- Very accurate for irregular shapes
+- Accurate for irregular shapes
 - Follows actual sprite boundaries closely
 - Configurable simplification via tolerance parameter
 
@@ -31,9 +32,10 @@ The utility now provides two different approaches for computing bounding shapes:
 - Average: ~6.3 points per polygon
 - Range: 5-8 points
 
-### 2. Convex Hull (Graham Scan)
+### 2. Convex hull (Graham scan)
 
-**Best for:** Simpler collision detection, faster algorithms (SAT)
+**Best for:**
+Simpler collision detection, faster algorithms (SAT)
 
 **How it works:**
 1. Extracts all solid pixels from the sprite
@@ -54,7 +56,7 @@ The utility now provides two different approaches for computing bounding shapes:
 - Range: 6-15 points
 - Includes more empty space for concave asteroids
 
-### Comparison Demo
+### Comparison demo
 
 Open `bounding-shape-comparison.html` to see a side-by-side comparison:
 - Blue polygons: Marching Squares + Douglas-Peucker
