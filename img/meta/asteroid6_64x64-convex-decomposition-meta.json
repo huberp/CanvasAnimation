@@ -4,7 +4,7 @@
   "spriteHeight": 64,
   "gridWidth": 8,
   "numSprites": 64,
-  "timestamp": "2025-10-20T16:47:17.110Z",
+  "timestamp": "2025-10-20T17:26:23.983Z",
   "algorithm": "convexDecomposition",
   "description": "Bayazit algorithm (FACD) - Fast Approximate Convex Decomposition",
   "accuracyLevels": {
