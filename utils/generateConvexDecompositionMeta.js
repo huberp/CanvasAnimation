@@ -22,15 +22,17 @@ import { createCanvas, loadImage } from 'canvas';
 import * as boundingShape from './boundingShapeNode.js';
 
 // Accuracy levels with different tolerance values
+// These match the marching squares tolerance values from generateBoundingShapeMeta.js
+// to ensure convex decomposition starts from the same simplified contour
 const ACCURACY_LEVELS = {
     low: {
-        tolerance: 2.0
+        tolerance: 4.0
     },
     mid: {
-        tolerance: 1.0
+        tolerance: 2.0
     },
     high: {
-        tolerance: 0.5
+        tolerance: 1.0
     }
 };
 
