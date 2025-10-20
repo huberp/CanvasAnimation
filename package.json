@@ -5,7 +5,7 @@
   "type": "module",
   "main": "public_html/js/setupObjects.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node utils/test-tolerance-alignment.js",
     "generate-meta": "node utils/generateBoundingShapeMeta.js",
     "generate-all-meta": "node utils/processAllSpriteSheets.js",
     "generate-convex-meta": "node utils/generateConvexDecompositionMeta.js",
