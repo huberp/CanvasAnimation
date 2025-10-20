@@ -39,8 +39,8 @@ The Bayazit convex decomposition algorithm produces invalid results for most spr
 **Description**: Use a smaller tolerance for Phase 3 optimization to preserve small triangles.
 
 **Changes Required**:
-- Modify `phase3_optimizeConvexPolygons()` to use a fraction of the input tolerance (e.g., `tolerance * 0.3`)
-- Or use a fixed small tolerance (e.g., `0.5`) regardless of input
+- Modify `phase3_optimizeConvexPolygons()` to use a fraction of the input tolerance (for example, `tolerance * 0.3`)
+- Or use a fixed small tolerance (for example, `0.5`) regardless of input
 
 **Pros**:
 - ✅ Preserves small triangles (keeps them as valid 3-point polygons)
@@ -48,7 +48,7 @@ The Bayazit convex decomposition algorithm produces invalid results for most spr
 - ✅ Simple to implement
 
 **Cons**:
-- ❌ Still creates tiny, nearly-degenerate triangles
+- ❌ Still creates tiny, nearly degenerate triangles
 - ❌ More points in output (slightly larger file sizes)
 - ❌ Doesn't fix the underlying Bayazit issue
 
@@ -61,7 +61,7 @@ The Bayazit convex decomposition algorithm produces invalid results for most spr
 
 **Changes Required**:
 - Add area calculation function
-- Filter polygons with area below threshold (e.g., `minArea = 5` square pixels)
+- Filter polygons with area below threshold (for example, `minArea = 5` square pixels)
 - Apply in `phase3_optimizeConvexPolygons()` or after decomposition
 
 **Pros**:
@@ -176,7 +176,7 @@ function phase3_optimizeConvexPolygons(polygons, tolerance = 1.0) {
 
 For even simpler fix with better filtering:
 1. Filter degenerate polygons (< 3 points)
-2. Filter tiny polygons (area < threshold, e.g., 5 px²)
+2. Filter tiny polygons (area < threshold, for example, 5 px²)
 3. Log warnings when filtering occurs
 
 **Better for**: Production use where we want to be conservative and avoid any tiny/useless polygons.

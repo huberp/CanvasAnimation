@@ -12,3 +12,4 @@ Tol
 poly-decomp
 refactor
 spriteSheetName
+Smallfighter
