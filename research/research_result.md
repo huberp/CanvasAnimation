@@ -39,7 +39,7 @@ This document contains research on algorithms for computing 2D bounding shapes f
 **Pros:**
 - Simpler collision detection with Separating Axis Theorem (SAT)
 - Fast computation
-- Good for convex or nearly-convex shapes
+- Good for convex or nearly convex shapes
 
 **Cons:**
 - May not fit irregular concave shapes well (like asteroids)

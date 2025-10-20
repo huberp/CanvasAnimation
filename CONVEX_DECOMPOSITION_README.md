@@ -1,17 +1,17 @@
-# Convex Decomposition Utility
+# Convex decomposition utility
 
 This document describes the new convex decomposition utility added in this PR, which complements the existing bounding shape utility.
 
 ## Overview
 
-The convex decomposition utility generates metadata containing **multiple convex polygons** per sprite using the **Bayazit algorithm (FACD - Fast Approximate Convex Decomposition)** implemented in PR #36. This approach is ideal for accurate collision detection with complex, concave shapes while maintaining compatibility with SAT (Separating Axis Theorem).
+The convex decomposition utility generates metadata containing convex polygons per sprite using the **Bayazit algorithm (FACD - Fast Approximate Convex Decomposition)** implemented in PR #36. This approach works well for accurate collision detection with complex, concave shapes while maintaining compatibility with SAT (Separating Axis Theorem).
 
 ## Motivation
 
-While the existing bounding shape utility (using Marching Squares) generates accurate outlines, it can produce **concave polygons** that require more complex collision detection algorithms. The convex decomposition utility solves this by:
+While the existing bounding shape utility (using Marching Squares) generates accurate outlines, it can produce concave polygons that require more complex collision detection algorithms. The convex decomposition utility solves this by:
 
-1. **Decomposing concave shapes** into multiple convex polygons
-2. **Maintaining SAT compatibility** - all resulting polygons are convex
+1. **Decomposing concave shapes** into convex polygons
+2. **Maintaining SAT compatibility** - all resulting polygons convex
 3. **Providing better collision accuracy** than a single convex hull
 4. **Offering configurable accuracy levels** to balance performance vs precision
 
@@ -19,7 +19,7 @@ While the existing bounding shape utility (using Marching Squares) generates acc
 
 The utility uses the Bayazit algorithm for Fast Approximate Convex Decomposition:
 
-### Three-Phase Process
+### Three-phase process
 
 1. **Phase 1: Contour Extraction & Simplification**
    - Uses Marching Squares to trace sprite outline
@@ -37,7 +37,7 @@ The utility uses the Bayazit algorithm for Fast Approximate Convex Decomposition
 
 ## Usage
 
-### Generate Convex Decomposition for a Single Sprite Sheet
+### Generate convex decomposition for a single sprite sheet
 
 ```bash
 node utils/generateConvexDecompositionMeta.js <image-path> <sprite-width> <sprite-height> <grid-width> <num-sprites>
@@ -53,7 +53,7 @@ Or using npm:
 npm run generate-convex-meta img/asteroid4_32x32.png 32 32 5 19
 ```
 
-### Generate for All Sprite Sheets
+### Generate for all sprite sheets
 
 ```bash
 npm run generate-all-convex-meta
@@ -61,16 +61,16 @@ npm run generate-all-convex-meta
 
 This processes all sprite sheets defined in `utils/processAllSpriteSheetsConvex.js`.
 
-## Output Structure
+## Output structure
 
-### Generated Files
+### Generated files
 
 For each sprite sheet, the utility generates:
 
 1. **Metadata JSON File**: `img/meta/<sprite-name>-convex-decomposition-meta.json`
 2. **Visualization Screenshots**: `img/visualizations/<sprite-name>-convexDecomposition-{low|mid|high}.png`
 
-### Metadata Format
+### Metadata format
 
 ```json
 {
@@ -108,7 +108,7 @@ For each sprite sheet, the utility generates:
 }
 ```
 
-### Accuracy Levels
+### Accuracy levels
 
 | Level | Tolerance | Use Case | Characteristics |
 |-------|-----------|----------|-----------------|
@@ -118,7 +118,7 @@ For each sprite sheet, the utility generates:
 
 **Note:** These tolerance values match the marching squares algorithm to ensure convex decomposition starts from the same simplified contour as the single polygon approach.
 
-## Comparison with Single Polygon Approach
+## Comparison with single polygon approach
 
 | Aspect | Single Polygon (Marching Squares) | Convex Decomposition (Bayazit) |
 |--------|-----------------------------------|--------------------------------|
@@ -129,12 +129,12 @@ For each sprite sheet, the utility generates:
 | **Performance** | Faster (fewer polygons) | Good (optimized convex polygons) |
 | **Best for** | Simple shapes, fast collision | Complex shapes, accurate collision |
 
-### Example: Asteroid4 Sprite #1 (Mid Accuracy)
+### Example: Asteroid4 sprite #1 (mid accuracy)
 
 - **Single Polygon**: 4 points, concave
 - **Convex Decomposition**: 2 polygons, 8 total points, all convex
 
-## Visual Results
+## Visual results
 
 All sprite sheets now have visualization screenshots in `img/visualizations/`:
 
@@ -146,15 +146,15 @@ For each sprite sheet and accuracy level:
 - Red dots mark vertices
 - Labels show sprite index, polygon count, and total points
 
-### Example Statistics (Asteroid4, Mid Accuracy)
+### Example statistics (Asteroid4, mid accuracy)
 
 - Average polygons per sprite: 1.32
 - Average points per sprite: 9.26
 - All polygons are convex and SAT-compatible
 
-## Integration in Your Game
+## Integration in your game
 
-### Loading Metadata
+### Loading metadata
 
 ```javascript
 import convexMeta from './img/meta/asteroid4_32x32-convex-decomposition-meta.json';
@@ -168,7 +168,7 @@ console.log(`Sprite has ${sprite.polygonCount} convex polygons`);
 console.log(`Total points: ${sprite.totalPoints}`);
 ```
 
-### Collision Detection with SAT
+### Collision detection with SAT
 
 ```javascript
 class AsteroidCollision {
@@ -198,7 +198,7 @@ class AsteroidCollision {
 }
 ```
 
-### Adaptive Quality
+### Adaptive quality
 
 ```javascript
 // Choose accuracy based on device capabilities
@@ -210,7 +210,7 @@ const collisionSystem = new AsteroidCollision(convexMeta, accuracy);
 
 ## Demos
 
-### Convex Decomposition Comparison Demo
+### Convex decomposition comparison demo
 
 Open `convex-decomposition-comparison.html` to see:
 - Side-by-side comparison of single polygon vs convex decomposition
@@ -218,15 +218,15 @@ Open `convex-decomposition-comparison.html` to see:
 - Accuracy level controls
 - Live statistics showing polygon count, point count, and convexity
 
-### Existing Demos
+### Existing demos
 
 - `bounding-shape-demo.html` - Single polygon approach
 - `convex-decomposition-demo.html` - Three-phase algorithm visualization
 - `test-bounding-shape.html` - Algorithm tests
 
-## Files Added/Modified
+## Files added or modified
 
-### New Files
+### New files
 
 - `utils/generateConvexDecompositionMeta.js` - Main utility for convex decomposition
 - `utils/processAllSpriteSheetsConvex.js` - Batch processor
@@ -235,7 +235,7 @@ Open `convex-decomposition-comparison.html` to see:
 - `img/visualizations/*-convexDecomposition-*.png` - Visualizations (24 files)
 - `CONVEX_DECOMPOSITION_README.md` - This file
 
-### Modified Files
+### Modified files
 
 - `utils/boundingShapeNode.js` - Added convex decomposition functions
 - `utils/generateBoundingShapeMeta.js` - Updated to save screenshots to visualizations folder
@@ -247,7 +247,7 @@ Open `convex-decomposition-comparison.html` to see:
 
 - Moved all visualization screenshots from `img/meta/` to `img/visualizations/`
 
-## Performance Considerations
+## Performance considerations
 
 ### Preprocessing
 - All decomposition is done **once during development**
@@ -259,14 +259,14 @@ Open `convex-decomposition-comparison.html` to see:
 - More polygons per sprite but simpler collision math
 - Suitable for games with 10-100+ objects on screen
 
-### Optimization Tips
+### Optimization tips
 
 1. **Choose appropriate accuracy level** based on target platform
 2. **Use spatial partitioning** (grid, quadtree) for broad-phase
 3. **Cache polygon transformations** when objects don't rotate
 4. **Consider polygon count** - sprites with 10+ polygons might benefit from simplified collision
 
-## Future Enhancements
+## Future enhancements
 
 Potential improvements for future PRs:
 

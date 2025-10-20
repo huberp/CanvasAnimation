@@ -124,4 +124,4 @@ All files are in the repository root except:
 
 ---
 
-**Quick Decision**: If you trust the analysis, just comment "Hybrid" to proceed with the recommended fix! 🚀
+**Quick Decision**: If you trust the analysis, just comment "Hybrid" to proceed with the recommended fix. 🚀

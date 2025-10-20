@@ -1,4 +1,4 @@
-# Canvas Animation
+# Canvas animation
 
 A JavaScript-based Canvas animation project featuring an interactive game with asteroids, explosions, and a controllable spaceship.
 
@@ -12,13 +12,13 @@ This project demonstrates HTML5 Canvas animation capabilities using ES6 JavaScri
 - Object-oriented animation framework
 - **NEW**: 2D bounding shape utility for collision detection (see [BOUNDING_SHAPE_README.md](BOUNDING_SHAPE_README.md))
 
-## How to Run the Sample
+## How to run the sample
 
-Since this is a client-side HTML5/JavaScript application, you can run it in several ways:
+Since this client-side HTML5/JavaScript app can run in different ways:
 
-### Option 1: Using a Local Web Server (Recommended)
+### Option 1: Using a local web server (recommended)
 
-The application requires a web server to properly load ES6 modules. You can use any of these methods:
+The app requires a web server to properly load ES6 modules. You can use any of these methods:
 
 **Using Python:**
 ```bash
@@ -42,7 +42,7 @@ php -S localhost:8000
 
 Then open your browser and navigate to: `http://localhost:8000`
 
-### Option 2: Using a Modern Browser
+### Option 2: Using a modern browser
 
 Some modern browsers allow you to open HTML files directly, but this may have limitations with ES6 module loading:
 
@@ -53,7 +53,7 @@ Some modern browsers allow you to open HTML files directly, but this may have li
 - Use arrow keys or WASD to control the spaceship
 - Click the "Stop Animation" button to pause/resume the animation
 
-## Project Structure
+## Project structure
 
 ```
 .
@@ -85,18 +85,18 @@ Some modern browsers allow you to open HTML files directly, but this may have li
 └── .github/workflows/  # CI/CD workflows
 ```
 
-## Technologies Used
+## Technologies used
 
 - HTML5 Canvas
 - ES6 JavaScript
 - requestAnimationFrame for smooth animations
 - Sprite-based graphics
 
-## Bounding Shape Metadata Generator
+## Bounding shape metadata generator
 
 The project includes utilities to generate bounding shape metadata for sprite sheets:
 
-### Single Polygon Approach
+### Single polygon approach
 
 ```bash
 # Generate metadata for a single sprite sheet
@@ -108,9 +108,10 @@ npm run generate-all-meta
 
 The utility computes bounding shapes using three algorithms (Marching Squares, Convex Hull, Simplified Convex Hull) at three accuracy levels (low, mid, high), and creates visual screenshots of the results.
 
-**Demo:** Open `bounding-shape-meta-demo.html` in your browser to see how to load and use the generated metadata in your game.
+**Demo:**
+Open `bounding-shape-meta-demo.html` in your browser to see how to load and use the generated metadata in your game.
 
-### Convex Decomposition Approach (NEW)
+### Convex decomposition approach (new)
 
 ```bash
 # Generate convex decomposition metadata for a single sprite sheet
@@ -120,49 +121,52 @@ npm run generate-convex-meta img/asteroid4_32x32.png 32 32 5 19
 npm run generate-all-convex-meta
 ```
 
-This new utility uses the **Bayazit algorithm (FACD)** from PR #36 to decompose sprite shapes into multiple convex polygons. This is ideal for accurate collision detection while maintaining compatibility with SAT (Separating Axis Theorem).
+This new utility uses the **Bayazit algorithm (FACD)** from PR #36 to decompose sprite shapes into convex polygons. This approach works well for accurate collision detection while maintaining compatibility with SAT (Separating Axis Theorem).
 
 **Benefits:**
-- All resulting polygons are convex (SAT-compatible)
+- All resulting polygons convex (SAT-compatible)
 - Better fit for complex, concave shapes like asteroids
 - More accurate collision detection than single polygon approach
 
-**Demo:** Open `convex-decomposition-comparison.html` in your browser to see a side-by-side comparison of both approaches.
+**Demo:**
+Open `convex-decomposition-comparison.html` in your browser to see a side-by-side comparison of both approaches.
 
 See [utils/README.md](utils/README.md) for detailed documentation.
 
-## Browser Compatibility
+## Browser compatibility
 
 Works best in modern browsers that support:
 - HTML5 Canvas
 - ES6 JavaScript features
 - requestAnimationFrame
 
-## Continuous Integration & Deployment
+## Continuous integration and deployment
 
 This project uses GitHub Actions for automated testing and deployment:
 
-### Automated Testing
+### Automated testing
 Every push and pull request to the master branch triggers automated tests that:
-- Validate JavaScript syntax
+- Check JavaScript syntax
 - Check HTML files
 - Verify project structure
 - Ensure all required files exist
 
-### Automated Deployment to GitHub Pages
+### Automated deployment to GitHub pages
 
-Changes pushed to the master branch are automatically deployed to GitHub Pages (gh-pages branch).
+Changes pushed to the master branch deploy automatically to GitHub Pages (gh-pages branch).
 
 The deployment workflow:
 1. Fetches the latest changes from master
 2. Merges them into the gh-pages branch using the `theirs` strategy
 3. Pushes the updated gh-pages branch
 
-**Note:** The gh-pages branch currently contains ES5 code. The merge strategy `-X theirs` ensures that the ES6 refactored JavaScript files (animation.js, base.js, game.js, setupObjects.js) from master replace the ES5 versions in case of conflicts.
+**Note:**
+The gh-pages branch currently contains ES5 code. The merge strategy `-X theirs` ensures that the ES6 refactored JavaScript files (animation.js, base.js, game.js, setupObjects.js) from master replace the ES5 versions in case of conflicts.
 
-The site will be available at: `https://huberp.github.io/CanvasAnimation/`
+The site is available at:
+`https://huberp.github.io/CanvasAnimation/`
 
-### Manual Deployment (Alternative)
+### Manual deployment (alternative)
 
 If you prefer to deploy manually, you can still use the traditional approach:
 
@@ -184,4 +188,4 @@ git push origin gh-pages
 ## Credits
 
 - Game assets from [Free Game Assets](http://freegameassets.blogspot.de/)
-- Additional resources from [Shoot'em Up .NET](http://www.codeproject.com/Articles/677417/Shootem-Up-NET)
+- Resources from [Shoot'em Up .NET](http://www.codeproject.com/Articles/677417/Shootem-Up-NET)

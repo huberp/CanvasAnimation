@@ -16,7 +16,7 @@ I've completed the investigation of the convex decomposition algorithm bug. Here
 "convexPolygons": [
   [
     { "x": 32, "y": 7 },
-    { "x": 41, "y": 6 }  // ❌ INVALID - only 2 points!
+    { "x": 41, "y": 6 }  // ❌ INVALID - only 2 points
   ],
   [
     { "x": 41, "y": 6 },
@@ -31,7 +31,7 @@ The bug has **three contributing factors**:
 
 1. **Bayazit Decomposition Creates Tiny Triangles**
    - Algorithm finds reflex vertices near contour wrap-around points
-   - Creates very small triangular polygons (e.g., 4 px² area)
+   - Creates very small triangular polygons (for example, 4 px² area)
    - Example: Triangle `[(32,7), (33,6), (41,6)]` with one side only 1.41 pixels
 
 2. **Phase 3 Optimization Over-Simplifies**
@@ -67,7 +67,7 @@ I've analyzed 5 different fix approaches and created comprehensive documentation
 
 | Option | Description | Valid? | Coverage | Complexity |
 |--------|-------------|--------|----------|------------|
-| **Hybrid ⭐** | Reduce tol + filter | ✓ | Full | Low |
+| **Hybrid ⭐** | Reduce Tol + filter | ✓ | Full | Low |
 | **Option 1** | Filter degenerate only | ✓ | Lost | Lowest |
 | **Option 2** | Reduce tolerance only | ✓ | Full | Low |
 | **Option 3** | Filter by area threshold | ✓ | Partial | Low |
@@ -79,7 +79,7 @@ I've analyzed 5 different fix approaches and created comprehensive documentation
 I've created comprehensive documentation and test utilities:
 
 ### Quick Reference
-- **DECOMPOSITION_BUG_SUMMARY.md** - TL;DR version with code example
+- **DECOMPOSITION_BUG_SUMMARY.md** - Summary version with code example
 - **DECOMPOSITION_FIX_OPTIONS.md** - Detailed analysis of all 5 options
 - **img/visualizations/decomposition-fix-comparison.png** - Visual side-by-side comparison
 
@@ -116,7 +116,7 @@ Comment with option number: `Option 1`, `Option 2`, `Option 3`, `Option 4`, or `
 
 ### Option C: Custom Requirements
 Comment with your specific requirements:
-- e.g., "Must preserve all coverage" or "Minimize file size"
+- For example, "Must preserve all coverage" or "Minimize file size"
 - I'll recommend the best option for your needs
 
 ### Option D: Questions First
@@ -154,4 +154,4 @@ Once you approve a fix option:
 
 ---
 
-**Awaiting your decision! Just comment with your choice.** 🚀
+**Awaiting your decision. Just comment with your choice.** 🚀

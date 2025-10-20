@@ -1,2 +1,6 @@
 node_modules/
 package-lock.json
+
+# Vale styles (downloaded automatically by GitHub Action)
+.github/styles/Google/
+.github/styles/write-good/
