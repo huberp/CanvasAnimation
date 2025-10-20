@@ -145,5 +145,5 @@ The screenshots demonstrate that the bounding shapes accurately fit the sprite c
 ## Notes
 
 - Asteroid1 uses the same 72×72 sprite size but has more complex shapes than the smaller 32×32 asteroids, resulting in slightly higher point counts
-- The smallfighter sprite is larger (95×151) and more elongated, which is reflected in the higher point counts needed to accurately capture its shape
+- The Smallfighter sprite is larger (95×151) and more elongated, which is reflected in the higher point counts needed to accurately capture its shape
 - All metadata follows the same structure as asteroid3 and asteroid4 for consistency

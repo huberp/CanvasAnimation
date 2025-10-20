@@ -67,7 +67,7 @@ I've analyzed 5 different fix approaches and created comprehensive documentation
 
 | Option | Description | Valid? | Coverage | Complexity |
 |--------|-------------|--------|----------|------------|
-| **Hybrid ⭐** | Reduce tol + filter | ✓ | Full | Low |
+| **Hybrid ⭐** | Reduce Tol + filter | ✓ | Full | Low |
 | **Option 1** | Filter degenerate only | ✓ | Lost | Lowest |
 | **Option 2** | Reduce tolerance only | ✓ | Full | Low |
 | **Option 3** | Filter by area threshold | ✓ | Partial | Low |

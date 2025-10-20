@@ -301,7 +301,7 @@ For the asteroid4 sprite sheet (19 sprites, 32×32 pixels each):
 - **Average Points**: ~6.3 per polygon
 - **Min Points**: 5
 - **Max Points**: 8
-- **Computation Time**: < 100ms for all sprites (one-time cost)
+- **Computation Time**: < 100 ms for all sprites (one-time cost)
 
 ### Three-Phase Convex Decomposition (NEW - Recommended for SAT)
 
