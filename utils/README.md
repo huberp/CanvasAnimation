@@ -1,4 +1,4 @@
-# Bounding Shape Metadata Generator
+# Bounding shape metadata generator
 
 This utility generates spritesheet metadata files containing bounding shapes for collision detection. It processes sprite sheets and creates JSON files with bounding shape coordinates for each sprite using multiple algorithms and accuracy levels.
 
@@ -23,7 +23,7 @@ This will install the `canvas` package which is required for image processing in
 
 ## Usage
 
-### Process a Single Sprite Sheet
+### Process a single sprite sheet
 
 ```bash
 node utils/generateBoundingShapeMeta.js <image-path> <sprite-width> <sprite-height> <grid-width> <num-sprites>
@@ -36,7 +36,7 @@ npm run generate-meta <image-path> <sprite-width> <sprite-height> <grid-width> <
 ```
 
 **Parameters:**
-- `image-path`: Path to the sprite sheet image (e.g., `img/asteroid4_32x32.png`)
+- `image-path`: Path to the sprite sheet image (for example, `img/asteroid4_32x32.png`)
 - `sprite-width`: Width of each sprite in pixels
 - `sprite-height`: Height of each sprite in pixels
 - `grid-width`: Number of sprites per row in the sheet
@@ -48,7 +48,7 @@ npm run generate-meta <image-path> <sprite-width> <sprite-height> <grid-width> <
 node utils/generateBoundingShapeMeta.js img/asteroid4_32x32.png 32 32 5 19
 ```
 
-### Process All Sprite Sheets
+### Process all sprite sheets
 
 To process all sprite sheets defined in the project:
 
@@ -66,7 +66,7 @@ npm run generate-all-meta
 
 The utility generates the following files in the `img/meta/` directory:
 
-### 1. Metadata JSON File
+### 1. Metadata JSON file
 
 Named `<sprite-sheet>-meta.json`, this file contains:
 
@@ -104,7 +104,7 @@ Each sprite entry contains:
 - `boundingShape`: Array of `{x, y}` points defining the polygon (relative to sprite box)
 - `pointCount`: Number of points in the polygon
 
-### 2. Visual Screenshots
+### 2. Visual screenshots
 
 Nine PNG files per sprite sheet showing the computed bounding shapes:
 - `<sprite-sheet>-marchingSquares-low.png`
@@ -119,7 +119,7 @@ Nine PNG files per sprite sheet showing the computed bounding shapes:
 
 ## Algorithms
 
-### 1. Marching Squares + Douglas-Peucker
+### 1. Marching squares with Douglas-Peucker
 
 Best for irregular, concave shapes like asteroids.
 
@@ -128,7 +128,7 @@ Best for irregular, concave shapes like asteroids.
 - **Mid** (tolerance: 2.0) - Balanced accuracy and performance
 - **High** (tolerance: 1.0) - More accurate, more points
 
-### 2. Convex Hull
+### 2. Convex hull
 
 Produces convex polygons suitable for simpler collision algorithms.
 
@@ -137,7 +137,7 @@ Produces convex polygons suitable for simpler collision algorithms.
 - **Mid** (tolerance: 1.0) - Moderately simplified
 - **High** (tolerance: 0.5) - Minimally simplified
 
-### 3. Simplified Convex Hull
+### 3. Simplified convex hull
 
 Combines convex hull with simplification to reduce collinear points.
 
@@ -146,9 +146,9 @@ Combines convex hull with simplification to reduce collinear points.
 - **Mid** (tolerance: 1.0) - Moderate point count
 - **High** (tolerance: 0.5) - More detailed
 
-## Using the Generated Metadata
+## Using the generated metadata
 
-### Loading Metadata in Your Game
+### Loading metadata in your game
 
 ```javascript
 import metadata from './img/meta/asteroid4_32x32-meta.json';
@@ -166,7 +166,7 @@ console.log(`Bounding shape:`, sprite0.boundingShape);
 console.log(`Point count: ${sprite0.pointCount}`);
 ```
 
-### Integrating with Collision Detection
+### Integrating with collision detection
 
 ```javascript
 class SpriteWithCollision {
@@ -198,9 +198,9 @@ const asteroidCollision = new SpriteWithCollision(
 const shape = asteroidCollision.getBoundingShape(5);
 ```
 
-## Choosing the Right Algorithm and Accuracy
+## Choosing the right algorithm and accuracy
 
-### Algorithm Selection
+### Algorithm selection
 
 | Algorithm | Best For | Pros | Cons |
 |-----------|----------|------|------|
@@ -208,7 +208,7 @@ const shape = asteroidCollision.getBoundingShape(5);
 | **Convex Hull** | Simple collision detection | Always convex, simpler math | Poor fit for concave shapes |
 | **Simplified Convex Hull** | Balanced approach | Convex + fewer points | Still loses concave details |
 
-### Accuracy Selection
+### Accuracy selection
 
 | Accuracy | Use Case | Trade-off |
 |----------|----------|-----------|
@@ -216,20 +216,20 @@ const shape = asteroidCollision.getBoundingShape(5);
 | **Mid** | General purpose | Good balance |
 | **High** | Desktop, few objects | Most accurate, more processing |
 
-## Performance Considerations
+## Performance considerations
 
 - **Pre-compute**: Metadata generation is a one-time process during development
 - **Choose wisely**: Select algorithm/accuracy based on device capabilities
 - **Load once**: Load metadata at game initialization, not per-frame
 - **Broad-phase first**: Use AABB for initial collision checks, then polygon collision
 
-## Convex Decomposition Utility (NEW)
+## Convex decomposition utility (new)
 
 ### Overview
 
 The convex decomposition utility generates metadata containing multiple convex polygons per sprite using the **Bayazit algorithm (FACD)** from PR #36. This is ideal for accurate collision detection with complex shapes while maintaining SAT compatibility.
 
-### Process a Single Sprite Sheet
+### Process a single sprite sheet
 
 ```bash
 node utils/generateConvexDecompositionMeta.js <image-path> <sprite-width> <sprite-height> <grid-width> <num-sprites>
@@ -247,7 +247,7 @@ npm run generate-convex-meta <image-path> <sprite-width> <sprite-height> <grid-w
 node utils/generateConvexDecompositionMeta.js img/asteroid4_32x32.png 32 32 5 19
 ```
 
-### Process All Sprite Sheets
+### Process all sprite sheets
 
 ```bash
 node utils/processAllSpriteSheetsConvex.js
@@ -269,7 +269,7 @@ The utility generates:
    - `<sprite-sheet>-convexDecomposition-mid.png`
    - `<sprite-sheet>-convexDecomposition-high.png`
 
-### Metadata Structure
+### Metadata structure
 
 ```json
 {
@@ -296,14 +296,14 @@ The utility generates:
 }
 ```
 
-### Comparison: Single Polygon vs Convex Decomposition
+### Comparison: Single polygon vs convex decomposition
 
 | Approach | Best For | Pros | Cons |
 |----------|----------|------|------|
 | **Single Polygon** (generateBoundingShapeMeta.js) | Simple collision detection | One polygon per sprite | May be concave |
 | **Convex Decomposition** (generateConvexDecompositionMeta.js) | Accurate collision with SAT | All polygons convex, better fit | More polygons per sprite |
 
-### Using Convex Decomposition in Your Game
+### Using convex decomposition in your game
 
 ```javascript
 import metadata from './img/meta/asteroid4_32x32-convex-decomposition-meta.json';
@@ -333,7 +333,7 @@ convexPolygons.forEach(polygon => {
 
 ## Troubleshooting
 
-### "canvas module not found"
+### Canvas module not found
 
 Install the canvas dependency:
 ```bash
