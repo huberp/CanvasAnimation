@@ -112,9 +112,11 @@ For each sprite sheet, the utility generates:
 
 | Level | Tolerance | Use Case | Characteristics |
 |-------|-----------|----------|-----------------|
-| **low** | 2.0 | Mobile devices, many objects | Fewer polygons and points, faster |
-| **mid** | 1.0 | General purpose | Balanced accuracy and performance |
-| **high** | 0.5 | Desktop, few objects | More polygons and points, most accurate |
+| **low** | 4.0 | Mobile devices, many objects | Fewer polygons and points, faster |
+| **mid** | 2.0 | General purpose | Balanced accuracy and performance |
+| **high** | 1.0 | Desktop, few objects | More polygons and points, most accurate |
+
+**Note:** These tolerance values match the marching squares algorithm to ensure convex decomposition starts from the same simplified contour as the single polygon approach.
 
 ## Comparison with Single Polygon Approach
 
